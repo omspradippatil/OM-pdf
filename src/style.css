@@ -726,3 +726,215 @@ body {
 @media (max-width: 400px) {
   .features-grid { grid-template-columns: 1fr; }
 }
+
+/* ─── Hero Trust Bar ─── */
+.hero-trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+  animation: fadeInUp 0.7s ease 0.35s both;
+}
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 100px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+}
+.trust-bad  { color: var(--error); border-color: var(--error-border); background: var(--error-bg); }
+.trust-good { color: #065f46; border-color: var(--success-border); background: var(--success-bg); }
+[data-theme="dark"] .trust-good { color: #6ee7b7; }
+.trust-vs { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); }
+
+/* ─── Tool Tabs ─── */
+.tool-tabs-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 0 24px 32px;
+}
+.tool-tabs {
+  display: inline-flex;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 5px;
+  gap: 4px;
+  box-shadow: var(--shadow-sm);
+}
+.tool-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+}
+.tool-tab:hover { color: var(--primary); background: var(--bg-hover); }
+.tool-tab.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 14px var(--primary-glow);
+}
+.tab-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: #10b981;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 100px;
+}
+.tool-tab.active .tab-badge { background: rgba(255,255,255,0.25); }
+
+/* ─── Split Tool ─── */
+.split-file-info { display: flex; flex-direction: column; gap: 14px; animation: slideIn 0.3s ease; }
+
+.split-file-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.split-modes {
+  display: flex;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px;
+}
+.split-mode-btn {
+  flex: 1;
+  padding: 9px 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.split-mode-btn:hover { background: var(--bg-hover); color: var(--primary); }
+.split-mode-btn.active { background: var(--primary); color: #fff; box-shadow: 0 3px 10px var(--primary-glow); }
+
+.split-option-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  animation: slideIn 0.25s ease;
+}
+.split-label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+.split-range-input {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 10px 14px;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  background: var(--bg);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.split-range-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+.split-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; }
+.split-hint code { background: var(--bg-hover); padding: 1px 5px; border-radius: 4px; font-family: monospace; }
+.split-every-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.btn-split-action { background: linear-gradient(135deg, #7c3aed, #2563EB); }
+.btn-split-action::before { background: linear-gradient(135deg, #6d28d9, #1d4ed8); }
+
+/* ─── Download Again Button ─── */
+.btn-download-again {
+  background: var(--success);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.btn-download-again:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+/* ─── Privacy Section ─── */
+.privacy-section {
+  padding: 72px 24px;
+  background: linear-gradient(135deg, rgba(37,99,235,.04), rgba(124,58,237,.04));
+  border-top: 1px solid var(--border);
+}
+.privacy-inner { max-width: 800px; margin: 0 auto; text-align: center; }
+.privacy-title { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.025em; margin-bottom: 10px; }
+.privacy-sub { color: var(--text-secondary); font-size: 1rem; margin-bottom: 40px; }
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.comparison-col {
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  text-align: left;
+  border: 1px solid var(--border);
+}
+.comparison-bad  { background: var(--error-bg); border-color: var(--error-border); }
+.comparison-good { background: var(--success-bg); border-color: var(--success-border); }
+.comparison-col-header {
+  font-weight: 800;
+  font-size: 1rem;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.comparison-bad  .comparison-col-header { color: var(--error); }
+.comparison-good .comparison-col-header { color: var(--success); }
+.comparison-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.comparison-list li {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.4;
+}
+.comparison-bad  .comparison-list li::before { content: '✗'; color: var(--error); font-weight: 700; flex-shrink: 0; }
+.comparison-good .comparison-list li::before { content: '✓'; color: var(--success); font-weight: 700; flex-shrink: 0; }
+
+@media (max-width: 580px) {
+  .comparison-grid { grid-template-columns: 1fr; }
+  .hero-trust { flex-direction: column; gap: 8px; }
+  .tool-tab { padding: 9px 14px; font-size: 0.82rem; }
+  .split-modes { flex-direction: column; }
+}

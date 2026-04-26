@@ -6,32 +6,65 @@ import { setProgress } from './uiManager.js';
 /**
  * Merge an array of { file, name } objects.
  * Reports progress via setProgress(0–100).
- * Returns a Uint8Array of the merged PDF bytes.
+ * Returns { bytes: Uint8Array, warnings: string[] }
  */
 export async function mergePDFs(fileEntries) {
   const merged = await PDFDocument.create();
-  const total = fileEntries.length;
+  const total  = fileEntries.length;
+  const warnings = [];
+
+  // Set document metadata
+  merged.setTitle('Merged PDF – OM PDF');
+  merged.setCreator('OM PDF (https://om-pdf.netlify.app)');
+  merged.setProducer('OM PDF');
+  merged.setCreationDate(new Date());
+  merged.setModificationDate(new Date());
 
   for (let i = 0; i < total; i++) {
     const entry = fileEntries[i];
-    const arrayBuffer = await entry.file.arrayBuffer();
-    const srcDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: false });
-    const pageIndices = srcDoc.getPageIndices();
-    const copiedPages = await merged.copyPages(srcDoc, pageIndices);
+
+    let srcDoc;
+    try {
+      const arrayBuffer = await entry.file.arrayBuffer();
+      // First try without ignoring encryption (catches truly locked files)
+      try {
+        srcDoc = await PDFDocument.load(arrayBuffer);
+      } catch (encErr) {
+        // If encrypted, load with ignoreEncryption — pages may be blank but won't crash
+        if (encErr.message && encErr.message.includes('encrypted')) {
+          srcDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+          warnings.push(`"${entry.name}" is password-protected — pages may appear blank.`);
+        } else {
+          throw encErr;
+        }
+      }
+    } catch (err) {
+      warnings.push(`"${entry.name}" could not be read and was skipped: ${err.message}`);
+      // Update progress and continue with remaining files
+      setProgress(5 + ((i + 1) / total) * 85);
+      await new Promise(r => setTimeout(r, 0));
+      continue;
+    }
+
+    const pageIndices  = srcDoc.getPageIndices();
+    const copiedPages  = await merged.copyPages(srcDoc, pageIndices);
     copiedPages.forEach(page => merged.addPage(page));
 
-    // Update progress: 5% → 90% during loading, final 10% on save
-    const pct = 5 + ((i + 1) / total) * 85;
-    setProgress(pct);
+    // Progress: 5% → 90% across file loading
+    setProgress(5 + ((i + 1) / total) * 85);
 
-    // Yield to event loop so browser stays responsive
+    // Yield to event loop to keep UI responsive
     await new Promise(r => setTimeout(r, 0));
+  }
+
+  if (merged.getPageCount() === 0) {
+    throw new Error('No pages could be merged. All files may be corrupted or unreadable.');
   }
 
   setProgress(95);
   const bytes = await merged.save();
   setProgress(100);
-  return bytes;
+  return { bytes, warnings };
 }
 
 /**
@@ -45,6 +78,17 @@ export async function getPageCount(file) {
   } catch {
     return null;
   }
+}
+
+/**
+ * Generate a timestamped filename: prefix_YYYY-MM-DD_HH-MM-SS.pdf
+ */
+export function timestampedFilename(base = 'merged') {
+  const now    = new Date();
+  const date   = now.toISOString().slice(0, 10);                           // YYYY-MM-DD
+  const time   = now.toTimeString().slice(0, 8).replace(/:/g, '-');        // HH-MM-SS
+  const clean  = base.trim().replace(/\.pdf$/i, '').replace(/\s+/g, '_') || 'merged';
+  return `${clean}_${date}_${time}.pdf`;
 }
 
 /**
