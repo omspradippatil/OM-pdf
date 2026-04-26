@@ -1,6 +1,7 @@
 // splitPdf.js – PDF split/extract logic
 
 import { PDFDocument } from 'pdf-lib';
+import JSZip from 'jszip';
 
 /**
  * Parse a range string like "1-3, 5, 7-9" into sorted 0-indexed page array.
@@ -36,21 +37,33 @@ export async function extractPages(file, pageIndices) {
   return newDoc.save();
 }
 
-/** Split every page into individual PDFs. Returns array of {bytes, pageNum}. */
-export async function splitEveryPage(file, onProgress) {
+/**
+ * Split every page into individual PDFs, bundle them into a ZIP.
+ * onProgress(0-100) is called as pages are processed.
+ * Returns a Blob of the ZIP file.
+ */
+export async function splitEveryPage(file, baseName, onProgress) {
   const buf    = await file.arrayBuffer();
   const srcDoc = await PDFDocument.load(buf, { ignoreEncryption: true });
   const total  = srcDoc.getPageCount();
-  const results = [];
+  const zip    = new JSZip();
+  const folder = zip.folder(baseName);
+
   for (let i = 0; i < total; i++) {
     const doc = await PDFDocument.create();
     const [pg] = await doc.copyPages(srcDoc, [i]);
     doc.addPage(pg);
-    results.push({ bytes: await doc.save(), pageNum: i + 1 });
-    onProgress && onProgress(Math.round(((i + 1) / total) * 100));
+    const bytes = await doc.save();
+    const pageNum = String(i + 1).padStart(String(total).length, '0');
+    folder.file(`${baseName}_page${pageNum}.pdf`, bytes);
+    onProgress && onProgress(Math.round(((i + 1) / total) * 90));
     await new Promise(r => setTimeout(r, 0));
   }
-  return results;
+
+  onProgress && onProgress(95);
+  const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+  onProgress && onProgress(100);
+  return zipBlob;
 }
 
 /** Download bytes as PDF */

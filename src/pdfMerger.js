@@ -1,7 +1,7 @@
 // pdfMerger.js – handles PDF merging with pdf-lib
 
 import { PDFDocument } from 'pdf-lib';
-import { setProgress } from './uiManager.js';
+import { setProgress, updateProgressLabel } from './uiManager.js';
 
 /**
  * Merge an array of { file, name } objects.
@@ -22,38 +22,32 @@ export async function mergePDFs(fileEntries) {
 
   for (let i = 0; i < total; i++) {
     const entry = fileEntries[i];
+    updateProgressLabel(`Reading file ${i + 1} of ${total}: ${entry.name.slice(0, 30)}…`);
 
     let srcDoc;
     try {
       const arrayBuffer = await entry.file.arrayBuffer();
-      // First try without ignoring encryption (catches truly locked files)
       try {
         srcDoc = await PDFDocument.load(arrayBuffer);
       } catch (encErr) {
-        // If encrypted, load with ignoreEncryption — pages may be blank but won't crash
         if (encErr.message && encErr.message.includes('encrypted')) {
           srcDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
           warnings.push(`"${entry.name}" is password-protected — pages may appear blank.`);
-        } else {
-          throw encErr;
-        }
+        } else { throw encErr; }
       }
     } catch (err) {
-      warnings.push(`"${entry.name}" could not be read and was skipped: ${err.message}`);
-      // Update progress and continue with remaining files
+      warnings.push(`"${entry.name}" could not be read and was skipped.`);
       setProgress(5 + ((i + 1) / total) * 85);
       await new Promise(r => setTimeout(r, 0));
       continue;
     }
 
-    const pageIndices  = srcDoc.getPageIndices();
-    const copiedPages  = await merged.copyPages(srcDoc, pageIndices);
+    updateProgressLabel(`Merging file ${i + 1} of ${total}…`);
+    const pageIndices = srcDoc.getPageIndices();
+    const copiedPages = await merged.copyPages(srcDoc, pageIndices);
     copiedPages.forEach(page => merged.addPage(page));
 
-    // Progress: 5% → 90% across file loading
     setProgress(5 + ((i + 1) / total) * 85);
-
-    // Yield to event loop to keep UI responsive
     await new Promise(r => setTimeout(r, 0));
   }
 

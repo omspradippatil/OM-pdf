@@ -1,21 +1,32 @@
 // main.js – entry point
 
 import './style.css';
-import { addFiles, getFiles, clearFiles, subscribe, setPageCount } from './fileManager.js';
+import { addFiles, getFiles, clearFiles, subscribe, setPageCount, setThumbnail } from './fileManager.js';
 import {
   renderFiles, showValidation, showError, hideError,
-  showProgress, hideProgress, showSuccess, setDropzoneActive
+  showProgress, hideProgress, showSuccess, setDropzoneActive, updateProgressLabel
 } from './uiManager.js';
 import { mergePDFs, downloadPDF, getPageCount, timestampedFilename } from './pdfMerger.js';
 import { parsePageRanges, extractPages, splitEveryPage, downloadBytes } from './splitPdf.js';
 import { formatBytes } from './fileManager.js';
+import { generateThumbnail } from './thumbnailGenerator.js';
 
 /* ══════════════════════════════════
-   THEME
+   THEME — system detect + manual override
 ══════════════════════════════════ */
 const THEME_KEY = 'om-pdf-theme';
-const saved = localStorage.getItem(THEME_KEY);
-if (saved) document.body.dataset.theme = saved;
+const savedTheme = localStorage.getItem(THEME_KEY);
+if (savedTheme) {
+  document.body.dataset.theme = savedTheme;
+} else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+  document.body.dataset.theme = 'dark';
+}
+// Listen for OS-level changes (only if user hasn't manually set)
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+  if (!localStorage.getItem(THEME_KEY)) {
+    document.body.dataset.theme = e.matches ? 'dark' : 'light';
+  }
+});
 document.getElementById('themeToggle').addEventListener('click', () => {
   const next = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
   document.body.dataset.theme = next;
@@ -65,8 +76,16 @@ subscribe(files => {
 async function handleFiles(rawFiles) {
   const { warnings } = addFiles(Array.from(rawFiles));
   if (warnings.length) showValidation(warnings.join(' | '));
+  // Async load page counts + thumbnails for new entries (those still null)
   getFiles().forEach(entry => {
-    if (entry.pages === null) getPageCount(entry.file).then(n => { if (n !== null) setPageCount(entry.id, n); });
+    if (entry.pages === null) {
+      getPageCount(entry.file).then(n => { if (n !== null) setPageCount(entry.id, n); });
+    }
+    if (entry.thumbnail === null) {
+      generateThumbnail(entry.file).then(dataUrl => {
+        if (dataUrl) setThumbnail(entry.id, dataUrl);
+      });
+    }
   });
 }
 
@@ -237,16 +256,17 @@ splitBtn.addEventListener('click', async () => {
       splitSuccessDetails.textContent = `"${filename}" · ${indices.length} page${indices.length !== 1 ? 's' : ''} extracted`;
       splitSuccessBanner.hidden = false;
     } else {
-      // Split every page — sequential downloads
-      const results = await splitEveryPage(splitFile, pct => setSplitProgress(Math.round(pct * 0.9)));
-      setSplitProgress(100);
-      for (let i = 0; i < results.length; i++) {
-        const { bytes, pageNum } = results[i];
-        const filename = `${baseName}_page${String(pageNum).padStart(3,'0')}_${timestamp}.pdf`;
-        downloadBytes(bytes, filename);
-        await new Promise(r => setTimeout(r, 400));
-      }
-      splitSuccessDetails.textContent = `${results.length} individual PDFs downloaded`;
+      // Split every page → single ZIP download
+      document.getElementById('splitProgressLabel').textContent = 'Splitting pages…';
+      const zipBlob = await splitEveryPage(splitFile, baseName, pct => setSplitProgress(Math.round(pct)));
+      document.getElementById('splitProgressLabel').textContent = 'Creating ZIP…';
+      const zipFilename = `${baseName}_pages_${new Date().toISOString().slice(0,10)}.zip`;
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url; a.download = zipFilename;
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+      splitSuccessDetails.textContent = `"${zipFilename}" — ${splitTotalPages} pages as individual PDFs in a ZIP`;
       splitSuccessBanner.hidden = false;
     }
   } catch (err) {

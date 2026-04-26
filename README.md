@@ -6,12 +6,14 @@
 
 **Simple. Fast. Free PDF Tools.**
 
-Merge multiple PDF files instantly — right in your browser. No uploads, no sign-up, completely private.
+Merge or split PDF files instantly — right in your browser. No uploads, no sign-up, completely private.
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Netlify-00C7B7?style=flat-square&logo=netlify)](https://your-site.netlify.app)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Netlify-00C7B7?style=flat-square&logo=netlify)](https://om-pdf.netlify.app)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](LICENSE)
 [![Built with Vite](https://img.shields.io/badge/Built%20with-Vite-646CFF?style=flat-square&logo=vite)](https://vitejs.dev)
+
+🌐 **Live:** [https://om-pdf.netlify.app](https://om-pdf.netlify.app)
 
 </div>
 
@@ -19,15 +21,16 @@ Merge multiple PDF files instantly — right in your browser. No uploads, no sig
 
 ## ✨ Features
 
-- 📂 **Drag & Drop** — drag files directly onto the page
-- 🔀 **Reorder Files** — drag to rearrange merge order
-- 📄 **Page Count** — displays page count per file
-- 📊 **Progress Bar** — real-time merge progress
-- 🌙 **Dark Mode** — toggle & persisted via localStorage
-- 📱 **Fully Responsive** — works on mobile, tablet, desktop
+- 📂 **File preview list** — name, size, page count, and **live PDF thumbnail** of page 1
+- 🔀 **Drag to reorder** — rearrange merge order before combining
+- ✂️ **Split PDF** — extract page ranges or split every page individually
+- 📊 **Progress bar** — real-time step-by-step feedback per file
+- 🌙 **Dark mode** — auto-detects system preference + manual toggle
+- 📱 **Fully responsive** — desktop, tablet, and mobile
 - 🔒 **100% Private** — all processing happens in your browser
-- ⚡ **Lightning Fast** — client-side only, no server round-trips
-- 🚀 **Netlify Ready** — one-click deploy
+- ⚡ **Lightning fast** — no upload wait, instant processing
+- 🏷️ **Custom output filename** — rename before downloading
+- 📈 **SEO optimized** — sitemap, structured data, Open Graph
 
 ---
 
@@ -35,8 +38,8 @@ Merge multiple PDF files instantly — right in your browser. No uploads, no sig
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) v18 or higher
-- npm v9 or higher
+- [Node.js](https://nodejs.org/) **v18 or higher**
+- npm **v9 or higher**
 
 ### Installation
 
@@ -45,22 +48,30 @@ Merge multiple PDF files instantly — right in your browser. No uploads, no sig
 git clone https://github.com/your-username/OM-pdf.git
 cd OM-pdf
 
-# 2. Install dependencies
+# 2. Install all dependencies (reads from package.json)
 npm install
 
-# 3. Start the development server
-npm run dev
+# ── OR install from requirements.txt manually ──
+# npm install pdf-lib pdfjs-dist
+# npm install --save-dev vite
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+> All required packages are listed in [`requirements.txt`](requirements.txt).  
+> Running `npm install` automatically installs everything from `package.json`.
+
+### Run Locally
+
+```bash
+npm run dev
+# → http://localhost:5173
+```
 
 ### Build for Production
 
 ```bash
 npm run build
+# → outputs to dist/
 ```
-
-Output will be in the `dist/` directory.
 
 ### Preview Production Build
 
@@ -70,28 +81,113 @@ npm run preview
 
 ---
 
+## 📦 Dependencies
+
+All packages are documented in [`requirements.txt`](requirements.txt).
+
+| Package | Version | Purpose |
+|---|---|---|
+| `pdf-lib` | `^1.17.1` | PDF creation, merging, and manipulation (runs client-side) |
+| `pdfjs-dist` | `^5.6.205` | PDF rendering engine — generates thumbnail previews |
+| `vite` *(dev)* | `^5.2.0` | Build tool and dev server |
+
+---
+
 ## 📁 Project Structure
 
 ```
 OM-pdf/
-├── index.html              # App shell (semantic HTML)
-├── package.json            # Dependencies & scripts
-├── vite.config.js          # Vite bundler config
-├── netlify.toml            # Netlify deploy config
-├── LICENSE                 # MIT License
-└── src/
-    ├── main.js             # Entry point — wires all modules
-    ├── style.css           # Global styles (design tokens, dark mode)
-    ├── fileManager.js      # File state: add, remove, reorder, validate
-    ├── pdfMerger.js        # pdf-lib merge logic + download
-    └── uiManager.js        # DOM rendering, progress, alerts
+│
+├── index.html                  # App entry — full semantic HTML, all panels
+├── package.json                # npm config, scripts, and dependency versions
+├── requirements.txt            # Human-readable dependency list (npm install reads package.json)
+├── vite.config.js              # Vite bundler config (output → dist/, code splits pdf-lib)
+├── netlify.toml                # Netlify deploy config (build cmd + publish dir + headers)
+├── .gitignore                  # Ignores node_modules/, dist/, .env, OS/editor files
+├── LICENSE                     # Proprietary license — owner: OM, contributions welcome
+├── README.md                   # This file
+│
+├── public/                     # Static files copied as-is to dist/
+│   ├── robots.txt              # Tells search crawlers to index all pages
+│   └── sitemap.xml             # XML sitemap for https://om-pdf.netlify.app
+│
+└── src/                        # All application source code
+    │
+    ├── main.js                 # ★ Entry point — wires ALL modules together
+    │                           #   • Tool tab switching (Merge / Split)
+    │                           #   • Theme: system dark mode + manual toggle
+    │                           #   • Merge tool: dropzone, file input, merge action
+    │                           #   • Split tool: file upload, mode toggle, split action
+    │                           #   • Download Again button logic
+    │
+    ├── style.css               # ★ Global stylesheet
+    │                           #   • CSS design tokens (colors, shadows, radius)
+    │                           #   • Light + dark mode via [data-theme] attribute
+    │                           #   • All component styles: navbar, hero, dropzone,
+    │                           #     file list, thumbnails, progress, alerts, tabs,
+    │                           #     split tool, privacy section, features, footer
+    │                           #   • Responsive breakpoints (mobile-first)
+    │                           #   • Animations: fadeIn, slideIn, shimmer, spinner
+    │
+    ├── fileManager.js          # File state manager (in-memory store)
+    │                           #   • addFiles()      — validates & adds File objects
+    │                           #   • removeFile()    — removes by ID
+    │                           #   • clearFiles()    — resets list
+    │                           #   • reorderFiles()  — drag-and-drop reordering
+    │                           #   • setPageCount()  — stores page count per file
+    │                           #   • setThumbnail()  — stores thumbnail data URL
+    │                           #   • getTotalSize()  — sum of all file sizes
+    │                           #   • subscribe()     — event emitter for UI updates
+    │                           #   • Limits: 200 MB per file, 100 MB soft warning
+    │
+    ├── uiManager.js            # DOM rendering and UI state
+    │                           #   • renderFiles()   — builds the file list with
+    │                           #                       thumbnails, page counts, drag handles
+    │                           #   • showValidation / showError — auto-dismiss alerts
+    │                           #   • showProgress / setProgress / hideProgress
+    │                           #   • updateProgressLabel() — per-file step feedback
+    │                           #   • showSuccess()   — auto-dismiss success banner
+    │                           #   • setDropzoneActive() — drag-over visual state
+    │
+    ├── pdfMerger.js            # PDF merge engine (pdf-lib)
+    │                           #   • mergePDFs()     — merges files in order,
+    │                           #                       handles encrypted PDFs gracefully,
+    │                           #                       returns { bytes, warnings[] }
+    │                           #   • getPageCount()  — reads page count from a File
+    │                           #   • timestampedFilename() — generates output name
+    │                           #                       with YYYY-MM-DD_HH-MM-SS suffix
+    │                           #   • downloadPDF()   — triggers browser download
+    │
+    ├── splitPdf.js             # PDF split engine (pdf-lib)
+    │                           #   • parsePageRanges() — parses "1-3, 5, 7-9" strings
+    │                           #                         into 0-indexed page arrays
+    │                           #   • extractPages()  — extracts a range into new PDF
+    │                           #   • splitEveryPage()— splits each page individually,
+    │                           #                       reports progress via callback
+    │                           #   • downloadBytes() — triggers download of any bytes
+    │
+    └── thumbnailGenerator.js   # PDF thumbnail renderer (pdfjs-dist)
+                                #   • generateThumbnail() — renders page 1 of a PDF
+                                #                           to a 72px wide JPEG data URL
+                                #   • Uses CDN worker for pdfjs to avoid bundle complexity
+                                #   • Returns null on failure (encrypted, corrupt files)
 ```
 
 ---
 
 ## 🌐 Deploy to Netlify
 
-### Option 1 — Netlify CLI
+### Option 1 — Git Integration (Recommended)
+
+1. Push this repo to GitHub
+2. Go to [app.netlify.com](https://app.netlify.com) → **Add new site**
+3. Connect your GitHub repo
+4. Settings are auto-detected from `netlify.toml`:
+   - **Build command:** `npm run build`
+   - **Publish directory:** `dist`
+5. Click **Deploy** ✅
+
+### Option 2 — Netlify CLI
 
 ```bash
 npm install -g netlify-cli
@@ -99,15 +195,13 @@ npm run build
 netlify deploy --prod --dir=dist
 ```
 
-### Option 2 — Git Integration
+### After Deploy — Submit to Google
 
-1. Push this repo to GitHub
-2. Go to [app.netlify.com](https://app.netlify.com) → **Add new site**
-3. Connect your GitHub repo
-4. Build settings are auto-detected from `netlify.toml`:
-   - **Build command:** `npm run build`
-   - **Publish directory:** `dist`
-5. Click **Deploy** ✅
+Submit your sitemap to [Google Search Console](https://search.google.com/search-console):
+
+```
+https://om-pdf.netlify.app/sitemap.xml
+```
 
 ---
 
@@ -115,12 +209,13 @@ netlify deploy --prod --dir=dist
 
 | Technology | Purpose |
 |---|---|
-| HTML5 | Semantic markup & accessibility |
-| CSS3 | Styling, dark mode, animations |
-| JavaScript (ESM) | App logic, modular architecture |
-| [pdf-lib](https://pdf-lib.js.org/) | Client-side PDF merging |
+| HTML5 | Semantic markup & accessibility (ARIA) |
+| CSS3 | Styling, dark mode, animations, responsive |
+| JavaScript (ESM) | Modular app logic |
+| [pdf-lib](https://pdf-lib.js.org/) | Client-side PDF merging & splitting |
+| [pdfjs-dist](https://mozilla.github.io/pdf.js/) | PDF page rendering for thumbnails |
 | [Vite](https://vitejs.dev/) | Build tool & dev server |
-| Netlify | Hosting & deployment |
+| Netlify | Hosting, CDN & deployment |
 
 ---
 
@@ -129,25 +224,25 @@ netlify deploy --prod --dir=dist
 Contributions are welcome! Bug fixes, features, and improvements are appreciated.
 
 > **Important:** By submitting a pull request or contribution, you agree that
-> **full ownership of your contribution is assigned to the project Owner (OM)**.
+> **full ownership of your contribution is assigned to the project Owner (OM Patil)**.
 > You retain no co-ownership or IP rights. See [LICENSE](LICENSE) for full terms.
 
 ### How to Contribute
 
 1. **Fork** this repository
-2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
-3. **Commit** your changes: `git commit -m 'Add amazing feature'`
-4. **Push** to your branch: `git push origin feature/amazing-feature`
-5. **Open a Pull Request** 🎉
+2. **Install** dependencies: `npm install`
+3. **Create** a feature branch: `git checkout -b feature/my-feature`
+4. **Commit** your changes: `git commit -m 'Add my feature'`
+5. **Push** to your branch: `git push origin feature/my-feature`
+6. **Open a Pull Request** 🎉
 
 ### Ideas for Contributions
 
-- 🔒 Password-protected PDF support  
-- ✂️ PDF split / extract pages tool  
-- 🖼️ PDF to image conversion  
-- 🌍 Internationalization (i18n)  
-- ♿ Accessibility improvements  
-- 🧪 Unit tests  
+- 🔒 Password-protected PDF support
+- ✂️ PDF compression
+- 🌍 Internationalization (i18n)
+- ♿ Accessibility improvements
+- 🧪 Unit tests
 
 > ⚠️ Do **not** copy or reuse the UI design, layout, or branding in other projects.
 > This is explicitly prohibited by the [LICENSE](LICENSE).
@@ -182,7 +277,7 @@ This project uses a **Proprietary License** — see [LICENSE](LICENSE) for full 
 
 ## ⭐ Show Your Support
 
-If you found this project helpful, please give it a **⭐ star** on GitHub — it means a lot!
+If you found this project helpful, please give it a **⭐ star** on GitHub!
 
 ---
 
