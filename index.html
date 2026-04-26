@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="OM PDF – Merge multiple PDFs instantly in your browser. Free, fast, and secure. No uploads to servers." />
+  <meta name="keywords" content="PDF merger, merge PDF, combine PDF, free PDF tool, online PDF" />
+  <meta name="author" content="OM PDF" />
+  <meta property="og:title" content="OM PDF – Simple. Fast. Free PDF Tools" />
+  <meta property="og:description" content="Merge multiple PDF files instantly in your browser. Completely free and private." />
+  <meta property="og:type" content="website" />
+  <title>OM PDF – Simple. Fast. Free PDF Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+<body data-theme="light">
+
+  <!-- ─── Navbar ─── -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-brand" aria-label="OM PDF Home">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M14 2V8H20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="brand-name">OM <span>PDF</span></span>
+      </a>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+          <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/>
+            <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ─── Hero ─── -->
+  <section class="hero" id="hero">
+    <div class="hero-badge">
+      <span class="badge-dot" aria-hidden="true"></span>
+      100% Free & Private — Files never leave your browser
+    </div>
+    <h1 class="hero-title">Merge PDF Files<br/><span class="gradient-text">Instantly & Effortlessly</span></h1>
+    <p class="hero-subtitle">Simple. Fast. Free PDF Tools — combine multiple PDFs in seconds, no sign-up required.</p>
+  </section>
+
+  <!-- ─── Main App Card ─── -->
+  <main class="app-container" id="main-app">
+
+    <!-- Drop Zone -->
+    <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Upload PDF files by clicking or dragging them here">
+      <div class="dropzone-content">
+        <div class="dropzone-icon" aria-hidden="true">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="17 8 12 3 7 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p class="dropzone-primary">Drag & drop PDF files here</p>
+        <p class="dropzone-secondary">or</p>
+        <label class="btn-upload" for="fileInput">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Choose PDF Files
+        </label>
+        <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple hidden aria-label="Choose PDF files to merge" />
+        <p class="dropzone-hint">PDF files only · Max 50 MB per file</p>
+      </div>
+    </div>
+
+    <!-- File List Panel -->
+    <div class="file-panel" id="filePanel" hidden aria-live="polite">
+      <div class="file-panel-header">
+        <div class="file-count-badge" id="fileCountBadge">0 files</div>
+        <div class="file-panel-actions">
+          <button class="btn-text" id="addMoreBtn" aria-label="Add more PDF files">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            Add More
+          </button>
+          <input type="file" id="addMoreInput" accept=".pdf,application/pdf" multiple hidden aria-label="Add more PDF files" />
+          <button class="btn-text btn-danger" id="clearAllBtn" aria-label="Remove all files">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M19 6L18.1245 19.1334C18.0544 20.1872 17.1816 21 16.1254 21H7.8746C6.81837 21 5.94563 20.1872 5.87549 19.1334L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M9 6V4C9 3.44772 9.44772 3 10 3H14C14.5523 3 15 3.44772 15 4V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Clear All
+          </button>
+        </div>
+      </div>
+      <p class="reorder-hint">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="9" cy="5" r="1" fill="currentColor"/>
+          <circle cx="9" cy="12" r="1" fill="currentColor"/>
+          <circle cx="9" cy="19" r="1" fill="currentColor"/>
+          <circle cx="15" cy="5" r="1" fill="currentColor"/>
+          <circle cx="15" cy="12" r="1" fill="currentColor"/>
+          <circle cx="15" cy="19" r="1" fill="currentColor"/>
+        </svg>
+        Drag to reorder files
+      </p>
+      <ul class="file-list" id="fileList" aria-label="Uploaded PDF files"></ul>
+    </div>
+
+    <!-- Validation Warning -->
+    <div class="alert alert-warning" id="validationAlert" hidden role="alert">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M10.29 3.86L1.82 18C1.64537 18.3024 1.55299 18.6453 1.55201 18.9945C1.55103 19.3438 1.64148 19.6872 1.81443 19.9905C1.98738 20.2939 2.23675 20.5467 2.53773 20.7238C2.83871 20.9009 3.18058 20.9962 3.53 21H20.47C20.8194 20.9962 21.1613 20.9009 21.4623 20.7238C21.7633 20.5467 22.0126 20.2939 22.1856 19.9905C22.3585 19.6872 22.449 19.3438 22.448 18.9945C22.447 18.6453 22.3546 18.3024 22.18 18L13.71 3.86C13.5317 3.56611 13.2807 3.32312 12.9812 3.15448C12.6817 2.98585 12.3437 2.89725 12 2.89725C11.6563 2.89725 11.3183 2.98585 11.0188 3.15448C10.7193 3.32312 10.4683 3.56611 10.29 3.86Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span id="validationMessage"></span>
+    </div>
+
+    <!-- Error Alert -->
+    <div class="alert alert-error" id="errorAlert" hidden role="alert">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        <line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span id="errorMessage"></span>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container" id="progressContainer" hidden aria-live="polite" aria-label="Merging progress">
+      <div class="progress-info">
+        <span class="progress-label" id="progressLabel">Merging PDFs…</span>
+        <span class="progress-pct" id="progressPct">0%</span>
+      </div>
+      <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="progressTrack">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <!-- Success Banner -->
+    <div class="success-banner" id="successBanner" hidden role="status" aria-live="polite">
+      <div class="success-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <polyline points="9 12 11 14 15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="success-text">
+        <strong>PDF merged successfully!</strong>
+        <span id="successDetails">Your file is downloading…</span>
+      </div>
+      <button class="success-dismiss" id="successDismiss" aria-label="Dismiss success message">✕</button>
+    </div>
+
+    <!-- Merge Button -->
+    <div class="merge-section" id="mergeSection" hidden>
+      <div class="filename-row">
+        <label class="filename-label" for="filenameInput">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18.5 2.5C18.8978 2.10217 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.10217 21.5 2.5C21.8978 2.89782 22.1213 3.43739 22.1213 4C22.1213 4.56261 21.8978 5.10217 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Output filename
+        </label>
+        <div class="filename-input-wrap">
+          <input type="text" id="filenameInput" class="filename-input" placeholder="merged" aria-label="Output filename (without extension)" spellcheck="false" />
+          <span class="filename-ext">.pdf</span>
+        </div>
+      </div>
+      <button class="btn-merge" id="mergeBtn" aria-label="Merge selected PDF files">
+        <span class="btn-merge-inner" id="mergeBtnInner">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M8 7H4C3.46957 7 2.96086 7.21071 2.58579 7.58579C2.21071 7.96086 2 8.46957 2 9V19C2 19.5304 2.21071 20.0391 2.58579 20.4142C2.96086 20.7893 3.46957 21 4 21H14C14.5304 21 15.0391 20.7893 15.4142 20.4142C15.7893 20.0391 16 19.5304 16 19V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 7H20C21.1046 7 22 7.89543 22 9V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M17 3L21 7L17 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Merge PDFs
+        </span>
+      </button>
+      <p class="merge-hint">Files are processed locally — never uploaded to any server</p>
+    </div>
+
+  </main>
+
+  <!-- ─── Features Strip ─── -->
+  <section class="features" aria-label="Key features">
+    <h2 class="features-title">Why Choose OM PDF?</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true">🔒</div>
+        <h3>100% Private</h3>
+        <p>Files are processed in your browser. Nothing is ever sent to a server.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true">⚡</div>
+        <h3>Lightning Fast</h3>
+        <p>Client-side processing means instant results without upload delays.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true">🎯</div>
+        <h3>Easy to Use</h3>
+        <p>Drag, drop, reorder, merge. No sign-up, no fuss, completely free.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon" aria-hidden="true">📱</div>
+        <h3>Works Everywhere</h3>
+        <p>Fully responsive for desktop, tablet, and mobile devices.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Footer ─── -->
+  <footer class="footer">
+    <p>Built with ❤️ by <strong>OM PDF</strong> — Simple. Fast. Free PDF Tools</p>
+    <p class="footer-sub">All processing happens locally in your browser. Your files are completely private.</p>
+  </footer>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
