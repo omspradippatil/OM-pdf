@@ -9,8 +9,8 @@
 Merge multiple PDF files instantly — right in your browser. No uploads, no sign-up, completely private.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Netlify-00C7B7?style=flat-square&logo=netlify)](https://your-site.netlify.app)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md)
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg?style=flat-square)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](LICENSE)
 [![Built with Vite](https://img.shields.io/badge/Built%20with-Vite-646CFF?style=flat-square&logo=vite)](https://vitejs.dev)
 
 </div>
@@ -126,7 +126,11 @@ netlify deploy --prod --dir=dist
 
 ## 🤝 Contributing
 
-Contributions are what make open source amazing! **All contributions are welcome.**
+Contributions are welcome! Bug fixes, features, and improvements are appreciated.
+
+> **Important:** By submitting a pull request or contribution, you agree that
+> **full ownership of your contribution is assigned to the project Owner (OM)**.
+> You retain no co-ownership or IP rights. See [LICENSE](LICENSE) for full terms.
 
 ### How to Contribute
 
@@ -138,16 +142,15 @@ Contributions are what make open source amazing! **All contributions are welcome
 
 ### Ideas for Contributions
 
-- 🔢 PDF page count display improvements  
 - 🔒 Password-protected PDF support  
 - ✂️ PDF split / extract pages tool  
 - 🖼️ PDF to image conversion  
-- 📝 PDF annotation support  
 - 🌍 Internationalization (i18n)  
 - ♿ Accessibility improvements  
 - 🧪 Unit tests  
 
-Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
+> ⚠️ Do **not** copy or reuse the UI design, layout, or branding in other projects.
+> This is explicitly prohibited by the [LICENSE](LICENSE).
 
 ---
 
@@ -164,9 +167,16 @@ Found a bug? Please [open an issue](https://github.com/your-username/OM-pdf/issu
 
 ## 📜 License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+This project uses a **Proprietary License** — see [LICENSE](LICENSE) for full terms.
 
-You are free to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of this software.
+- ✅ You may view and study the code
+- ✅ You may contribute (rights assigned to the Owner)
+- ✅ You may run it locally for personal use
+- ❌ You may not copy, redistribute, or reuse the design
+- ❌ You may not deploy a public instance without permission
+- ❌ You may not use the "OM PDF" name or branding
+
+**All rights reserved. Owner: OM**
 
 ---
 
@@ -178,6 +188,6 @@ If you found this project helpful, please give it a **⭐ star** on GitHub — i
 
 <div align="center">
 
-Built with ❤️ by **OM PDF** — Open Source, Free Forever.
+Built with ❤️ by **OM** — All Rights Reserved.
 
 </div>
