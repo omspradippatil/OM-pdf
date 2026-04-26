@@ -51,12 +51,12 @@ cd OM-pdf
 # 2. Install all dependencies (reads from package.json)
 npm install
 
-# ── OR install from requirements.txt manually ──
+# ── OR install from DEPENDENCIES.md manually ──
 # npm install pdf-lib pdfjs-dist
 # npm install --save-dev vite
 ```
 
-> All required packages are listed in [`requirements.txt`](requirements.txt).  
+> All required packages are listed in [`DEPENDENCIES.md`](DEPENDENCIES.md).  
 > Running `npm install` automatically installs everything from `package.json`.
 
 ### Run Locally
@@ -83,7 +83,7 @@ npm run preview
 
 ## 📦 Dependencies
 
-All packages are documented in [`requirements.txt`](requirements.txt).
+All packages are documented in [`DEPENDENCIES.md`](DEPENDENCIES.md).
 
 | Package | Version | Purpose |
 |---|---|---|
@@ -100,7 +100,7 @@ OM-pdf/
 │
 ├── index.html                  # App entry — full semantic HTML, all panels
 ├── package.json                # npm config, scripts, and dependency versions
-├── requirements.txt            # Human-readable dependency list (npm install reads package.json)
+├── DEPENDENCIES.md             # npm dependency reference � actual install uses package.json
 ├── vite.config.js              # Vite bundler config (output → dist/, code splits pdf-lib)
 ├── netlify.toml                # Netlify deploy config (build cmd + publish dir + headers)
 ├── .gitignore                  # Ignores node_modules/, dist/, .env, OS/editor files
