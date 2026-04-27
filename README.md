@@ -172,10 +172,10 @@ OM-pdf/
                                 #                           to a 72px wide JPEG data URL
                                 #   • Uses CDN worker for pdfjs to avoid bundle complexity
                                 #   • Returns null on failure (encrypted, corrupt files)
+```
 
 ---
 
----
 ## 🛠️ Tech Stack
 
 | Technology | Purpose |
