@@ -45,14 +45,14 @@ Merge or split PDF files instantly — right in your browser. No uploads, no sig
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/OM-pdf.git
+git clone https://github.com/omspradippatil/OM-pdf.git
 cd OM-pdf
 
 # 2. Install all dependencies (reads from package.json)
 npm install
 
 # ── OR install from DEPENDENCIES.md manually ──
-# npm install pdf-lib pdfjs-dist
+# npm install pdf-lib pdfjs-dist jszip
 # npm install --save-dev vite
 ```
 
@@ -89,22 +89,23 @@ All packages are documented in [`DEPENDENCIES.md`](DEPENDENCIES.md).
 |---|---|---|
 | `pdf-lib` | `^1.17.1` | PDF creation, merging, and manipulation (runs client-side) |
 | `pdfjs-dist` | `^5.6.205` | PDF rendering engine — generates thumbnail previews |
+| `jszip` | `^3.10.1` | ZIP archive creation — bundles split pages into one download |
 | `vite` *(dev)* | `^5.2.0` | Build tool and dev server |
 
 ---
 
 ## 📁 Project Structure
 
-```
+```text
 OM-pdf/
 │
 ├── index.html                  # App entry — full semantic HTML, all panels
 ├── package.json                # npm config, scripts, and dependency versions
-├── DEPENDENCIES.md             # npm dependency reference � actual install uses package.json
+├── DEPENDENCIES.md             # npm dependency reference — actual install uses package.json
 ├── vite.config.js              # Vite bundler config (output → dist/, code splits pdf-lib)
 ├── netlify.toml                # Netlify deploy config (build cmd + publish dir + headers)
 ├── .gitignore                  # Ignores node_modules/, dist/, .env, OS/editor files
-├── LICENSE                     # Proprietary license — owner: OM, contributions welcome
+├── LICENSE                     # Proprietary license — owner: OM Patil, contributions welcome
 ├── README.md                   # This file
 │
 ├── public/                     # Static files copied as-is to dist/
@@ -199,7 +200,7 @@ netlify deploy --prod --dir=dist
 
 Submit your sitemap to [Google Search Console](https://search.google.com/search-console):
 
-```
+```text
 https://om-pdf.netlify.app/sitemap.xml
 ```
 
@@ -214,6 +215,7 @@ https://om-pdf.netlify.app/sitemap.xml
 | JavaScript (ESM) | Modular app logic |
 | [pdf-lib](https://pdf-lib.js.org/) | Client-side PDF merging & splitting |
 | [pdfjs-dist](https://mozilla.github.io/pdf.js/) | PDF page rendering for thumbnails |
+| [JSZip](https://stuk.github.io/jszip/) | ZIP archive generation for split PDFs |
 | [Vite](https://vitejs.dev/) | Build tool & dev server |
 | Netlify | Hosting, CDN & deployment |
 
@@ -251,7 +253,7 @@ Contributions are welcome! Bug fixes, features, and improvements are appreciated
 
 ## 🐛 Bug Reports
 
-Found a bug? Please [open an issue](https://github.com/your-username/OM-pdf/issues) with:
+Found a bug? Please [open an issue](https://github.com/omspradippatil/OM-pdf/issues) with:
 
 - A clear description of the problem
 - Steps to reproduce
@@ -271,7 +273,7 @@ This project uses a **Proprietary License** — see [LICENSE](LICENSE) for full 
 - ❌ You may not deploy a public instance without permission
 - ❌ You may not use the "OM PDF" name or branding
 
-**All rights reserved. Owner: OM**
+**All rights reserved. Owner: OM Patil**
 
 ---
 
@@ -283,6 +285,6 @@ If you found this project helpful, please give it a **⭐ star** on GitHub!
 
 <div align="center">
 
-Built with ❤️ by **OM** — All Rights Reserved.
+Built with ❤️ by **OM Patil** — All Rights Reserved.
 
 </div>
