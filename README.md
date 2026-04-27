@@ -172,38 +172,7 @@ OM-pdf/
                                 #                           to a 72px wide JPEG data URL
                                 #   • Uses CDN worker for pdfjs to avoid bundle complexity
                                 #   • Returns null on failure (encrypted, corrupt files)
-```
-
----
-
-## 🌐 Deploy to Netlify
-
-### Option 1 — Git Integration (Recommended)
-
-1. Push this repo to GitHub
-2. Go to [app.netlify.com](https://app.netlify.com) → **Add new site**
-3. Connect your GitHub repo
-4. Settings are auto-detected from `netlify.toml`:
-   - **Build command:** `npm run build`
-   - **Publish directory:** `dist`
-5. Click **Deploy** ✅
-
-### Option 2 — Netlify CLI
-
-```bash
-npm install -g netlify-cli
-npm run build
-netlify deploy --prod --dir=dist
-```
-
-### After Deploy — Submit to Google
-
-Submit your sitemap to [Google Search Console](https://search.google.com/search-console):
-
-```text
-https://om-pdf.netlify.app/sitemap.xml
-```
-
+                                
 ---
 
 ## 🛠️ Tech Stack
