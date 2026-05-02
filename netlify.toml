@@ -4,6 +4,9 @@
 
   [build.environment]
     NODE_VERSION = "20"
+    # VITE_FIREBASE_PROJECT_ID value ("om-pdf") is the app name / domain — not a real secret.
+    # It appears legitimately in package.json, sitemap, URLs etc.
+    SECRETS_SCAN_OMIT_KEYS = "VITE_FIREBASE_PROJECT_ID"
 
 # SPA routing — all paths serve index.html so React Router works
 [[redirects]]
