@@ -1,9 +1,14 @@
 [build]
   publish = "dist"
-  command = "npm run build"
+  command = "npm install && npm run build"
 
-# SPA routing — redirect all paths to index.html
+  [build.environment]
+    NODE_VERSION  = "20"
+    NODE_ENV      = "production"
+    NPM_FLAGS     = "--include=dev"
+
+# SPA routing — all paths serve index.html so React Router works
 [[redirects]]
-  from = "/*"
-  to   = "/index.html"
+  from   = "/*"
+  to     = "/index.html"
   status = 200
