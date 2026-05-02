@@ -1,0 +1,81 @@
+{
+  "_info": {
+    "project": "OM PDF",
+    "description": "Firestore DB schema — import this as reference when configuring Firebase Console",
+    "collections": ["user_files"],
+    "rules_file": "firestore.rules"
+  },
+
+  "collections": {
+    "user_files": {
+      "_description": "Stores metadata for every PDF saved to cloud by a logged-in user.",
+      "_path": "user_files/{docId}",
+      "_indexes": [
+        { "fields": ["uid", "createdAt"], "order": "DESCENDING", "purpose": "My Files dashboard list" }
+      ],
+      "schema": {
+        "uid": {
+          "type": "string",
+          "required": true,
+          "description": "Firebase Auth UID of the file owner"
+        },
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "Output filename e.g. merged_2026-05-02_21-15-00.pdf"
+        },
+        "size": {
+          "type": "number",
+          "required": true,
+          "description": "File size in bytes"
+        },
+        "pages": {
+          "type": "number",
+          "required": false,
+          "description": "Total page count of the merged PDF (optional)"
+        },
+        "tool": {
+          "type": "string",
+          "required": false,
+          "enum": ["merge", "split", "rotate", "page_numbers"],
+          "description": "Which tool was used to produce this file"
+        },
+        "url": {
+          "type": "string",
+          "required": true,
+          "description": "Firebase Storage download URL"
+        },
+        "storagePath": {
+          "type": "string",
+          "required": true,
+          "description": "Full storage path e.g. users/{uid}/merged_2026-05-02_21-15-00.pdf — used for deletion"
+        },
+        "createdAt": {
+          "type": "timestamp",
+          "required": true,
+          "description": "Server timestamp — use serverTimestamp() when writing"
+        }
+      },
+      "sample_document": {
+        "uid": "abc123firebaseUid",
+        "name": "merged_2026-05-02_21-15-00.pdf",
+        "size": 2457600,
+        "pages": 12,
+        "tool": "merge",
+        "url": "https://firebasestorage.googleapis.com/v0/b/om-pdf.appspot.com/...",
+        "storagePath": "users/abc123firebaseUid/merged_2026-05-02_21-15-00.pdf",
+        "createdAt": "2026-05-02T15:45:00Z"
+      }
+    }
+  },
+
+  "security_rules": {
+    "note": "Paste these rules in Firebase Console → Firestore → Rules",
+    "rules": "rules_version = '2'; service cloud.firestore { match /databases/{database}/documents { match /user_files/{docId} { allow read, delete: if request.auth != null && request.auth.uid == resource.data.uid; allow create: if request.auth != null && request.auth.uid == request.resource.data.uid; } } }"
+  },
+
+  "storage_rules": {
+    "note": "Paste these rules in Firebase Console → Storage → Rules",
+    "rules": "rules_version = '2'; service firebase.storage { match /b/{bucket}/o { match /users/{uid}/{allPaths=**} { allow read, write, delete: if request.auth != null && request.auth.uid == uid; } } }"
+  }
+}

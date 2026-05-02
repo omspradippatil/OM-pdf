@@ -8,8 +8,16 @@ import {
 } from './uiManager.js';
 import { mergePDFs, downloadPDF, getPageCount, timestampedFilename } from './pdfMerger.js';
 import { parsePageRanges, extractPages, splitEveryPage, downloadBytes } from './splitPdf.js';
+import { rotatePdf } from './rotatePdf.js';
 import { formatBytes } from './fileManager.js';
 import { generateThumbnail } from './thumbnailGenerator.js';
+import { auth, provider, signInWithPopup, signOut, onAuthStateChanged, storage, ref, uploadBytes, getDownloadURL } from './firebase.js';
+
+/* ══════════════════════════════════
+   GLOBAL STATE
+══════════════════════════════════ */
+let lastMergedBytes = null;
+let lastMergedFilename = '';
 
 /* ══════════════════════════════════
    THEME — system detect + manual override
@@ -47,6 +55,115 @@ document.querySelectorAll('.tool-tab').forEach(btn => {
 });
 
 /* ══════════════════════════════════
+   AUTHENTICATION & CLOUD
+══════════════════════════════════ */
+let currentUser = null;
+const loginBtn = document.getElementById('loginBtn');
+const userProfile = document.getElementById('userProfile');
+const userAvatar = document.getElementById('userAvatar');
+const userName = document.getElementById('userName');
+const userProfileBtn = document.getElementById('userProfileBtn');
+const authDropdown = document.getElementById('authDropdown');
+const logoutBtn = document.getElementById('logoutBtn');
+const saveToCloudBtn = document.getElementById('saveToCloudBtn');
+
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  if (user) {
+    loginBtn.hidden = true;
+    userProfile.hidden = false;
+    userAvatar.src = user.photoURL || '';
+    userName.textContent = user.displayName || 'User';
+    if (saveToCloudBtn) saveToCloudBtn.hidden = false;
+  } else {
+    loginBtn.hidden = false;
+    userProfile.hidden = true;
+    authDropdown.hidden = true;
+    if (saveToCloudBtn) saveToCloudBtn.hidden = true;
+  }
+});
+
+loginBtn.addEventListener('click', async () => {
+  try {
+    loginBtn.style.opacity = '0.5';
+    await signInWithPopup(auth, provider);
+  } catch (error) {
+    console.error("Login failed:", error);
+    showError("Google Sign-In failed. " + error.message);
+  } finally {
+    loginBtn.style.opacity = '1';
+  }
+});
+
+userProfileBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  authDropdown.hidden = !authDropdown.hidden;
+});
+
+document.addEventListener('click', (e) => {
+  if (!userProfile.contains(e.target)) {
+    authDropdown.hidden = true;
+  }
+});
+
+logoutBtn.addEventListener('click', async () => {
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error("Logout failed:", error);
+  }
+});
+
+if (saveToCloudBtn) {
+  saveToCloudBtn.addEventListener('click', async () => {
+    if (!currentUser || !lastMergedBytes) return;
+    
+    try {
+      saveToCloudBtn.classList.add('loading');
+      saveToCloudBtn.innerHTML = `<span class="spinner" style="width:14px;height:14px;border-width:2px;border-top-color:var(--primary);"></span> Saving...`;
+      
+      const fileRef = ref(storage, `users/${currentUser.uid}/${lastMergedFilename}`);
+      await uploadBytes(fileRef, lastMergedBytes);
+      const url = await getDownloadURL(fileRef);
+      
+      // Save metadata to Firestore
+      try {
+        const { db, collection, addDoc, serverTimestamp } = await import('./firebase.js');
+        const storagePath = `users/${currentUser.uid}/${lastMergedFilename}`;
+        await addDoc(collection(db, 'user_files'), {
+          uid: currentUser.uid,
+          name: lastMergedFilename,
+          size: lastMergedBytes.byteLength || lastMergedBytes.size,
+          tool: 'merge',
+          url: url,
+          storagePath,
+          createdAt: serverTimestamp()
+        });
+      } catch(e) { console.error('Firestore error:', e); }
+      
+      // Update button to success state
+      saveToCloudBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Saved`;
+      saveToCloudBtn.style.background = 'var(--success-bg)';
+      saveToCloudBtn.style.color = 'var(--success)';
+      saveToCloudBtn.style.borderColor = 'var(--success-border)';
+      
+      // Reset button after 3 seconds
+      setTimeout(() => {
+        saveToCloudBtn.classList.remove('loading');
+        saveToCloudBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9M12 12v9m-4-4 4-4 4 4"/></svg> Save to Cloud`;
+        saveToCloudBtn.style = '';
+      }, 3000);
+      
+    } catch (error) {
+      console.error("Upload failed:", error);
+      showError("Failed to save to cloud: " + error.message);
+      saveToCloudBtn.classList.remove('loading');
+      saveToCloudBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9M12 12v9m-4-4 4-4 4 4"/></svg> Save to Cloud`;
+    }
+  });
+}
+
+/* ══════════════════════════════════
    MERGE TOOL
 ══════════════════════════════════ */
 const dropzone      = document.getElementById('dropzone');
@@ -59,9 +176,6 @@ const mergeBtnInner = document.getElementById('mergeBtnInner');
 const filenameInput = document.getElementById('filenameInput');
 const downloadAgainBtn = document.getElementById('downloadAgainBtn');
 const successDismiss   = document.getElementById('successDismiss');
-
-let lastMergedBytes = null;
-let lastMergedFilename = '';
 
 // File state subscription
 subscribe(files => {
@@ -132,7 +246,10 @@ mergeBtn.addEventListener('click', async () => {
     downloadPDF(bytes, filename);
     if (w.length) showValidation(w.join(' | '));
 
-    const totalPages = files.reduce((s, f) => s + (f.pages || 0), 0);
+    const totalPages = files.reduce((s, f) => {
+      if (Array.isArray(f.pageOrder)) return s + f.pageOrder.length;
+      return s + (f.pages || 0);
+    }, 0);
     showSuccess(`"${filename}" · ${files.length} files${totalPages ? ' · ' + totalPages + ' pages' : ''}`);
     filenameInput.value = '';
   } catch (err) {
@@ -278,3 +395,240 @@ splitBtn.addEventListener('click', async () => {
     splitBtn.disabled = false;
   }
 });
+
+/* ══════════════════════════════════
+   ROTATE TOOL
+══════════════════════════════════ */
+const rotateDropzone      = document.getElementById('rotateDropzone');
+const rotateFileInput     = document.getElementById('rotateFileInput');
+const rotateFileInfo      = document.getElementById('rotateFileInfo');
+const rotateFileName      = document.getElementById('rotateFileName');
+const rotateFileSize      = document.getElementById('rotateFileSize');
+const rotatePageCount     = document.getElementById('rotatePageCount');
+const rotateClearBtn      = document.getElementById('rotateClearBtn');
+const rotateBtn           = document.getElementById('rotateBtn');
+const rotateBtnInner      = document.getElementById('rotateBtnInner');
+const rotateRangeInput    = document.getElementById('rotateRangeInput');
+const rotateFilenameInput = document.getElementById('rotateFilenameInput');
+const rotateErrorAlert    = document.getElementById('rotateErrorAlert');
+const rotateErrorMessage  = document.getElementById('rotateErrorMessage');
+const rotateSuccessBanner = document.getElementById('rotateSuccessBanner');
+const rotateSuccessDetails = document.getElementById('rotateSuccessDetails');
+const rotateSuccessDismiss = document.getElementById('rotateSuccessDismiss');
+
+let rotateFile = null;
+let rotateTotalPages = 0;
+let rotateDegrees = 90;
+
+function showRotateError(msg) {
+  rotateErrorMessage.textContent = msg;
+  rotateErrorAlert.hidden = false;
+  setTimeout(() => rotateErrorAlert.hidden = true, 6000);
+}
+
+async function loadRotateFile(file) {
+  if (!file || !file.name.toLowerCase().endsWith('.pdf')) { showRotateError('Please select a PDF file.'); return; }
+  if (file.size > 50 * 1024 * 1024) { showRotateError('File exceeds 50 MB limit.'); return; }
+  rotateFile = file;
+  rotateFileName.textContent = file.name;
+  rotateFileSize.textContent = formatBytes(file.size);
+  rotatePageCount.textContent = 'Loading…';
+  rotateDropzone.hidden = true;
+  rotateFileInfo.hidden = false;
+  rotateSuccessBanner.hidden = true;
+
+  const count = await getPageCount(file);
+  rotateTotalPages = count || 0;
+  rotatePageCount.textContent = count ? `${count} pages` : 'Unknown pages';
+  rotateFilenameInput.value = file.name.replace(/\.pdf$/i, '') + '_rotated';
+}
+
+rotateDropzone.addEventListener('click', () => rotateFileInput.click());
+rotateDropzone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); rotateFileInput.click(); } });
+rotateDropzone.addEventListener('dragover', e => e.preventDefault());
+rotateDropzone.addEventListener('drop', e => { e.preventDefault(); loadRotateFile(e.dataTransfer.files[0]); });
+rotateFileInput.addEventListener('change', e => { loadRotateFile(e.target.files[0]); e.target.value = ''; });
+
+rotateClearBtn.addEventListener('click', () => {
+  rotateFile = null; rotateTotalPages = 0;
+  rotateFileInfo.hidden = true;
+  rotateDropzone.hidden = false;
+  rotateSuccessBanner.hidden = true;
+});
+
+rotateSuccessDismiss.addEventListener('click', () => rotateSuccessBanner.hidden = true);
+
+document.querySelectorAll('.rotate-degree-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.rotate-degree-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    rotateDegrees = parseInt(btn.dataset.deg, 10);
+  });
+});
+
+const ROTATE_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 4v6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 20v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 10a8 8 0 0 1 14-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 14a8 8 0 0 1-14 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Rotate PDF`;
+
+rotateBtn.addEventListener('click', async () => {
+  if (!rotateFile) { showRotateError('Please select a PDF file first.'); return; }
+  rotateSuccessBanner.hidden = true;
+  rotateErrorAlert.hidden = true;
+  rotateBtn.disabled = true;
+  rotateBtnInner.innerHTML = `<span class="spinner"></span> Rotating…`;
+
+  try {
+    const indices = parsePageRanges(rotateRangeInput.value, rotateTotalPages);
+    if (indices.length === 0) { showRotateError('No valid pages found. Check your page range.'); return; }
+    const bytes = await rotatePdf(rotateFile, indices, rotateDegrees);
+    const baseName = rotateFilenameInput.value.trim().replace(/\.pdf$/i, '') || 'rotated';
+    const filename = `${baseName}_${new Date().toISOString().slice(0,10)}.pdf`;
+    downloadBytes(bytes, filename);
+    rotateSuccessDetails.textContent = `"${filename}" · ${indices.length} page${indices.length !== 1 ? 's' : ''} rotated ${rotateDegrees} deg`;
+    rotateSuccessBanner.hidden = false;
+  } catch (err) {
+    console.error('[OM PDF] Rotate error:', err);
+    showRotateError(`Rotate failed: ${err.message || 'Unexpected error.'}`);
+  } finally {
+    rotateBtnInner.innerHTML = ROTATE_ICON;
+    rotateBtn.disabled = false;
+  }
+});
+
+/* ══════════════════════════════════
+   PAGE NUMBERS TOOL
+══════════════════════════════════ */
+import { addPageNumbers, getPdfPageCount } from './pageNumbers.js';
+import { formatBytes as fmtBytes } from './fileManager.js';
+
+let pnFile = null;
+const pnDropzone       = document.getElementById('pnDropzone');
+const pnFileInput      = document.getElementById('pnFileInput');
+const pnFileInfo       = document.getElementById('pnFileInfo');
+const pnFileName       = document.getElementById('pnFileName');
+const pnFileSize       = document.getElementById('pnFileSize');
+const pnFilePages      = document.getElementById('pnFilePages');
+const pnClearBtn       = document.getElementById('pnClearBtn');
+const pnBtn            = document.getElementById('pnBtn');
+const pnBtnInner       = document.getElementById('pnBtnInner');
+const pnProgressContainer = document.getElementById('pnProgressContainer');
+const pnProgressLabel  = document.getElementById('pnProgressLabel');
+const pnProgressPct    = document.getElementById('pnProgressPct');
+const pnProgressFill   = document.getElementById('pnProgressFill');
+const pnSuccessBanner  = document.getElementById('pnSuccessBanner');
+const pnSuccessDetails = document.getElementById('pnSuccessDetails');
+const pnSuccessDismiss = document.getElementById('pnSuccessDismiss');
+const pnErrorAlert     = document.getElementById('pnErrorAlert');
+const pnErrorMessage   = document.getElementById('pnErrorMessage');
+
+function setPnProgress(pct) {
+  pnProgressPct.textContent = pct + '%';
+  pnProgressFill.style.width = pct + '%';
+}
+
+async function loadPnFile(file) {
+  if (!file || file.type !== 'application/pdf') {
+    pnErrorMessage.textContent = 'Please select a valid PDF file.';
+    pnErrorAlert.hidden = false; return;
+  }
+  pnFile = file;
+  pnDropzone.hidden = true;
+  pnFileInfo.hidden = false;
+  pnFileName.textContent  = file.name;
+  pnFileSize.textContent  = fmtBytes(file.size);
+  pnFilePages.textContent = 'counting…';
+  const count = await getPdfPageCount(file);
+  pnFilePages.textContent = count ? `${count} pages` : 'unknown pages';
+}
+
+pnDropzone.addEventListener('click', () => pnFileInput.click());
+pnDropzone.addEventListener('dragover', e => { e.preventDefault(); });
+pnDropzone.addEventListener('drop', e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) loadPnFile(f); });
+pnFileInput.addEventListener('change', e => { if (e.target.files[0]) loadPnFile(e.target.files[0]); e.target.value = ''; });
+pnClearBtn.addEventListener('click', () => {
+  pnFile = null;
+  pnDropzone.hidden = false;
+  pnFileInfo.hidden = true;
+  pnSuccessBanner.hidden = true;
+  pnErrorAlert.hidden = true;
+});
+pnSuccessDismiss.addEventListener('click', () => { pnSuccessBanner.hidden = true; });
+
+const PN_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8L14 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="9" y1="13" x2="15" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="17" x2="15" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Add Page Numbers`;
+
+pnBtn.addEventListener('click', async () => {
+  if (!pnFile) return;
+  pnErrorAlert.hidden  = true;
+  pnSuccessBanner.hidden = true;
+  pnBtnInner.innerHTML = `<span class="spinner"></span> Adding numbers…`;
+  pnBtn.disabled = true;
+  pnProgressContainer.hidden = false;
+  setPnProgress(0);
+
+  try {
+    const opts = {
+      startFrom: parseInt(document.getElementById('pnStartFrom').value) || 1,
+      startPage: parseInt(document.getElementById('pnStartPage').value) || 1,
+      position:  document.getElementById('pnPosition').value,
+      prefix:    document.getElementById('pnPrefix').value,
+      showTotal: document.getElementById('pnShowTotal').checked,
+      fontSize:  parseInt(document.getElementById('pnFontSize').value) || 11,
+    };
+    const bytes = await addPageNumbers(pnFile, opts, setPnProgress);
+    const baseName = (document.getElementById('pnFilenameInput').value.trim().replace(/\.pdf$/i,'') || 'numbered');
+    const filename = `${baseName}_${new Date().toISOString().slice(0,10)}.pdf`;
+    downloadBytes(bytes, filename);
+    pnSuccessDetails.textContent = ` "${filename}"`;
+    pnSuccessBanner.hidden = false;
+  } catch (err) {
+    pnErrorMessage.textContent = err.message || 'Failed to add page numbers.';
+    pnErrorAlert.hidden = false;
+  } finally {
+    pnProgressContainer.hidden = true;
+    pnBtnInner.innerHTML = PN_ICON;
+    pnBtn.disabled = false;
+  }
+});
+
+/* ══════════════════════════════════
+   MY FILES DASHBOARD
+══════════════════════════════════ */
+import { fetchUserFiles, deleteUserFile, renderMyFiles } from './myFiles.js';
+
+const mfLoginAlert  = document.getElementById('mfLoginAlert');
+const mfContent     = document.getElementById('mfContent');
+const mfLoading     = document.getElementById('mfLoading');
+const myFilesRefresh = document.getElementById('myFilesRefresh');
+const myFilesCountBadge = document.getElementById('myFilesCountBadge');
+
+async function loadMyFiles() {
+  if (!currentUser) return;
+  mfLoginAlert.hidden = true;
+  mfContent.hidden    = true;
+  mfLoading.hidden    = false;
+  const files = await fetchUserFiles(currentUser.uid);
+  mfLoading.hidden    = true;
+  mfContent.hidden    = false;
+  // Update tab badge
+  myFilesCountBadge.textContent = files.length;
+  myFilesCountBadge.hidden = files.length === 0;
+  renderMyFiles(files, async (docId, path) => {
+    const res = await deleteUserFile(docId, path);
+    if (res.ok) await loadMyFiles();
+    else alert('Delete failed: ' + res.error);
+  });
+}
+
+// Load when My Files tab is clicked
+document.getElementById('tab-myfiles').addEventListener('click', () => {
+  if (currentUser) { loadMyFiles(); }
+  else { mfLoginAlert.hidden = false; mfContent.hidden = true; mfLoading.hidden = true; }
+});
+
+myFilesRefresh.addEventListener('click', loadMyFiles);
+
+// Reload My Files when user logs in
+onAuthStateChanged(auth, user => {
+  if (user && document.getElementById('tool-myfiles') && !document.getElementById('tool-myfiles').hidden) {
+    loadMyFiles();
+  }
+});
+

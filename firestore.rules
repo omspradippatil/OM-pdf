@@ -1,0 +1,21 @@
+// ─────────────────────────────────────────────────────────────
+// Firestore Security Rules — OM PDF
+// Paste this in: Firebase Console → Firestore → Rules
+// ─────────────────────────────────────────────────────────────
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // user_files collection
+    // Each user can only read/write/delete their OWN documents
+    match /user_files/{docId} {
+      allow read, delete: if request.auth != null
+                          && request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.uid;
+      // Disallow updates (files are immutable after creation)
+      allow update: if false;
+    }
+
+  }
+}

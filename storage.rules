@@ -1,0 +1,16 @@
+// ─────────────────────────────────────────────────────────────
+// Firebase Storage Security Rules — OM PDF
+// Paste this in: Firebase Console → Storage → Rules
+// ─────────────────────────────────────────────────────────────
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Each user can only read/write/delete files in their OWN folder
+    match /users/{uid}/{allPaths=**} {
+      allow read, write, delete: if request.auth != null
+                                 && request.auth.uid == uid;
+    }
+
+  }
+}

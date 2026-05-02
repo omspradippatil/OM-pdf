@@ -1,0 +1,58 @@
+// src/constants/tools.js — single source of truth for all tool metadata
+
+export const TOOLS = [
+  {
+    key:         'merge',
+    icon:        '🔗',
+    title:       'Merge PDF',
+    desc:        'Combine multiple PDFs into one. Drag to reorder, then merge instantly.',
+    path:        '/merge-pdf',
+    color:       '#2563EB',
+    driveFolder: 'Merged',
+  },
+  {
+    key:         'split',
+    icon:        '✂️',
+    title:       'Split PDF',
+    desc:        'Extract page ranges or split every page into individual PDFs.',
+    path:        '/split-pdf',
+    color:       '#7C3AED',
+    driveFolder: 'Split',
+  },
+  {
+    key:         'rotate',
+    icon:        '🔄',
+    title:       'Rotate PDF',
+    desc:        'Rotate all pages by 90°, 180° or 270° — done in seconds.',
+    path:        '/rotate-pdf',
+    color:       '#EC4899',
+    driveFolder: 'Rotated',
+  },
+  {
+    key:         'compress',
+    icon:        '⚡',
+    title:       'Compress PDF',
+    desc:        'Reduce file size without losing quality. Perfect for email and sharing.',
+    path:        '/compress-pdf',
+    color:       '#0EA5E9',
+    driveFolder: 'Compressed',
+  },
+  {
+    key:         'convert',
+    icon:        '🖼️',
+    title:       'PDF to JPG',
+    desc:        'Convert every page to a high-quality JPG image — right in your browser.',
+    path:        '/convert-pdf',
+    color:       '#10B981',
+    driveFolder: 'Converted',
+  },
+  {
+    key:         'pagenums',
+    icon:        '🔢',
+    title:       'Page Numbers',
+    desc:        'Stamp clean page numbers onto any PDF. Choose position and style.',
+    path:        '/page-numbers',
+    color:       '#F59E0B',
+    driveFolder: 'Page Numbers',
+  },
+];
