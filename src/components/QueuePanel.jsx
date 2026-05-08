@@ -18,31 +18,6 @@ function formatEta(ms) {
 }
 
 export default function QueuePanel({ title = 'Queue', items = [] }) {
-  if (!items.length) return null;
-  return (
-    <div className="queue-panel">
-      <div className="queue-header">
-        <h3 className="queue-title">{title}</h3>
-        <span className="queue-count">{items.length} item{items.length !== 1 ? 's' : ''}</span>
-      </div>
-      <div className="queue-list">
-        {items.map(item => (
-          <div key={item.id} className={`queue-item status-${item.status || 'queued'}`}>
-            <div className="queue-main">
-              <div className="queue-name" title={item.name}>{item.name}</div>
-              <div className="queue-meta">
-                <span>{STATUS_LABELS[item.status] || 'Queued'}</span>
-                {item.etaMs ? <span>ETA {formatEta(item.etaMs)}</span> : <span>ETA —</span>}
-                {typeof item.progress === 'number' ? <span>{Math.round(item.progress)}%</span> : null}
-              </div>
-            </div>
-            <div className="queue-progress">
-              <div className="queue-progress-bar" style={{ width: `${Math.min(100, Math.max(0, item.progress || 0))}%` }} />
-            </div>
-            {item.message ? <div className="queue-message">{item.message}</div> : null}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  // Technical details hidden as per user request to keep the UI clean
+  return null;
 }

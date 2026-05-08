@@ -1,8 +1,9 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import { pdfjs } from 'react-pdf';
 
-// Import the worker directly as a URL to ensure Vite bundles it correctly
-import workerSrc from 'pdfjs-dist/build/pdf.worker.mjs?url';
+// Using CDN for the worker to ensure 100% reliability across all environments
+const PDFJS_VERSION = '5.6.205';
+const workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${PDFJS_VERSION}/build/pdf.worker.min.mjs`;
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 
