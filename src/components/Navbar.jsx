@@ -116,7 +116,15 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <button className="btn-auth" onClick={login} aria-label="Sign in with Google">
+            <button className="btn-auth" onClick={async () => {
+              console.log('Sign in clicked');
+              try {
+                await login();
+              } catch (err) {
+                console.error('Sign in failed:', err);
+                alert('Sign in failed. Please check if popups are blocked.');
+              }
+            }} aria-label="Sign in with Google">
               <GoogleIcon />
               <span className="auth-text">Sign In</span>
             </button>

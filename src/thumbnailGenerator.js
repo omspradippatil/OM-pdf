@@ -21,7 +21,8 @@ export async function generateThumbnail(file) {
     canvas.height  = viewport.height;
     await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
     return canvas.toDataURL('image/jpeg', 0.75);
-  } catch {
+  } catch (err) {
+    console.error('[generateThumbnail] error:', err);
     return null;
   }
 }
@@ -33,7 +34,12 @@ export async function generateThumbnail(file) {
 export async function generatePageThumbnails(file, onProgress) {
   try {
     const buf  = await file.arrayBuffer();
-    const pdf  = await pdfjsLib.getDocument({ data: buf, verbosity: 0 }).promise;
+    const pdf  = await pdfjsLib.getDocument({ 
+      data: buf, 
+      verbosity: 0,
+      cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.6.205/cmaps/',
+      cMapPacked: true,
+    }).promise;
     const total = pdf.numPages;
     const thumbs = new Array(total).fill(null);
 
@@ -51,7 +57,8 @@ export async function generatePageThumbnails(file, onProgress) {
     }
 
     return thumbs;
-  } catch {
+  } catch (err) {
+    console.error('[generatePageThumbnails] error:', err);
     return null;
   }
 }

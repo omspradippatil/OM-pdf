@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import SEO from '../components/SEO';
 import { PDFDocument, degrees } from 'pdf-lib';
 import ToolPageLayout from '../components/ToolPageLayout';
@@ -131,17 +131,17 @@ export default function RotatePDF() {
 
   return (
     <ToolPageLayout title="Rotate PDF"
-      subtitle="Rotate all pages in a PDF by 90°, 180°, or 270° — instantly in your browser."
-      icon="🔄"
+      subtitle="Rotate all pages in a PDF by 90�, 180�, or 270� � instantly in your browser."
+      icon="??"
     >
-      <SEO keywords="rotate pdf, flip pdf, turn pdf, pdf page rotation, free online pdf tools" title="Rotate PDF Online Free � OM PDF | 90� 180� 270�" description="Rotate all pages of a PDF by 90�, 180� or 270�. Fast, free and private � processed entirely in your browser." url="https://om-pdf.netlify.app/rotate-pdf" />
+      <SEO keywords="rotate pdf, flip pdf, turn pdf, pdf page rotation, free online pdf tools" title="Rotate PDF Online Free ? OM PDF | 90? 180? 270?" description="Rotate all pages of a PDF by 90?, 180? or 270?. Fast, free and private ? processed entirely in your browser." url="https://om-pdf.netlify.app/rotate-pdf" />
       {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a PDF to rotate" hint="Single PDF · Max 200 MB" />
+        <DropZone onFiles={loadFile} label="Drop a PDF to rotate" hint="Single PDF � Max 200 MB" />
       ) : (
         <div className="split-file-info">
           {/* File card */}
           <div className="split-file-card">
-            <div className="file-icon">📄</div>
+            <div className="file-icon">??</div>
             <div className="file-info">
               <div className="file-name">{file.name}</div>
               <div className="file-meta"><span className="file-size">{formatBytes(file.size)}</span></div>
@@ -157,8 +157,8 @@ export default function RotatePDF() {
           <div className="split-option-panel">
             <label className="split-label">Rotate pages individually</label>
             <div className="rotate-tools">
-              <button className="btn-text" type="button" onClick={() => rotateAll(90)}>Rotate all ↺</button>
-              <button className="btn-text" type="button" onClick={() => rotateAll(270)}>Rotate all ↻</button>
+              <button className="btn-text" type="button" onClick={() => rotateAll(90)}>Rotate all ?</button>
+              <button className="btn-text" type="button" onClick={() => rotateAll(270)}>Rotate all ?</button>
             </div>
             <div className="rotate-grid">
               {pageThumbs.map((thumb, idx) => (
@@ -171,24 +171,24 @@ export default function RotatePDF() {
                   <div className="rotate-card-footer">
                     <span>Page {idx + 1}</span>
                     <div className="rotate-card-actions">
-                      <button type="button" onClick={() => rotatePage(idx, 270)}>↻</button>
-                      <button type="button" onClick={() => rotatePage(idx, 90)}>↺</button>
+                      <button type="button" onClick={() => rotatePage(idx, 270)}>?</button>
+                      <button type="button" onClick={() => rotatePage(idx, 90)}>?</button>
                     </div>
                   </div>
-                  {rotations[idx] ? <span className="rotate-badge">{rotations[idx]}°</span> : null}
+                  {rotations[idx] ? <span className="rotate-badge">{rotations[idx]}�</span> : null}
                 </div>
               ))}
             </div>
             <div className="rotate-preview">
-              <Document file={file} loading="Loading preview…">
-                <Page pageNumber={selectedPage} width={420} renderAnnotationLayer={false} renderTextLayer={false} />
+              <Document file={file} loading="Loading preview�">
+                <Page pageNumber={selectedPage} width={420} rotate={rotations[selectedPage - 1] || 0} renderAnnotationLayer={false} renderTextLayer={false} />
               </Document>
             </div>
           </div>
 
-          {error   && <div className="alert alert-error"><span>❌ {error}</span></div>}
+          {error   && <div className="alert alert-error"><span>? {error}</span></div>}
           <QueuePanel title="File queue" items={queueItems} />
-          {rotating && <ProgressBar pct={progress} label="Rotating PDF…" />}
+          {rotating && <ProgressBar pct={progress} label="Rotating PDF�" />}
           {success && (
             <SuccessBanner message="PDF rotated!" details={success} onDismiss={() => setSuccess('')}>
               <button
@@ -225,7 +225,7 @@ export default function RotatePDF() {
                 Rotate PDF
               </span>
             </button>
-            <p className="merge-hint">🔒 Processed locally — no upload</p>
+            <p className="merge-hint">?? Processed locally � no upload</p>
           </div>
         </div>
       )}
@@ -233,6 +233,7 @@ export default function RotatePDF() {
     </ToolPageLayout>
   );
 }
+
 
 
 
