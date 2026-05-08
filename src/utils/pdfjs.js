@@ -1,9 +1,12 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Use Vite's ?url import to serve the worker from the same origin.
-// This avoids CSP violations that occur when loading from CDN in production.
-import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+let workerInitialized = false;
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
+if (!workerInitialized) {
+	const workerUrl = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url);
+	// Use workerSrc only to avoid shared workerPort teardown across renders.
+	pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl.toString();
+	workerInitialized = true;
+}
 
 export { pdfjsLib };

@@ -61,6 +61,20 @@ async function compressByRaster(file, { quality, scale }, onProgress) {
   return bytes;
 }
 
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function deriveLossySettings(originalBytes, targetMB, currentQuality, currentScale) {
+  if (!targetMB || targetMB <= 0) return { quality: currentQuality, scale: currentScale };
+  const targetBytes = targetMB * 1024 * 1024;
+  const ratio = targetBytes / Math.max(1, originalBytes);
+  if (ratio >= 1) return { quality: currentQuality, scale: currentScale };
+  const quality = clamp(0.95 * Math.pow(ratio, 0.6), 0.45, 0.95);
+  const scale = clamp(1.6 * Math.pow(ratio, 0.5), 0.8, 2);
+  return { quality, scale };
+}
+
 export default function CompressPDF() {
   
   const { user } = useAuth();
@@ -72,6 +86,7 @@ export default function CompressPDF() {
   const [mode, setMode] = useState('lossless');
   const [quality, setQuality] = useState(0.72);
   const [scale, setScale] = useState(1.4);
+  const [targetSizeMB, setTargetSizeMB] = useState('');
   const queueItems = file ? [{
     id: file.name,
     name: file.name,
@@ -91,9 +106,18 @@ export default function CompressPDF() {
     if (!file) return;
     setError(''); setResult(null); setCompressing(true); setProgress(0);
     try {
-      const bytes = mode === 'lossless'
-        ? await compressPDF(file, setProgress)
-        : await compressByRaster(file, { quality, scale }, setProgress);
+      let bytes;
+      let appliedQuality = quality;
+      let appliedScale = scale;
+      if (mode === 'lossless') {
+        bytes = await compressPDF(file, setProgress);
+      } else {
+        const targetValue = parseFloat(targetSizeMB);
+        const derived = deriveLossySettings(file.size, Number.isFinite(targetValue) ? targetValue : 0, quality, scale);
+        appliedQuality = derived.quality;
+        appliedScale = derived.scale;
+        bytes = await compressByRaster(file, { quality: appliedQuality, scale: appliedScale }, setProgress);
+      }
       const savings = ((1 - bytes.byteLength / file.size) * 100).toFixed(1);
       setResult({ bytes, origSize: file.size, newSize: bytes.byteLength, savings, name: file.name.replace(/\.pdf$/i, '_compressed.pdf') });
       addRecentFile({ tool: 'compress', name: file.name.replace(/\.pdf$/i, '_compressed.pdf'), size: bytes.byteLength || 0 });
@@ -107,8 +131,9 @@ export default function CompressPDF() {
           newSize: bytes.byteLength,
           savings: Number(savings),
           mode,
-          quality,
-          scale,
+          quality: appliedQuality,
+          scale: appliedScale,
+          targetSizeMB: targetSizeMB ? Number(targetSizeMB) : null,
         }
       });
     } catch (err) {
@@ -162,12 +187,24 @@ export default function CompressPDF() {
             </div>
             {mode === 'lossy' && (
               <div className="compress-controls">
+                <label className="split-label" htmlFor="targetSize">Target size (MB, best effort)</label>
+                <input
+                  id="targetSize"
+                  className="split-range-input"
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={targetSizeMB}
+                  onChange={e => setTargetSizeMB(e.target.value)}
+                  placeholder="e.g. 3"
+                />
                 <label className="split-label" htmlFor="qualityRange">JPEG quality ({Math.round(quality * 100)}%)</label>
                 <input id="qualityRange" type="range" min={50} max={95} value={Math.round(quality * 100)}
                   onChange={e => setQuality(Math.min(0.95, Math.max(0.5, parseInt(e.target.value, 10) / 100)))} />
                 <label className="split-label" htmlFor="scaleRange">Render scale ({scale.toFixed(1)}x)</label>
-                <input id="scaleRange" type="range" min={10} max={20} value={Math.round(scale * 10)}
-                  onChange={e => setScale(Math.min(2, Math.max(1, parseInt(e.target.value, 10) / 10)))} />
+                <input id="scaleRange" type="range" min={8} max={20} value={Math.round(scale * 10)}
+                  onChange={e => setScale(Math.min(2, Math.max(0.8, parseInt(e.target.value, 10) / 10)))} />
+                <div className="compress-hint">Target size is best effort; results vary by document complexity.</div>
               </div>
             )}
           </div>

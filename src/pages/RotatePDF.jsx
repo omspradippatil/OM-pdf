@@ -14,10 +14,7 @@ import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import QueuePanel from '../components/QueuePanel';
 import RecentFilesPanel from '../components/RecentFilesPanel';
-import { Document, Page, pdfjs } from 'react-pdf';
-import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-
-pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
+import PdfCanvas from '../components/PdfCanvas';
 
 async function rotatePDF(file, rotations, onProgress) {
   onProgress?.(10);
@@ -196,31 +193,14 @@ export default function RotatePDF() {
               ))}
             </div>
             <div className="rotate-preview">
-              <Document
+              <PdfCanvas
                 file={file}
-                loading="Loading preview..."
-                onLoadSuccess={({ numPages }) => {
-                  setPageCount(numPages);
-                  setPreviewError('');
-                  setRotations(prev => (prev.length ? prev : Array.from({ length: numPages }, () => 0)));
-                  setSelectedPage(prev => (prev > numPages ? 1 : prev));
-                }}
-                onLoadError={(err) => {
-                  setPreviewError(err?.message || 'Preview failed to load.');
-                }}
-                onSourceError={(err) => {
-                  setPreviewError(err?.message || 'Preview source failed to load.');
-                }}
-              >
-                <Page
-                  key={`${selectedPage}-${rotations[selectedPage - 1] || 0}`}
-                  pageNumber={selectedPage}
-                  width={420}
-                  rotate={rotations[selectedPage - 1] || 0}
-                  renderAnnotationLayer={false}
-                  renderTextLayer={false}
-                />
-              </Document>
+                pageNumber={selectedPage}
+                width={420}
+                rotate={rotations[selectedPage - 1] || 0}
+                onRender={() => setPreviewError('')}
+                onError={(err) => setPreviewError(err?.message || 'Preview failed to load.')}
+              />
               {previewError ? <div className="rotate-preview-error">{previewError}</div> : null}
             </div>
           </div>

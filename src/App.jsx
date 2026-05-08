@@ -13,6 +13,9 @@ const RotatePDF = lazy(() => import('./pages/RotatePDF'));
 const CompressPDF = lazy(() => import('./pages/CompressPDF'));
 const ConvertPDF = lazy(() => import('./pages/ConvertPDF'));
 const ImageToPDF = lazy(() => import('./pages/ImageToPDF'));
+const OrganizePDF = lazy(() => import('./pages/OrganizePDF'));
+const WatermarkPDF = lazy(() => import('./pages/WatermarkPDF'));
+const CropPDF = lazy(() => import('./pages/CropPDF'));
 const PageNumbers = lazy(() => import('./pages/PageNumbers'));
 const MyFiles = lazy(() => import('./pages/MyFiles'));
 
@@ -33,6 +36,9 @@ export default function App() {
               <Route path="/compress-pdf" element={<CompressPDF />} />
               <Route path="/convert-pdf"  element={<ConvertPDF />} />
               <Route path="/image-to-pdf" element={<ImageToPDF />} />
+              <Route path="/organize-pdf" element={<OrganizePDF />} />
+              <Route path="/watermark-pdf" element={<WatermarkPDF />} />
+              <Route path="/crop-pdf" element={<CropPDF />} />
               <Route path="/page-numbers" element={<PageNumbers />} />
               <Route path="/my-files"     element={<MyFiles />} />
             </Routes>

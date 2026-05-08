@@ -1,8 +1,17 @@
 import { defineConfig } from 'vite';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 export default defineConfig({
+  resolve: {
+    alias: {
+      'pdfjs-dist': path.resolve(__dirname, 'node_modules/pdfjs-dist'),
+    },
+  },
   plugins: [
     react(),
     VitePWA({

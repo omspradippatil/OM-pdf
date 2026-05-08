@@ -6,6 +6,7 @@ import ProgressBar from '../components/ProgressBar';
 import SuccessBanner from '../components/SuccessBanner';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import { addPageNumbers, getPdfPageCount } from '../pageNumbers';
+import PdfCanvas from '../components/PdfCanvas';
 import { downloadBytes } from '../splitPdf';
 import { formatBytes } from '../fileManager';
 import { useAuth } from '../context/AuthContext';
@@ -24,6 +25,8 @@ export default function PageNumbers() {
   const [working, setWorking]   = useState(false);
   const [error, setError]   = useState('');
   const [success, setSuccess] = useState('');
+  const [previewDims, setPreviewDims] = useState(null);
+  const [previewError, setPreviewError] = useState('');
   const [opts, setOpts] = useState({
     startFrom: 1, startPage: 1, position: 'bottom-center',
     prefix: '', showTotal: false, fontSize: 11,
@@ -46,9 +49,22 @@ export default function PageNumbers() {
     if (!f || f.type !== 'application/pdf') { setError('Select a valid PDF.'); return; }
     setFile(f); setError(''); setSuccess(''); setFilename(f.name.replace(/\.pdf$/i, ''));
     setPages(null);
+    setPreviewDims(null);
+    setPreviewError('');
     const n = await getPdfPageCount(f);
     setPages(n);
   };
+
+  const buildLabel = () => {
+    const pageNum = opts.startFrom || 1;
+    if (opts.showTotal && pages) {
+      return `${opts.prefix || ''}${pageNum} of ${pages}`;
+    }
+    return `${opts.prefix || ''}${pageNum}`;
+  };
+
+  const previewLabel = buildLabel();
+  const previewFontSize = Math.max(8, Math.min(24, opts.fontSize || 11));
 
   const handleProcess = async () => {
     if (!file) return;
@@ -155,6 +171,35 @@ export default function PageNumbers() {
                   onChange={e => setFilename(e.target.value)} placeholder="numbered" spellCheck={false} />
                 <span className="filename-ext">.pdf</span>
               </div>
+            </div>
+          </div>
+
+          <div className="pn-preview">
+            <div className="pn-preview-card">
+              <div className="pn-preview-label">Preview (page 1)</div>
+              <div className="pn-preview-frame">
+                <PdfCanvas
+                  file={file}
+                  pageNumber={1}
+                  width={420}
+                  onRender={({ width, height, scale }) => {
+                    setPreviewDims({ width, height, scale });
+                    setPreviewError('');
+                  }}
+                  onError={(err) => setPreviewError(err?.message || 'Preview failed to load.')}
+                />
+                {previewDims ? (
+                  <div
+                    className={`pn-preview-text pn-${opts.position}`}
+                    style={{
+                      fontSize: Math.round(previewFontSize * (previewDims.scale || 1)),
+                    }}
+                  >
+                    {previewLabel}
+                  </div>
+                ) : null}
+              </div>
+              {previewError ? <div className="pn-preview-error">{previewError}</div> : null}
             </div>
           </div>
 

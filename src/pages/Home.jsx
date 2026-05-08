@@ -9,6 +9,8 @@ const FEATURES = [
   { icon: '🔒', title: '100% Private',      desc: 'Your files never leave your device. Zero server contact.' },
   { icon: '💰', title: 'Always Free',       desc: 'No subscriptions. No watermarks. No account required.' },
   { icon: '📱', title: 'Works Everywhere',  desc: 'Fully responsive — desktop, tablet, and mobile.' },
+  { icon: '✅', title: 'No Watermarks',     desc: 'Clean output files with no forced branding.' },
+  { icon: '⚙️', title: 'All-in-One Suite',  desc: 'Merge, split, rotate, compress, and more in one place.' },
 ];
 
 /* Floating icon in hero illustration */
