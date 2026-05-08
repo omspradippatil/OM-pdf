@@ -53,7 +53,7 @@ function SortablePageItem({ id, thumb, pageNumber, onRemove, onSelect, selected 
     >
       <button className="page-thumb-wrap" type="button" onClick={onSelect}>
         {thumb
-          ? <img className="page-thumb" src={thumb} alt={`Page ${pageNumber} preview`} loading="lazy" />
+          ? <img className="page-thumb" src={thumb} alt={`Page ${pageNumber} preview`} />
           : <div className="page-thumb-placeholder" aria-hidden="true" />}
       </button>
       <div className="page-number">{pageNumber}</div>
