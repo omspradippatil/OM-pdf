@@ -2,99 +2,141 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { TOOLS } from '../constants/tools';
 
+// Pure SVG Icon components to ensure 0-dependency build success
+const GitHubIcon = ({ size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+  </svg>
+);
+
+const LinkedInIcon = ({ size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2zM4 2a2 2 0 1 1-2 2 2 2 0 0 1 2-2z" />
+  </svg>
+);
+
+const GlobeIcon = ({ size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+  </svg>
+);
+
+const MailIcon = ({ size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+    <polyline points="22,6 12,13 2,6" />
+  </svg>
+);
+
+const ShieldIcon = ({ size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+  </svg>
+);
+
+const ZapIcon = ({ size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+  </svg>
+);
+
+const LockIcon = ({ size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+  </svg>
+);
+
+const FileIcon = ({ size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+  </svg>
+);
+
 export default function Footer() {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="footer">
-      <div className="footer-top">
-        <div className="footer-inner">
-          {/* Brand & Description */}
-          <div className="footer-brand-section">
-            <Link to="/" className="nav-brand" aria-label="OM PDF Home">
-              <div className="brand-icon" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M14 2H6C4.9 2 4 2.9 4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8L14 2z"
-                    stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M14 2v6h6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+    <footer className="footer-v2">
+      <div className="footer-v2-container">
+        <div className="footer-v2-main">
+          <div className="footer-v2-brand">
+            <Link to="/" className="brand-wrap">
+              <div className="brand-logo-v2">
+                <FileIcon size={24} />
               </div>
-              <span className="brand-name">OM <span>PDF</span></span>
+              <span className="brand-text-v2">OM <span>PDF</span></span>
             </Link>
-            <p className="footer-desc">
-              The ultimate privacy-first PDF toolkit. All processing is done locally in your browser to ensure your files never leave your device. Fast, secure, and always free.
+            <p className="brand-tagline">
+              Premium, client-side PDF tools designed for ultimate privacy and speed. Your data never leaves your browser.
             </p>
-            <div className="footer-socials">
-              <a href="https://github.com/omspradippatil/OM-pdf" target="_blank" rel="noopener noreferrer" className="social-icon" aria-label="GitHub">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
-                </svg>
-              </a>
-              <a href="#" className="social-icon" aria-label="Twitter">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                </svg>
-              </a>
+            <div className="creator-badge">
+              <span className="creator-label">Designed & Developed by</span>
+              <a href="https://ompradippatil.netlify.app/" target="_blank" rel="noopener noreferrer" className="creator-name">OM Patil</a>
             </div>
           </div>
 
-          {/* Tools */}
-          <div className="footer-links-section">
-            <h4 className="footer-heading">Powerful Tools</h4>
-            <ul className="footer-list">
-              {TOOLS.slice(0, 4).map(t => (
-                <li key={t.key}>
-                  <Link to={t.path} className="footer-link">
-                    {t.title}
-                  </Link>
-                </li>
+          <div className="footer-v2-links">
+            <h4 className="footer-v2-title">Popular Tools</h4>
+            <div className="footer-tools-grid">
+              {TOOLS.slice(0, 8).map(tool => (
+                <Link key={tool.key} to={tool.path} className="footer-tool-link">
+                  {tool.title}
+                </Link>
               ))}
-            </ul>
-          </div>
-          
-          <div className="footer-links-section">
-            <h4 className="footer-heading">More Tools</h4>
-            <ul className="footer-list">
-              {TOOLS.slice(4).map(t => (
-                <li key={t.key}>
-                  <Link to={t.path} className="footer-link">
-                    {t.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            </div>
           </div>
 
-          {/* Resources */}
-          <div className="footer-links-section">
-            <h4 className="footer-heading">Resources</h4>
-            <ul className="footer-list">
-              <li>
-                <Link to="/my-files" className="footer-link">
-                  My Cloud Files
-                </Link>
-              </li>
-              <li>
-                <a href="https://om-pdf.netlify.app" className="footer-link" target="_blank" rel="noopener noreferrer">
-                  Live Preview
-                </a>
-              </li>
-              <li>
-                <a href="https://github.com/omspradippatil/OM-pdf" className="footer-link" target="_blank" rel="noopener noreferrer">
-                  Contribute
-                </a>
-              </li>
-            </ul>
+          <div className="footer-v2-connect">
+            <h4 className="footer-v2-title">Connect</h4>
+            <div className="social-grid-v2">
+              <a href="https://github.com/omspradippatil" target="_blank" rel="noopener noreferrer" className="social-card">
+                <div className="social-icon-box">
+                  <GitHubIcon size={20} />
+                </div>
+                <span className="social-label">GitHub</span>
+              </a>
+              <a href="https://ompradippatil.netlify.app/" target="_blank" rel="noopener noreferrer" className="social-card">
+                <div className="social-icon-box">
+                  <GlobeIcon size={20} />
+                </div>
+                <span className="social-label">Portfolio</span>
+              </a>
+              <a href="https://in.linkedin.com/in/om-pradip-patil" target="_blank" rel="noopener noreferrer" className="social-card">
+                <div className="social-icon-box">
+                  <LinkedInIcon size={20} />
+                </div>
+                <span className="social-label">LinkedIn</span>
+              </a>
+              <a href="mailto:omspradippatil@gmail.com" className="social-card">
+                <div className="social-icon-box">
+                  <MailIcon size={20} />
+                </div>
+                <span className="social-label">Email</span>
+              </a>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="footer-bottom">
-        <div className="footer-bottom-inner">
-          <p className="copyright">&copy; {new Date().getFullYear()} <strong>OM PDF</strong>. The Zero-Server PDF Toolkit.</p>
-          <div className="footer-badges">
-            <span className="badge-local">🔒 Client-Side Only</span>
-            <span className="badge-free">💰 100% Free Forever</span>
+        <div className="footer-v2-bottom">
+          <div className="bottom-left">
+            <p>© {currentYear} OM PDF. Built by <strong>OM Patil</strong>.</p>
           </div>
-          <p className="made-by">Built by <a href="https://github.com/omspradippatil" target="_blank" rel="noopener">OM Patil</a></p>
+          <div className="bottom-right">
+            <div className="trust-badges">
+              <span className="trust-badge">
+                <ShieldIcon size={16} /> 100% Private
+              </span>
+              <span className="trust-badge">
+                <ZapIcon size={16} /> No Uploads
+              </span>
+              <span className="trust-badge">
+                <LockIcon size={16} /> AES-256
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

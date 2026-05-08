@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /my-files # Keep private file area out of search
 
-Sitemap: https://om-pdf.netlify.app/sitemap.xml
+Sitemap: https://ompdf.com/sitemap.xml

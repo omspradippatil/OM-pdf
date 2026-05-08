@@ -28,17 +28,17 @@ export function setDriveAccessToken(token, expiresInMs = TOKEN_TTL_MS, uid = nul
   resetFolderCache();
   if (!uid || !accessToken) return;
   try {
-    sessionStorage.setItem(STORAGE_TOKEN, accessToken);
-    sessionStorage.setItem(STORAGE_EXP, String(tokenExpiry));
-    sessionStorage.setItem(STORAGE_UID, uid);
+    localStorage.setItem(STORAGE_TOKEN, accessToken);
+    localStorage.setItem(STORAGE_EXP, String(tokenExpiry));
+    localStorage.setItem(STORAGE_UID, uid);
   } catch {}
 }
 
 export function loadStoredDriveToken(uid) {
   try {
-    const storedUid = sessionStorage.getItem(STORAGE_UID);
-    const token = sessionStorage.getItem(STORAGE_TOKEN);
-    const exp = parseInt(sessionStorage.getItem(STORAGE_EXP) || '0', 10);
+    const storedUid = localStorage.getItem(STORAGE_UID);
+    const token = localStorage.getItem(STORAGE_TOKEN);
+    const exp = parseInt(localStorage.getItem(STORAGE_EXP) || '0', 10);
     if (!uid || storedUid !== uid || !token || !exp) return false;
     if (Date.now() >= exp) return false;
     accessToken = token;
@@ -54,9 +54,9 @@ export function clearDriveAccessToken() {
   tokenExpiry = 0;
   resetFolderCache();
   try {
-    sessionStorage.removeItem(STORAGE_TOKEN);
-    sessionStorage.removeItem(STORAGE_EXP);
-    sessionStorage.removeItem(STORAGE_UID);
+    localStorage.removeItem(STORAGE_TOKEN);
+    localStorage.removeItem(STORAGE_EXP);
+    localStorage.removeItem(STORAGE_UID);
   } catch {}
 }
 

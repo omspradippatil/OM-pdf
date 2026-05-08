@@ -17,6 +17,11 @@ const OrganizePDF = lazy(() => import('./pages/OrganizePDF'));
 const WatermarkPDF = lazy(() => import('./pages/WatermarkPDF'));
 const CropPDF = lazy(() => import('./pages/CropPDF'));
 const PageNumbers = lazy(() => import('./pages/PageNumbers'));
+const MetadataEditor = lazy(() => import('./pages/MetadataEditor'));
+const PdfToText = lazy(() => import('./pages/PdfToText'));
+const ProtectPDF = lazy(() => import('./pages/ProtectPDF'));
+const UnlockPDF = lazy(() => import('./pages/UnlockPDF'));
+const PermissionsPDF = lazy(() => import('./pages/PermissionsPDF'));
 const MyFiles = lazy(() => import('./pages/MyFiles'));
 
 export default function App() {
@@ -40,6 +45,11 @@ export default function App() {
               <Route path="/watermark-pdf" element={<WatermarkPDF />} />
               <Route path="/crop-pdf" element={<CropPDF />} />
               <Route path="/page-numbers" element={<PageNumbers />} />
+              <Route path="/metadata-editor" element={<MetadataEditor />} />
+              <Route path="/pdf-to-text" element={<PdfToText />} />
+              <Route path="/protect-pdf" element={<ProtectPDF />} />
+              <Route path="/unlock-pdf" element={<UnlockPDF />} />
+              <Route path="/pdf-permissions" element={<PermissionsPDF />} />
               <Route path="/my-files"     element={<MyFiles />} />
             </Routes>
           </Suspense>
@@ -49,3 +59,5 @@ export default function App() {
     </AuthProvider>
   );
 }
+
+

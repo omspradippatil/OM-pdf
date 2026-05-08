@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { TOOLS } from '../constants/tools';
+import { TOOLS, CATEGORIES } from '../constants/tools';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -14,11 +14,13 @@ const GoogleIcon = () => (
 
 export default function Navbar() {
   const { user, login, logout } = useAuth();
+  const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [toolsOpen, setToolsOpen]       = useState(false);
   const [menuOpen, setMenuOpen]         = useState(false);
   const [scrolled, setScrolled]         = useState(false);
   const [theme, setTheme]               = useState(() => localStorage.getItem('om-pdf-theme') || 'light');
+  
   const dropRef = useRef(null);
   const toolsRef = useRef(null);
 
@@ -28,7 +30,7 @@ export default function Navbar() {
   }, [theme]);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
@@ -42,51 +44,76 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', close);
   }, []);
 
+  // Close menus on route change
+  useEffect(() => {
+    setToolsOpen(false);
+    setMenuOpen(false);
+    setDropdownOpen(false);
+  }, [location]);
+
+  const categorizedTools = Object.entries(CATEGORIES).map(([key, label]) => ({
+    label,
+    tools: TOOLS.filter(t => t.category === label)
+  }));
+
   return (
     <nav className={`navbar${scrolled ? ' scrolled' : ''}`} id="navbar">
-      <div className="nav-container">
-        {/* Brand */}
-        <Link to="/" className="nav-brand" aria-label="OM PDF Home">
-          <div className="brand-icon" aria-hidden="true">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path d="M14 2H6C4.9 2 4 2.9 4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8L14 2z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M14 2v6h6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <span className="brand-name">OM <span>PDF</span></span>
-        </Link>
+      <div className="nav-container-mega">
+        <div className="nav-left">
+          {/* Brand */}
+          <Link to="/" className="nav-brand" aria-label="OM PDF Home">
+            <div className="brand-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M14 2H6C4.9 2 4 2.9 4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8L14 2z" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M14 2v6h6" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <span className="brand-name">OM <span>PDF</span></span>
+          </Link>
 
-        {/* Desktop Nav */}
-        <div className="nav-links">
-          {TOOLS.slice(0, 3).map(t => (
-            <NavLink key={t.key} to={t.path} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
-              {t.title}
-            </NavLink>
-          ))}
-
-          <div className="nav-tools-dropdown" ref={toolsRef}>
-            <button className="nav-link-btn" onClick={() => setToolsOpen(o => !o)} aria-expanded={toolsOpen}>
-              More Tools
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginLeft: 4, transition: 'transform 0.2s', transform: toolsOpen ? 'rotate(180deg)' : 'rotate(0)' }}><polyline points="6 9 12 15 18 9"/></svg>
+          {/* Mega Dropdown Toggle */}
+          <div className="nav-mega-wrapper" ref={toolsRef}>
+            <button 
+              className={`nav-link-btn tools-btn ${toolsOpen ? 'active' : ''}`} 
+              onClick={() => setToolsOpen(o => !o)}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: 8 }}><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              Tools
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ marginLeft: 6, transition: 'transform 0.2s', transform: toolsOpen ? 'rotate(180deg)' : 'rotate(0)' }}><polyline points="6 9 12 15 18 9"/></svg>
             </button>
+
             {toolsOpen && (
-              <div className="tools-dropdown mega-dropdown">
-                {TOOLS.slice(3).map(t => (
-                  <Link key={t.key} to={t.path} className="tools-dropdown-item" onClick={() => setToolsOpen(false)}>
-                    <div className="tools-dropdown-icon">{t.icon}</div>
-                    <div className="tools-dropdown-text">
-                      <span className="tools-dropdown-title">{t.title}</span>
+              <div className="mega-menu-panel">
+                <div className="mega-menu-container">
+                  {categorizedTools.map((cat, idx) => (
+                    <div key={idx} className="mega-menu-column">
+                      <h3 className="mega-menu-title">{cat.label}</h3>
+                      <div className="mega-menu-links">
+                        {cat.tools.map(t => (
+                          <Link key={t.key} to={t.path} className="mega-menu-item">
+                            <span className="mega-item-icon" style={{ background: `${t.color}15`, color: t.color }}>{t.icon}</span>
+                            <span className="mega-item-text">{t.title}</span>
+                          </Link>
+                        ))}
+                      </div>
                     </div>
-                  </Link>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
+          </div>
+
+          {/* Quick Links */}
+          <div className="nav-desktop-links">
+            <NavLink to="/compress-pdf" className="nav-link">Compress</NavLink>
+            <NavLink to="/convert-pdf"  className="nav-link">Convert</NavLink>
+            <NavLink to="/merge-pdf"    className="nav-link">Merge</NavLink>
+            <NavLink to="/metadata-editor" className="nav-link">Edit</NavLink>
           </div>
         </div>
 
         {/* Right actions */}
-        <div className="nav-actions">
-          {/* Theme toggle */}
+        <div className="nav-right">
           <button className="theme-toggle" onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} aria-label="Toggle theme">
             {theme === 'dark'
               ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
@@ -94,21 +121,20 @@ export default function Navbar() {
             }
           </button>
 
-          {/* Auth */}
           {user ? (
             <div className="user-profile" ref={dropRef}>
-              <button className="user-profile-btn" onClick={() => setDropdownOpen(o => !o)} aria-label="User menu">
+              <button className="user-profile-btn" onClick={() => setDropdownOpen(o => !o)}>
                 <img src={user.photoURL || ''} alt="avatar" className="user-avatar" referrerPolicy="no-referrer" />
-                <span className="user-name">{user.displayName?.split(' ')[0]}</span>
+                <span className="user-name-desktop">{user.displayName?.split(' ')[0]}</span>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               {dropdownOpen && (
                 <div className="dropdown-menu">
-                  <Link to="/my-files" className="dropdown-item dropdown-item-link" onClick={() => setDropdownOpen(false)}>
+                  <Link to="/my-files" className="dropdown-item">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     My Files
                   </Link>
-                  <button className="dropdown-item dropdown-item-logout" onClick={() => { logout(); setDropdownOpen(false); }}>
+                  <button className="dropdown-item logout" onClick={logout}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
                     Logout
                   </button>
@@ -116,22 +142,12 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <button className="btn-auth" onClick={async () => {
-              console.log('Sign in clicked');
-              try {
-                await login();
-              } catch (err) {
-                console.error('Sign in failed:', err);
-                alert('Sign in failed. Please check if popups are blocked.');
-              }
-            }} aria-label="Sign in with Google">
-              <GoogleIcon />
-              <span className="auth-text">Sign In</span>
+            <button className="btn-nav-login" onClick={login}>
+              Log In
             </button>
           )}
 
-          {/* Hamburger */}
-          <button className="hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Menu">
+          <button className="hamburger" onClick={() => setMenuOpen(o => !o)}>
             <span /><span /><span />
           </button>
         </div>
@@ -139,18 +155,32 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="mobile-menu">
-          {TOOLS.map(t => (
-            <Link key={t.key} to={t.path} className="mobile-link" onClick={() => setMenuOpen(false)}>
-              {t.icon} {t.title}
-            </Link>
-          ))}
-          {user
-            ? <button className="mobile-link" onClick={() => { logout(); setMenuOpen(false); }}>Logout</button>
-            : <button className="mobile-link mobile-signin" onClick={() => { login(); setMenuOpen(false); }}><GoogleIcon /> Sign In with Google</button>
-          }
+        <div className="mobile-menu-panel">
+          <div className="mobile-menu-header">
+            <span className="mobile-menu-label">Menu</span>
+            <button className="btn-close-menu" onClick={() => setMenuOpen(false)}>&times;</button>
+          </div>
+          <div className="mobile-menu-body">
+            {categorizedTools.map((cat, idx) => (
+              <div key={idx} className="mobile-cat">
+                <div className="mobile-cat-title">{cat.label}</div>
+                {cat.tools.map(t => (
+                  <Link key={t.key} to={t.path} className="mobile-link" onClick={() => setMenuOpen(false)}>
+                    <span className="mobile-item-icon">{t.icon}</span> {t.title}
+                  </Link>
+                ))}
+              </div>
+            ))}
+            <div className="mobile-auth-section">
+              {user 
+                ? <button className="mobile-link-btn logout" onClick={logout}>Logout</button>
+                : <button className="mobile-link-btn login" onClick={login}><GoogleIcon /> Sign In with Google</button>
+              }
+            </div>
+          </div>
         </div>
       )}
     </nav>
   );
 }
+

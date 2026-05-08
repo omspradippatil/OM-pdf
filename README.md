@@ -24,11 +24,13 @@ Merge or split PDF files instantly — right in your browser. No uploads, no sig
 - 📂 **File preview list** — name, size, page count, and **live PDF thumbnail** of page 1
 - 🔀 **Drag to reorder** — rearrange merge order before combining
 - ✂️ **Split PDF** — extract page ranges or split every page individually
+- 🛡️ **Security Suite** — AES-256 encryption, password removal, and permission control
+- ☁️ **Google Drive** — persistent cloud storage integration for all tools
 - 📊 **Progress bar** — real-time step-by-step feedback per file
 - 🌙 **Dark mode** — auto-detects system preference + manual toggle
-- 📱 **Fully responsive** — desktop, tablet, and mobile
+- 📱 **Fully responsive** — desktop, tablet, and mobile with premium Mega-Menu
 - 🔒 **100% Private** — all processing happens in your browser
-- ⚡ **Lightning fast** — no upload wait, instant processing
+- ⚡ **Lightning fast** — no upload wait, instant processing using QPDF WASM
 - 🏷️ **Custom output filename** — rename before downloading
 - 📈 **SEO optimized** — sitemap, structured data, Open Graph
 
@@ -99,79 +101,26 @@ All packages are documented in [`DEPENDENCIES.md`](DEPENDENCIES.md).
 ```text
 OM-pdf/
 │
-├── index.html                  # App entry — full semantic HTML, all panels
 ├── package.json                # npm config, scripts, and dependency versions
 ├── DEPENDENCIES.md             # npm dependency reference — actual install uses package.json
 ├── vite.config.js              # Vite bundler config (output → dist/, code splits pdf-lib)
 ├── netlify.toml                # Netlify deploy config (build cmd + publish dir + headers)
 ├── .gitignore                  # Ignores node_modules/, dist/, .env, OS/editor files
-├── LICENSE                     # Proprietary license — owner: OM Patil, contributions welcome
-├── README.md                   # This file
+├├── public/                     # Static files & WASM binaries
+│   ├── qpdf.js                 # Security engine loader
+│   ├── qpdf.wasm               # Security engine binary
+│   ├── sitemap.xml             # SEO Sitemap
+│   └── robots.txt              # Crawler instructions
 │
-├── public/                     # Static files copied as-is to dist/
-│   ├── robots.txt              # Tells search crawlers to index all pages
-│   └── sitemap.xml             # XML sitemap for https://om-pdf.netlify.app
-│
-└── src/                        # All application source code
-    │
-    ├── main.js                 # ★ Entry point — wires ALL modules together
-    │                           #   • Tool tab switching (Merge / Split)
-    │                           #   • Theme: system dark mode + manual toggle
-    │                           #   • Merge tool: dropzone, file input, merge action
-    │                           #   • Split tool: file upload, mode toggle, split action
-    │                           #   • Download Again button logic
-    │
-    ├── style.css               # ★ Global stylesheet
-    │                           #   • CSS design tokens (colors, shadows, radius)
-    │                           #   • Light + dark mode via [data-theme] attribute
-    │                           #   • All component styles: navbar, hero, dropzone,
-    │                           #     file list, thumbnails, progress, alerts, tabs,
-    │                           #     split tool, privacy section, features, footer
-    │                           #   • Responsive breakpoints (mobile-first)
-    │                           #   • Animations: fadeIn, slideIn, shimmer, spinner
-    │
-    ├── fileManager.js          # File state manager (in-memory store)
-    │                           #   • addFiles()      — validates & adds File objects
-    │                           #   • removeFile()    — removes by ID
-    │                           #   • clearFiles()    — resets list
-    │                           #   • reorderFiles()  — drag-and-drop reordering
-    │                           #   • setPageCount()  — stores page count per file
-    │                           #   • setThumbnail()  — stores thumbnail data URL
-    │                           #   • getTotalSize()  — sum of all file sizes
-    │                           #   • subscribe()     — event emitter for UI updates
-    │                           #   • Limits: 200 MB per file, 100 MB soft warning
-    │
-    ├── uiManager.js            # DOM rendering and UI state
-    │                           #   • renderFiles()   — builds the file list with
-    │                           #                       thumbnails, page counts, drag handles
-    │                           #   • showValidation / showError — auto-dismiss alerts
-    │                           #   • showProgress / setProgress / hideProgress
-    │                           #   • updateProgressLabel() — per-file step feedback
-    │                           #   • showSuccess()   — auto-dismiss success banner
-    │                           #   • setDropzoneActive() — drag-over visual state
-    │
-    ├── pdfMerger.js            # PDF merge engine (pdf-lib)
-    │                           #   • mergePDFs()     — merges files in order,
-    │                           #                       handles encrypted PDFs gracefully,
-    │                           #                       returns { bytes, warnings[] }
-    │                           #   • getPageCount()  — reads page count from a File
-    │                           #   • timestampedFilename() — generates output name
-    │                           #                       with YYYY-MM-DD_HH-MM-SS suffix
-    │                           #   • downloadPDF()   — triggers browser download
-    │
-    ├── splitPdf.js             # PDF split engine (pdf-lib)
-    │                           #   • parsePageRanges() — parses "1-3, 5, 7-9" strings
-    │                           #                         into 0-indexed page arrays
-    │                           #   • extractPages()  — extracts a range into new PDF
-    │                           #   • splitEveryPage()— splits each page individually,
-    │                           #                       reports progress via callback
-    │                           #   • downloadBytes() — triggers download of any bytes
-    │
-    └── thumbnailGenerator.js   # PDF thumbnail renderer (pdfjs-dist)
-                                #   • generateThumbnail() — renders page 1 of a PDF
-                                #                           to a 72px wide JPEG data URL
-                                #   • Uses CDN worker for pdfjs to avoid bundle complexity
-                                #   • Returns null on failure (encrypted, corrupt files)
+└── src/                        # React Application Source
+    ├── App.jsx                 # Root component & Routing
+    ├── main.jsx                # App Entry Point
+    ├── components/             # Reusable UI Components (Navbar, Footer, MegaMenu)
+    ├── pages/                  # Tool Pages (Merge, Split, Protect, etc.)
+    ├── context/                # Auth & App State (Google Drive persistence)
+    ├── services/               # External APIs (Firebase, Google Drive)
+    ├── utils/                  # Core PDF Engines (pdfGuard, pdfjs)
+    └── style.css               # Global Design System & Animations
 ```
 
 ---
@@ -250,6 +199,17 @@ This project uses a **Proprietary License** — see [LICENSE](LICENSE) for full 
 ## ⭐ Show Your Support
 
 If you found this project helpful, please give it a **⭐ star** on GitHub!
+
+---
+
+## 👤 Contact the Developer
+
+**Developed by OM Patil**
+
+- **Portfolio**: [ompradippatil.netlify.app](https://ompradippatil.netlify.app/)
+- **GitHub**: [@omspradippatil](https://github.com/omspradippatil)
+- **LinkedIn**: [OM Pradip Patil](https://in.linkedin.com/in/om-pradip-patil)
+- **Email**: [omspradippatil@gmail.com](mailto:omspradippatil@gmail.com)
 
 ---
 
