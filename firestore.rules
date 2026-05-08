@@ -1,36 +1,36 @@
-// ─────────────────────────────────────────────────────────────
-// Firestore Security Rules — OM PDF
-// Paste this in: Firebase Console → Firestore → Rules
-// ─────────────────────────────────────────────────────────────
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // user_files collection
-    // Each user can only read/write/delete their OWN documents
+    // 1. Logs & Activity Tracking (Privacy-Safe Public Create)
+    match /logs/{docId} {
+      // Allows anyone to log an action, but nobody can read or steal the log data
+      allow create: if true; 
+      allow read, update, delete: if false; 
+    }
+
+    // 2. User Profiles
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // 3. User Files (Storage Metadata)
     match /user_files/{docId} {
-      allow read, delete: if request.auth != null
-                          && request.auth.uid == resource.data.uid;
-      allow create: if request.auth != null
-                    && request.auth.uid == request.resource.data.uid;
-      // Disallow updates (files are immutable after creation)
+      allow read, delete: if request.auth != null && request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
       allow update: if false;
     }
 
-    // users collection
-    match /users/{uid} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == uid;
-    }
-
-    // user_actions collection
+    // 4. Detailed Actions
     match /user_actions/{docId} {
-      allow read: if request.auth != null
-                  && request.auth.uid == resource.data.uid;
-      allow create: if request.auth != null
-                    && request.auth.uid == request.resource.data.uid;
+      allow read: if request.auth != null && request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
       allow update, delete: if false;
     }
 
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
   }
 }
