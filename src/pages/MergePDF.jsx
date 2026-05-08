@@ -109,7 +109,7 @@ export default function MergePDF() {
       downloadPDF(bytes, name);
       if (w.length) setWarning(w.join(' | '));
       const pages = files.reduce((s, f) => s + (f.pages || 0), 0);
-      setSuccess(`"${name}" � ${files.length} files${pages ? ' � ' + pages + ' pages' : ''}`);
+      setSuccess(`"${name}" - ${files.length} files${pages ? ' - ' + pages + ' pages' : ''}`);
       setFilename('');
       addRecentFile({
         tool: 'merge',
@@ -135,7 +135,7 @@ export default function MergePDF() {
     }
   };
 
-  /* -- No separate handleSaveDrive � handled by SaveToDriveButton -- */
+  /* -- No separate handleSaveDrive; handled by SaveToDriveButton -- */
 
   const queueItems = files.map(f => ({
     id: f.id,
@@ -147,17 +147,12 @@ export default function MergePDF() {
   }));
 
   return (
-    <ToolPageLayout title="Merge PDF Files"
+    <ToolPageLayout
+      title="Merge PDF Files"
       subtitle="Combine multiple PDFs into one. Drag to reorder, then merge instantly."
-      icon="??"
+      icon="🔗"
     >
       <SEO title="Merge PDF Online Free — OM PDF | No Upload Required" description="Combine multiple PDF files into one. Drag to reorder pages, then merge instantly in your browser. 100% free, private, no upload." url="https://om-pdf.netlify.app/merge-pdf" />
-      <SEO 
-        title="Merge PDF Online Free � No Upload Required" 
-        description="Combine multiple PDF files into one. Drag to reorder pages, then merge instantly in your browser. 100% free, private, no upload." 
-        url="https://om-pdf.netlify.app/merge-pdf" 
-        keywords="merge pdf, combine pdf, join pdf, free pdf merger, secure pdf tools, local pdf processing"
-      />
       {/* Drop zone */}
       <DropZone onFiles={handleFiles} multiple />
 
@@ -175,7 +170,7 @@ export default function MergePDF() {
       )}
 
       {/* Alerts */}
-      {warning && <div className="alert alert-warning"><span>?? {warning}</span></div>}
+      {warning && <div className="alert alert-warning"><span>Warning: {warning}</span></div>}
       {error   && <div className="alert alert-error"><span>❌ {error}</span></div>}
 
       {/* Progress */}
@@ -240,7 +235,7 @@ export default function MergePDF() {
             </span>
           </button>
 
-          <p className="merge-hint">🔒 Processed locally � files never uploaded to any server</p>
+          <p className="merge-hint">🔒 Processed locally - files never uploaded to any server</p>
         </div>
       )}
 

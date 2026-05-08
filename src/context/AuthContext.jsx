@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { reauthenticateWithPopup } from 'firebase/auth';
 import {
-  auth, provider, GoogleAuthProvider,
+  auth, provider, GoogleAuthProvider, firebaseReady,
   signInWithPopup, signOut, onAuthStateChanged
 } from '../firebase';
 import {
@@ -18,6 +18,10 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!firebaseReady || !auth) {
+      setLoading(false);
+      return;
+    }
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
@@ -32,6 +36,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async () => {
+    if (!firebaseReady || !auth) {
+      console.warn('[OM PDF] Firebase not configured — sign-in unavailable.');
+      return;
+    }
     try {
       const result = await signInWithPopup(auth, provider);
       const cred = GoogleAuthProvider.credentialFromResult(result);
@@ -45,7 +53,7 @@ export function AuthProvider({ children }) {
       });
     } catch (e) {
       console.error('Login error:', e);
-      await logUserAction(auth.currentUser, 'sign_in', {
+      await logUserAction(auth?.currentUser, 'sign_in', {
         status: 'error',
         meta: { error: e?.message || 'Login failed' }
       });
@@ -53,6 +61,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
+    if (!firebaseReady || !auth) return;
     const u = auth.currentUser;
     try {
       await signOut(auth);
@@ -65,6 +74,7 @@ export function AuthProvider({ children }) {
   };
 
   const ensureDriveToken = async (force = false) => {
+    if (!firebaseReady || !auth) throw new Error('Firebase not configured.');
     if (user && !hasDriveAccess()) {
       loadStoredDriveToken(user.uid);
     }

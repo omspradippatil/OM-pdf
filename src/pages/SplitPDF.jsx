@@ -64,17 +64,19 @@ export default function SplitPDF() {
     setError(''); setSuccess(''); setSplitting(true); setProgress(0);
     try {
       const baseName = filename.trim() || 'extracted';
+      const totalPages = pages ?? await getPageCount(file);
+      if (!totalPages) { setError('Could not read page count.'); return; }
+      if (pages === null) setPages(totalPages);
       if (mode === 'range') {
-        const total = pages || 9999;
-        const indices = range.trim() ? parsePageRanges(range, total) : Array.from({ length: total }, (_, i) => i);
+        const indices = range.trim() ? parsePageRanges(range, totalPages) : Array.from({ length: totalPages }, (_, i) => i);
         if (!indices.length) { setError('No valid pages in range.'); return; }
-        const bytes = await extractPages(file, indices, p => setProgress(p));
+        const bytes = await extractPages(file, indices);
         const name  = `${baseName}_${new Date().toISOString().slice(0,10)}.pdf`;
         downloadBytes(bytes, name);
         lastBytesRef.current = bytes;
         lastNameRef.current  = name;
         lastMimeRef.current  = 'application/pdf';
-        setSuccess(`"${baseName}.pdf" · ${indices.length} pages extracted`);
+        setSuccess(`"${baseName}.pdf" - ${indices.length} pages extracted`);
         addRecentFile({ tool: 'split', name, size: bytes.byteLength || 0, pages: indices.length });
         bumpLocalJob();
         await logUserAction(user, 'split_range', {
@@ -92,13 +94,13 @@ export default function SplitPDF() {
         lastBytesRef.current = zip;
         lastNameRef.current  = name;
         lastMimeRef.current  = 'application/zip';
-        setSuccess(`ZIP with ${pages} individual pages downloaded`);
-        addRecentFile({ tool: 'split', name, size: zip.size || 0, pages });
+        setSuccess(`ZIP with ${totalPages} individual pages downloaded`);
+        addRecentFile({ tool: 'split', name, size: zip.size || 0, pages: totalPages });
         bumpLocalJob();
         await logUserAction(user, 'split_every', {
           tool: 'split',
           status: 'success',
-          meta: { pages, outputName: name }
+          meta: { pages: totalPages, outputName: name }
         });
       } else {
         const zip  = await splitEveryNPages(file, baseName, chunkSize, p => setProgress(p));
@@ -110,13 +112,13 @@ export default function SplitPDF() {
         lastBytesRef.current = zip;
         lastNameRef.current  = name;
         lastMimeRef.current  = 'application/zip';
-        setSuccess(`ZIP with ${pages} pages in chunks of ${chunkSize}`);
-        addRecentFile({ tool: 'split', name, size: zip.size || 0, pages });
+        setSuccess(`ZIP with ${totalPages} pages in chunks of ${chunkSize}`);
+        addRecentFile({ tool: 'split', name, size: zip.size || 0, pages: totalPages });
         bumpLocalJob();
         await logUserAction(user, 'split_chunk', {
           tool: 'split',
           status: 'success',
-          meta: { pages, chunkSize, outputName: name }
+          meta: { pages: totalPages, chunkSize, outputName: name }
         });
       }
     } catch (err) {
@@ -132,7 +134,6 @@ export default function SplitPDF() {
   return (
     <ToolPageLayout title="Split PDF" subtitle="Extract page ranges or split every page into individual PDFs." icon="✂️">
       <SEO keywords="split pdf, extract pages, pdf splitter, cut pdf, separate pdf pages, free pdf tools" title="Split PDF Online Free — Extract Pages Instantly | OM PDF" description="Split a PDF into individual pages or extract specific page ranges. Free, private, browser-based — no upload needed." url="https://om-pdf.netlify.app/split-pdf" />
-      <SEO keywords="split pdf, extract pages, pdf splitter, cut pdf, separate pdf pages, free pdf tools" title="Split PDF Online Free � OM PDF | Extract Pages Instantly" description="Split a PDF into individual pages or extract specific page ranges. Free, private, browser-based � no upload needed." url="https://om-pdf.netlify.app/split-pdf" />
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to split" hint="Single PDF · Max 200 MB" />
       ) : (

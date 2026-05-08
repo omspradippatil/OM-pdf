@@ -90,7 +90,6 @@ export default function PageNumbers() {
   return (
     <ToolPageLayout title="Add Page Numbers" subtitle="Stamp customizable page numbers onto any PDF — locally, instantly." icon="🔢">
       <SEO keywords="add page numbers to pdf, stamp pdf, number pdf pages, custom page numbering, paginate pdf" title="Add Page Numbers to PDF Free — Custom Style | OM PDF" description="Stamp page numbers onto any PDF. Choose position, prefix, font size and starting number. Free, private, no upload." url="https://om-pdf.netlify.app/page-numbers" />
-      <SEO keywords="add page numbers to pdf, stamp pdf, number pdf pages, custom page numbering, paginate pdf" title="Add Page Numbers to PDF Free � OM PDF | Custom Position & Style" description="Stamp page numbers onto any PDF. Choose position, prefix, font size and starting number. Free, private, no upload." url="https://om-pdf.netlify.app/page-numbers" />
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to add page numbers" hint="Single PDF · Max 200 MB" />
       ) : (

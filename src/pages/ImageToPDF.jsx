@@ -51,6 +51,9 @@ async function readImageBytes(file) {
   const ctx = canvas.getContext('2d');
   ctx.drawImage(bitmap, 0, 0);
   const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.92));
+  if (!blob) {
+    throw new Error('Failed to process image data.');
+  }
   const bytes = await blob.arrayBuffer();
   return { bytes, type: 'png' };
 }
@@ -166,13 +169,13 @@ export default function ImageToPDF() {
           multiple
           accept="image/*"
           label="Drop images to convert"
-          hint="JPG, PNG, WebP � Max 20 files"
+          hint="JPG, PNG, WebP - Max 20 files"
           filter={(f) => f.type.startsWith('image/')}
         />
       ) : (
         <div className="split-file-info">
           <div className="split-file-card">
-            <div className="file-icon">???</div>
+            <div className="file-icon">🖼️</div>
             <div className="file-info">
               <div className="file-name">{images.length} images selected</div>
               <div className="file-meta">
@@ -231,7 +234,7 @@ export default function ImageToPDF() {
 
           {error && <div className="alert alert-error"><span>❌ {error}</span></div>}
           <QueuePanel title="File queue" items={queueItems} />
-          {converting && <ProgressBar pct={progress} label="Converting images�" />}
+          {converting && <ProgressBar pct={progress} label="Converting images..." />}
           {success && (
             <SuccessBanner message="PDF created!" details={success} onDismiss={() => setSuccess('')}>
               <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Images" />
@@ -246,7 +249,7 @@ export default function ImageToPDF() {
                 Convert to PDF
               </span>
             </button>
-            <p className="merge-hint">🔒 Processed locally � no upload</p>
+            <p className="merge-hint">🔒 Processed locally - no upload</p>
           </div>
         </div>
       )}

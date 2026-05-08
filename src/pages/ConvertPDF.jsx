@@ -27,6 +27,9 @@ async function pdfToImages(file, onProgress) {
     const ctx     = canvas.getContext('2d');
     await page.render({ canvasContext: ctx, viewport: vp }).promise;
     const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+    if (!blob) {
+      throw new Error('Failed to render a page image for conversion.');
+    }
     blobs.push({ blob, name: `page_${String(i).padStart(3,'0')}.jpg` });
     onProgress?.(Math.round((i / total) * 90));
   }
@@ -120,7 +123,6 @@ export default function ConvertPDF() {
   return (
     <ToolPageLayout title="Convert PDF to Images" subtitle="Export each page as a high-quality JPG image, right in your browser." icon="🖼️">
       <SEO keywords="pdf to jpg, convert pdf to image, extract images from pdf, pdf to jpeg, high quality pdf conversion" title="PDF to JPG Online Free — Convert PDF to Images | OM PDF" description="Convert PDF pages to high-quality JPG images instantly. Free, private, no upload — download as ZIP for multi-page PDFs." url="https://om-pdf.netlify.app/convert-pdf" />
-      <SEO keywords="pdf to jpg, convert pdf to image, extract images from pdf, pdf to jpeg, high quality pdf conversion" title="PDF to JPG Online Free � OM PDF | Convert PDF to Images" description="Convert PDF pages to high-quality JPG images instantly. Free, private, no upload � download as ZIP for multi-page PDFs." url="https://om-pdf.netlify.app/convert-pdf" />
       <div className="alert alert-warning" style={{ marginBottom: 16 }}>
         <span>ℹ️ Currently supports <strong>PDF → JPG</strong>. Doc/Word conversion requires a server and is not available client-side.</span>
       </div>

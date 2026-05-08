@@ -9,7 +9,7 @@ self.onmessage = async (e) => {
       const merged = await PDFDocument.create();
       const warnings = [];
 
-      merged.setTitle('Merged PDF – OM PDF');
+      merged.setTitle('Merged PDF - OM PDF');
       merged.setCreator('OM PDF (https://om-pdf.netlify.app)');
       merged.setProducer('OM PDF');
       merged.setCreationDate(new Date());

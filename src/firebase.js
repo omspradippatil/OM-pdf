@@ -1,4 +1,5 @@
 // firebase.js — initialised from environment variables (never hard-coded)
+// Graceful degradation: if Firebase is not configured, the app works in local-only mode.
 import { initializeApp }   from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
@@ -17,15 +18,30 @@ const firebaseConfig = {
   measurementId:     import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-const app      = initializeApp(firebaseConfig);
-const auth     = getAuth(app);
-const storage  = getStorage(app);
-const db       = getFirestore(app);
-const provider = new GoogleAuthProvider();
-provider.addScope('https://www.googleapis.com/auth/drive.file');
-provider.setCustomParameters({ prompt: 'select_account' });
+let app, auth, storage, db, provider;
+let firebaseReady = false;
+
+try {
+  if (!firebaseConfig.apiKey) throw new Error('Missing VITE_FIREBASE_API_KEY');
+  app      = initializeApp(firebaseConfig);
+  auth     = getAuth(app);
+  storage  = getStorage(app);
+  db       = getFirestore(app);
+  provider = new GoogleAuthProvider();
+  provider.addScope('https://www.googleapis.com/auth/drive.file');
+  provider.setCustomParameters({ prompt: 'select_account' });
+  firebaseReady = true;
+} catch (err) {
+  console.warn('[OM PDF] Firebase init skipped — local-only mode.', err.message);
+  // Create safe no-op fallbacks so the rest of the app doesn't crash
+  auth     = null;
+  storage  = null;
+  db       = null;
+  provider = null;
+}
 
 export {
+  firebaseReady,
   auth, provider, GoogleAuthProvider,
   signInWithPopup, signOut, onAuthStateChanged,
   storage, ref, uploadBytes, getDownloadURL, deleteObject,

@@ -1,7 +1,7 @@
-import { db, doc, getDoc, setDoc, serverTimestamp } from '../firebase';
+import { db, doc, getDoc, setDoc, serverTimestamp, firebaseReady } from '../firebase';
 
 export async function ensureUserProfile(user) {
-  if (!user) return false;
+  if (!user || !firebaseReady || !db) return false;
   const ref = doc(db, 'users', user.uid);
   try {
     const snap = await getDoc(ref);
@@ -20,7 +20,7 @@ export async function ensureUserProfile(user) {
     }
     return true;
   } catch (err) {
-    console.warn('[UserProfile]', err);
+    console.warn('[UserProfile]', err.message);
     return false;
   }
 }

@@ -44,6 +44,9 @@ async function compressByRaster(file, { quality, scale }, onProgress) {
     const ctx = canvas.getContext('2d');
     await page.render({ canvasContext: ctx, viewport }).promise;
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+    if (!blob) {
+      throw new Error('Failed to render a page image for compression.');
+    }
     const imgBuf = await blob.arrayBuffer();
     const img = await outDoc.embedJpg(imgBuf);
     const outPage = outDoc.addPage([viewport.width, viewport.height]);
@@ -131,7 +134,6 @@ export default function CompressPDF() {
   return (
     <ToolPageLayout title="Compress PDF" subtitle="Reduce PDF file size using client-side stream optimization." icon="⚡">
       <SEO keywords="compress pdf, reduce pdf size, shrink pdf, pdf optimizer, small pdf, local pdf compression" title="Compress PDF Online Free — Reduce PDF Size | OM PDF" description="Reduce PDF file size without losing quality. Free client-side PDF compression — your file never leaves your browser." url="https://om-pdf.netlify.app/compress-pdf" />
-      <SEO keywords="compress pdf, reduce pdf size, shrink pdf, pdf optimizer, small pdf, local pdf compression" title="Compress PDF Online Free � OM PDF | Reduce PDF Size" description="Reduce PDF file size without losing quality. Free client-side PDF compression � your file never leaves your browser." url="https://om-pdf.netlify.app/compress-pdf" />
       <div className="alert alert-warning" style={{ marginBottom: 16 }}>
         <span>ℹ️ Choose lossless (safe) or lossy (smaller size). Lossy mode rasterizes pages to images.</span>
       </div>
