@@ -1,4 +1,5 @@
 import React from 'react';
+import PrivacyDashboard from './PrivacyDashboard';
 
 export default function ToolPageLayout({ icon, title, subtitle, children }) {
   return (
@@ -8,6 +9,9 @@ export default function ToolPageLayout({ icon, title, subtitle, children }) {
         <h1 className="tool-page-title">{title}</h1>
         {subtitle && <p className="tool-page-subtitle">{subtitle}</p>}
         <div className="tool-privacy-badge">🔒 100% Local Processing — Files never leave your device</div>
+      </div>
+      <div className="tool-privacy-panel">
+        <PrivacyDashboard />
       </div>
       <div className="app-container tool-page-content">
         {children}

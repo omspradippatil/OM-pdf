@@ -58,26 +58,30 @@ export default function Navbar() {
 
         {/* Desktop Nav */}
         <div className="nav-links">
+          {TOOLS.slice(0, 3).map(t => (
+            <NavLink key={t.key} to={t.path} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
+              {t.title}
+            </NavLink>
+          ))}
+
           <div className="nav-tools-dropdown" ref={toolsRef}>
-            <button className="nav-link-btn" onClick={() => setToolsOpen(o => !o)}>
-              Tools
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginLeft: 4 }}><polyline points="6 9 12 15 18 9"/></svg>
+            <button className="nav-link-btn" onClick={() => setToolsOpen(o => !o)} aria-expanded={toolsOpen}>
+              More Tools
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginLeft: 4, transition: 'transform 0.2s', transform: toolsOpen ? 'rotate(180deg)' : 'rotate(0)' }}><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             {toolsOpen && (
-              <div className="tools-dropdown">
-                {TOOLS.map(t => (
+              <div className="tools-dropdown mega-dropdown">
+                {TOOLS.slice(3).map(t => (
                   <Link key={t.key} to={t.path} className="tools-dropdown-item" onClick={() => setToolsOpen(false)}>
-                    {t.icon} {t.title}
+                    <div className="tools-dropdown-icon">{t.icon}</div>
+                    <div className="tools-dropdown-text">
+                      <span className="tools-dropdown-title">{t.title}</span>
+                    </div>
                   </Link>
                 ))}
               </div>
             )}
           </div>
-          {TOOLS.map(t => (
-            <NavLink key={t.key} to={t.path} className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
-              {t.title}
-            </NavLink>
-          ))}
         </div>
 
         {/* Right actions */}

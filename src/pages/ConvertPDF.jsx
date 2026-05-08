@@ -1,15 +1,18 @@
-import React, { useState, useRef } from 'react';
-import useSEO from '../hooks/useSEO';
+﻿import React, { useState, useRef } from 'react';
+import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SuccessBanner from '../components/SuccessBanner';
 import SaveToDriveButton from '../components/SaveToDriveButton';
-import * as pdfjsLib from 'pdfjs-dist';
+import { pdfjsLib } from '../utils/pdfjs';
 import { formatBytes } from '../fileManager';
-
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.6.205/build/pdf.worker.min.mjs';
+import { useAuth } from '../context/AuthContext';
+import { logUserAction } from '../services/activityLog';
+import { addRecentFile } from '../services/recentFiles';
+import { bumpLocalJob } from '../services/privacyStats';
+import QueuePanel from '../components/QueuePanel';
+import RecentFilesPanel from '../components/RecentFilesPanel';
 
 async function pdfToImages(file, onProgress) {
   const buf   = await file.arrayBuffer();
@@ -31,7 +34,8 @@ async function pdfToImages(file, onProgress) {
 }
 
 export default function ConvertPDF() {
-  useSEO('PDF to JPG Online Free � OM PDF | Convert PDF to Images','Convert PDF pages to high-quality JPG images instantly. Free, private, no upload � download as ZIP for multi-page PDFs.','https://om-pdf.netlify.app/convert-pdf');
+  
+  const { user } = useAuth();
   const [file, setFile]     = useState(null);
   const [pages, setPages]   = useState(null);
   const [converting, setConverting] = useState(false);
@@ -40,6 +44,14 @@ export default function ConvertPDF() {
   const [success, setSuccess] = useState('');
   const lastBlobRef = useRef(null);
   const lastNameRef = useRef('');
+  const queueItems = file ? [{
+    id: file.name,
+    name: file.name,
+    status: converting ? 'processing' : error ? 'error' : success ? 'done' : 'ready',
+    progress: converting ? progress : success ? 100 : 0,
+    etaMs: file.size ? Math.max(1200, Math.round((file.size / (1024 * 1024)) * 900)) : null,
+    message: error || '',
+  }] : [];
 
   const loadFile = async (raw) => {
     const f = raw[0];
@@ -58,6 +70,7 @@ export default function ConvertPDF() {
     try {
       const images = await pdfToImages(file, setProgress);
       setProgress(95);
+      let outputName = '';
       if (images.length === 1) {
         const url = URL.createObjectURL(images[0].blob);
         const a = document.createElement('a'); a.href = url; a.download = images[0].name;
@@ -65,6 +78,7 @@ export default function ConvertPDF() {
         setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
         lastBlobRef.current = images[0].blob;
         lastNameRef.current = images[0].name;
+        outputName = images[0].name;
       } else {
         const JSZip = (await import('jszip')).default;
         const zip = new JSZip();
@@ -77,16 +91,36 @@ export default function ConvertPDF() {
         setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
         lastBlobRef.current = blob;
         lastNameRef.current = zipName;
+        outputName = zipName;
       }
       setProgress(100);
       setSuccess(`Converted ${images.length} page${images.length !== 1 ? 's' : ''} to JPG${images.length > 1 ? ' (ZIP)' : ''}`);
+      addRecentFile({ tool: 'convert', name: outputName, size: lastBlobRef.current?.size || 0, pages: images.length });
+      bumpLocalJob();
+      await logUserAction(user, 'convert', {
+        tool: 'convert',
+        status: 'success',
+        meta: {
+          pages: images.length,
+          outputName,
+          format: 'jpg',
+          zipped: images.length > 1,
+        }
+      });
     } catch (err) {
       setError('Conversion failed: ' + (err.message || 'Unexpected error.'));
+      await logUserAction(user, 'convert', {
+        tool: 'convert',
+        status: 'error',
+        meta: { error: err?.message || 'Conversion failed' }
+      });
     } finally { setConverting(false); setProgress(0); }
   };
 
   return (
-    <ToolPageLayout title="Convert PDF to Images" subtitle="Export each page as a high-quality JPG image, right in your browser." icon="🔄">
+    <ToolPageLayout title="Convert PDF to Images" subtitle="Export each page as a high-quality JPG image, right in your browser." icon="🖼️">
+      <SEO keywords="pdf to jpg, convert pdf to image, extract images from pdf, pdf to jpeg, high quality pdf conversion" title="PDF to JPG Online Free — Convert PDF to Images | OM PDF" description="Convert PDF pages to high-quality JPG images instantly. Free, private, no upload — download as ZIP for multi-page PDFs." url="https://om-pdf.netlify.app/convert-pdf" />
+      <SEO keywords="pdf to jpg, convert pdf to image, extract images from pdf, pdf to jpeg, high quality pdf conversion" title="PDF to JPG Online Free � OM PDF | Convert PDF to Images" description="Convert PDF pages to high-quality JPG images instantly. Free, private, no upload � download as ZIP for multi-page PDFs." url="https://om-pdf.netlify.app/convert-pdf" />
       <div className="alert alert-warning" style={{ marginBottom: 16 }}>
         <span>ℹ️ Currently supports <strong>PDF → JPG</strong>. Doc/Word conversion requires a server and is not available client-side.</span>
       </div>
@@ -110,6 +144,7 @@ export default function ConvertPDF() {
           </div>
 
           {error && <div className="alert alert-error"><span>❌ {error}</span></div>}
+          <QueuePanel title="File queue" items={queueItems} />
           {converting && <ProgressBar pct={progress} label="Converting pages to JPG…" />}
           {success && (
             <SuccessBanner message="Conversion complete!" details={success} onDismiss={() => setSuccess('')}>
@@ -134,6 +169,15 @@ export default function ConvertPDF() {
           </div>
         </div>
       )}
+      <RecentFilesPanel tool="convert" title="Recent conversions" />
     </ToolPageLayout>
   );
 }
+
+
+
+
+
+
+
+

@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
-import useSEO from '../hooks/useSEO';
-import { Link, useNavigate } from 'react-router-dom';
+﻿import React, { useRef } from 'react';
+import SEO from '../components/SEO';
+import { Link } from 'react-router-dom';
 import { TOOLS } from '../constants/tools';
+import PrivacyDashboard from '../components/PrivacyDashboard';
 
 const FEATURES = [
   { icon: '⚡', title: 'Lightning Fast',    desc: 'No upload delays. Processing runs instantly in your browser.' },
@@ -15,8 +16,46 @@ const FloatIcon = ({ icon, style }) => (
   <div className="float-icon" style={style} aria-hidden="true">{icon}</div>
 );
 
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is OM PDF free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, OM PDF is completely free to use. There are no hidden fees, no subscriptions, and no sign-up required."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are my PDF files uploaded to a server?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. OM PDF uses modern WebAssembly and Web Workers to process all your PDF files entirely locally inside your browser. Your files never leave your device."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is OM PDF secure?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, OM PDF is extremely secure because of its zero-upload architecture. Since processing happens locally, there is no risk of your sensitive documents being intercepted or stored on remote servers."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use OM PDF on my mobile phone?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes! OM PDF is a Progressive Web App (PWA) that is fully optimized for mobile devices. You can even install it to your home screen for offline use."
+      }
+    }
+  ]
+};
+
 export default function Home() {
-  useSEO('OM PDF � Free PDF Tools Online | Merge, Split, Compress, Convert','Merge PDF, split PDF, compress PDF, convert PDF to JPG and add page numbers � all free, private and instant in your browser. No upload. No sign-up.','https://om-pdf.netlify.app/');
   const toolsRef = useRef(null);
 
   const scrollToTools = (e) => {
@@ -26,6 +65,12 @@ export default function Home() {
 
   return (
     <div className="home-page">
+      <SEO keywords="pdf to jpg, convert pdf to image, extract images from pdf, pdf to jpeg, high quality pdf conversion" 
+        title="Free PDF Tools Online | Merge, Split, Compress, Convert" 
+        description="Merge PDF, split PDF, compress PDF, convert PDF to JPG and add page numbers — all free, private and instant in your browser. No upload. No sign-up." 
+        url="https://om-pdf.netlify.app/" 
+        schema={faqSchema} 
+      />
 
       {/* ══════════ HERO ══════════ */}
       <section className="home-hero" aria-label="Hero">
@@ -133,7 +178,9 @@ export default function Home() {
           <h2 className="section-title">Your Privacy is Our Priority</h2>
           <p className="section-sub">Unlike other PDF tools, OM PDF never touches your files on any server.</p>
 
-          <div className="comparison-grid">
+          <PrivacyDashboard />
+
+          <div className="comparison-grid" style={{ marginTop: 32 }}>
             <div className="comparison-col comparison-bad">
               <div className="comparison-col-header">❌ Other Tools</div>
               <ul className="comparison-list">
@@ -174,6 +221,42 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── SEO CONTENT & FAQ ── */}
+      <section className="seo-content-section" aria-label="About OM PDF">
+        <div className="seo-inner">
+          <article className="seo-article">
+            <h2>The Privacy-First Online PDF Editor</h2>
+            <p>Welcome to OM PDF, the ultimate suite of free PDF tools designed with your privacy in mind. Whether you need to <strong>merge PDF files</strong>, <strong>split PDF pages</strong>, <strong>compress PDF documents</strong>, or <strong>convert PDF to JPG</strong>, our platform offers lightning-fast solutions without compromising your data security.</p>
+            <h3>100% Local Processing: No Uploads Required</h3>
+            <p>Unlike traditional online PDF editors that force you to upload sensitive documents to remote cloud servers, OM PDF leverages advanced browser technologies like WebAssembly. This means every action — from rotating pages to lossless compression — happens locally on your device. Your files are never uploaded, ensuring absolute privacy and eliminating wait times.</p>
+            <h3>Secure, Fast, and Free PDF Tools</h3>
+            <p>We believe essential document management should be accessible to everyone. That's why OM PDF offers premium features like drag-and-drop page reordering, offline Progressive Web App (PWA) support, and high-quality image extraction completely free of charge. No watermarks, no account registration, and no limits.</p>
+          </article>
+          
+          <div className="faq-section">
+            <h2>Frequently Asked Questions</h2>
+            <div className="faq-grid">
+              <div className="faq-item">
+                <h4>Is OM PDF free?</h4>
+                <p>Yes, OM PDF is completely free to use. There are no hidden fees, no subscriptions, and no sign-up required.</p>
+              </div>
+              <div className="faq-item">
+                <h4>Are my PDF files uploaded to a server?</h4>
+                <p>No. OM PDF processes all your files entirely locally inside your browser. Your files never leave your device.</p>
+              </div>
+              <div className="faq-item">
+                <h4>Is OM PDF secure?</h4>
+                <p>Absolutely. Because of our zero-upload architecture, there is no risk of your sensitive documents being stored on remote servers.</p>
+              </div>
+              <div className="faq-item">
+                <h4>Does OM PDF work offline?</h4>
+                <p>Yes! You can install OM PDF as a Progressive Web App (PWA) on your desktop or mobile device to merge and split PDFs without an internet connection.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ══════════ CTA BANNER ══════════ */}
       <section className="cta-section" aria-label="Call to action">
         <div className="cta-inner">
@@ -189,3 +272,6 @@ export default function Home() {
     </div>
   );
 }
+
+
+

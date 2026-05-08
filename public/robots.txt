@@ -1,8 +1,4 @@
 User-agent: *
 Allow: /
 
-# Block nothing — all pages should be indexed
-Disallow:
-
-# Sitemap
 Sitemap: https://om-pdf.netlify.app/sitemap.xml

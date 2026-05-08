@@ -47,6 +47,15 @@ export const TOOLS = [
     driveFolder: 'Converted',
   },
   {
+    key:         'image_to_pdf',
+    icon:        '🧩',
+    title:       'Image to PDF',
+    desc:        'Turn JPG, PNG, or WebP images into a single PDF — fast and private.',
+    path:        '/image-to-pdf',
+    color:       '#F97316',
+    driveFolder: 'Images',
+  },
+  {
     key:         'pagenums',
     icon:        '🔢',
     title:       'Page Numbers',

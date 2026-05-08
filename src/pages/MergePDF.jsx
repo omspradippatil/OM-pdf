@@ -1,47 +1,31 @@
-import React, { useState, useCallback, useRef } from 'react';
-import useSEO from '../hooks/useSEO';
+﻿import React, { useState, useCallback, useRef } from 'react';
+import SEO from '../components/SEO';
 import {
   addFiles, getFiles, clearFiles, removeFile,
-  subscribe, setPageCount, setThumbnail
+  subscribe, setPageCount, setThumbnail, setFileStatus, setFileProgress
 } from '../fileManager';
 import { mergePDFs, downloadPDF, getPageCount, timestampedFilename } from '../pdfMerger';
 import { generateThumbnail } from '../thumbnailGenerator';
 import { useAuth } from '../context/AuthContext';
-import { uploadToDrive } from '../services/googleDrive';
 import SaveToDriveButton from '../components/SaveToDriveButton';
+import { logUserAction } from '../services/activityLog';
+import { addRecentFile } from '../services/recentFiles';
+import { bumpLocalJob } from '../services/privacyStats';
 import ToolPageLayout from '../components/ToolPageLayout';
 import FileList from '../components/FileList';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SuccessBanner from '../components/SuccessBanner';
-
-/* Google Drive icon */
-const DriveIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 87.3 78" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5l5.4 9.35z" fill="#0066DA"/>
-    <path d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.55A8.994 8.994 0 0 0 0 53.05h27.5l16.15-28.05z" fill="#00AC47"/>
-    <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.85 11.2 7.9 12.6z" fill="#EA4335"/>
-    <path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.1.45-4.5 1.2L43.65 25z" fill="#00832D"/>
-    <path d="M59.8 53.05H27.5L13.75 76.8c1.4.8 2.95 1.2 4.5 1.2h50.8c1.6 0 3.1-.45 4.5-1.2L59.8 53.05z" fill="#2684FC"/>
-    <path d="M73.4 26.5l-13.1-22.7c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25l16.15 28.05H87.3c0-1.55-.4-3.1-1.2-4.5L73.4 26.5z" fill="#FFBA00"/>
-  </svg>
-);
-
-/* Drive button visual states */
-const DRIVE_STATE = {
-  idle:    { label: 'Save to Drive',        cls: 'btn-drive' },
-  loading: { label: 'Uploading to Drive…',  cls: 'btn-drive loading' },
-  success: { label: 'Saved to Drive ✓',     cls: 'btn-drive success' },
-  error:   { label: 'Drive failed — retry', cls: 'btn-drive error' },
-};
+import QueuePanel from '../components/QueuePanel';
+import RecentFilesPanel from '../components/RecentFilesPanel';
 
 export default function MergePDF() {
-  useSEO('Merge PDF Online Free � OM PDF | No Upload Required','Combine multiple PDF files into one. Drag to reorder pages, then merge instantly in your browser. 100% free, private, no upload.','https://om-pdf.netlify.app/merge-pdf');
+  
   const { user } = useAuth();
-  /* ── File list ── */
+  /* -- File list -- */
   const [files, setFiles] = useState([]);
 
-  /* ── Merge state ── */
+  /* -- Merge state -- */
   const [progress, setProgress]   = useState(0);
   const [progLabel, setProgLabel] = useState('');
   const [merging, setMerging]     = useState(false);
@@ -50,30 +34,65 @@ export default function MergePDF() {
   const [success, setSuccess]     = useState('');
   const [filename, setFilename]   = useState('');
 
-  /* ── Drive state handled by SaveToDriveButton component ── */
+  /* -- Drive state handled by SaveToDriveButton component -- */
   // last merged result for re-download / drive save
   const lastBytesRef = useRef(null);
   const lastNameRef  = useRef('');
 
-  /* ── Subscribe to file manager ── */
+  /* -- Subscribe to file manager -- */
   React.useEffect(() => {
     const unsub = subscribe(list => setFiles([...list]));
     return unsub;
   }, []);
 
-  /* ── Handle dropped / selected files ── */
+  /* -- Handle dropped / selected files -- */
   const handleFiles = useCallback(async (rawFiles) => {
     const { warnings } = addFiles(Array.from(rawFiles));
     if (warnings.length) setWarning(warnings.join(' | '));
     getFiles().forEach(entry => {
-      if (entry.pages === null)
-        getPageCount(entry.file).then(n => { if (n) setPageCount(entry.id, n); });
-      if (entry.thumbnail === null)
-        generateThumbnail(entry.file).then(url => { if (url) setThumbnail(entry.id, url); });
+      if (entry.pages === null || entry.thumbnail === null) {
+        setFileStatus(entry.id, 'processing', 'Analyzing file');
+      }
+      if (entry.pages === null) {
+        getPageCount(entry.file).then(n => {
+          if (n !== null) {
+            setPageCount(entry.id, n);
+            setFileProgress(entry.id, 45);
+            const current = getFiles().find(f => f.id === entry.id);
+            if (current?.thumbnail) {
+              setFileProgress(entry.id, 100);
+              setFileStatus(entry.id, 'ready');
+            }
+          }
+        }).catch(() => {
+          setFileStatus(entry.id, 'error', 'Failed to read pages');
+        });
+      }
+      if (entry.thumbnail === null) {
+        generateThumbnail(entry.file).then(url => {
+          if (url) {
+            setThumbnail(entry.id, url);
+            setFileProgress(entry.id, 75);
+            const current = getFiles().find(f => f.id === entry.id);
+            if (current?.pages !== null) {
+              setFileProgress(entry.id, 100);
+              setFileStatus(entry.id, 'ready');
+            }
+          }
+        }).catch(() => {
+          const current = getFiles().find(f => f.id === entry.id);
+          if (current?.pages !== null) {
+            setFileProgress(entry.id, 100);
+            setFileStatus(entry.id, 'ready', 'Thumbnail skipped');
+          } else {
+            setFileStatus(entry.id, 'error', 'Thumbnail failed');
+          }
+        });
+      }
     });
   }, []);
 
-  /* ── Merge ── */
+  /* -- Merge -- */
   const handleMerge = async () => {
     if (files.length < 2) { setError('Add at least 2 PDF files.'); return; }
     setError(''); setWarning(''); setSuccess('');
@@ -90,27 +109,59 @@ export default function MergePDF() {
       downloadPDF(bytes, name);
       if (w.length) setWarning(w.join(' | '));
       const pages = files.reduce((s, f) => s + (f.pages || 0), 0);
-      setSuccess(`"${name}" · ${files.length} files${pages ? ' · ' + pages + ' pages' : ''}`);
+      setSuccess(`"${name}" � ${files.length} files${pages ? ' � ' + pages + ' pages' : ''}`);
       setFilename('');
+      addRecentFile({
+        tool: 'merge',
+        name,
+        size: bytes?.byteLength || 0,
+        pages,
+      });
+      bumpLocalJob();
+      await logUserAction(user, 'merge', {
+        tool: 'merge',
+        status: 'success',
+        meta: { files: files.length, pages, outputName: name }
+      });
     } catch (err) {
       setError('Merge failed: ' + (err.message || 'Unexpected error.'));
+      await logUserAction(user, 'merge', {
+        tool: 'merge',
+        status: 'error',
+        meta: { error: err?.message || 'Merge failed' }
+      });
     } finally {
       setMerging(false); setProgress(0); setProgLabel('');
     }
   };
 
-  /* ── No separate handleSaveDrive — handled by SaveToDriveButton ── */
+  /* -- No separate handleSaveDrive � handled by SaveToDriveButton -- */
 
-  const ds = null; // unused
+  const queueItems = files.map(f => ({
+    id: f.id,
+    name: f.name,
+    status: f.status,
+    progress: f.progress,
+    etaMs: f.etaMs,
+    message: f.message,
+  }));
 
   return (
-    <ToolPageLayout
-      title="Merge PDF Files"
+    <ToolPageLayout title="Merge PDF Files"
       subtitle="Combine multiple PDFs into one. Drag to reorder, then merge instantly."
-      icon="🔗"
+      icon="??"
     >
+      <SEO title="Merge PDF Online Free — OM PDF | No Upload Required" description="Combine multiple PDF files into one. Drag to reorder pages, then merge instantly in your browser. 100% free, private, no upload." url="https://om-pdf.netlify.app/merge-pdf" />
+      <SEO 
+        title="Merge PDF Online Free � No Upload Required" 
+        description="Combine multiple PDF files into one. Drag to reorder pages, then merge instantly in your browser. 100% free, private, no upload." 
+        url="https://om-pdf.netlify.app/merge-pdf" 
+        keywords="merge pdf, combine pdf, join pdf, free pdf merger, secure pdf tools, local pdf processing"
+      />
       {/* Drop zone */}
       <DropZone onFiles={handleFiles} multiple />
+
+      <QueuePanel title="File queue" items={queueItems} />
 
       {/* File list */}
       {files.length > 0 && (
@@ -124,18 +175,18 @@ export default function MergePDF() {
       )}
 
       {/* Alerts */}
-      {warning && <div className="alert alert-warning"><span>⚠️ {warning}</span></div>}
+      {warning && <div className="alert alert-warning"><span>?? {warning}</span></div>}
       {error   && <div className="alert alert-error"><span>❌ {error}</span></div>}
 
       {/* Progress */}
       {merging && <ProgressBar pct={progress} label={progLabel} />}
 
-      {/* ── Success banner ── */}
+      {/* -- Success banner -- */}
       {success && (
         <SuccessBanner
           message="PDF merged successfully!"
           details={success}
-          onDismiss={() => { setSuccess(''); setDriveState('idle'); setDriveLink(''); }}
+          onDismiss={() => { setSuccess(''); }}
         >
           {/* Re-download */}
           <button
@@ -189,9 +240,20 @@ export default function MergePDF() {
             </span>
           </button>
 
-          <p className="merge-hint">🔒 Processed locally — files never uploaded to any server</p>
+          <p className="merge-hint">🔒 Processed locally � files never uploaded to any server</p>
         </div>
       )}
+
+      <RecentFilesPanel tool="merge" title="Recent merges" />
     </ToolPageLayout>
   );
 }
+
+
+
+
+
+
+
+
+

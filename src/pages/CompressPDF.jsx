@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import useSEO from '../hooks/useSEO';
+﻿import React, { useState } from 'react';
+import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
@@ -7,6 +7,15 @@ import SuccessBanner from '../components/SuccessBanner';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import { PDFDocument } from 'pdf-lib';
 import { formatBytes } from '../fileManager';
+import { useAuth } from '../context/AuthContext';
+import { logUserAction } from '../services/activityLog';
+import { pdfjsLib } from '../utils/pdfjs';
+import { addRecentFile } from '../services/recentFiles';
+import { bumpLocalJob } from '../services/privacyStats';
+import QueuePanel from '../components/QueuePanel';
+import RecentFilesPanel from '../components/RecentFilesPanel';
+
+import { runPdfWorkerTask } from '../workers/workerClient';
 
 /**
  * Basic client-side PDF "compression":
@@ -14,23 +23,60 @@ import { formatBytes } from '../fileManager';
  * This is lightweight but real — not image recompression.
  */
 async function compressPDF(file, onProgress) {
-  onProgress?.(10);
+  const buffer = await file.arrayBuffer();
+  const { bytes } = await runPdfWorkerTask('compress_lossless', { buffer }, [buffer], onProgress);
+  return bytes;
+}
+
+async function compressByRaster(file, { quality, scale }, onProgress) {
+  onProgress?.(5);
   const buf = await file.arrayBuffer();
-  onProgress?.(30);
-  const pdfDoc = await PDFDocument.load(buf, { ignoreEncryption: true });
-  onProgress?.(60);
-  const bytes = await pdfDoc.save({ useObjectStreams: true, addDefaultPage: false });
+  const pdf = await pdfjsLib.getDocument({ data: buf, verbosity: 0 }).promise;
+  const total = pdf.numPages;
+  const outDoc = await PDFDocument.create();
+
+  for (let i = 1; i <= total; i++) {
+    const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.floor(viewport.width);
+    canvas.height = Math.floor(viewport.height);
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+    const imgBuf = await blob.arrayBuffer();
+    const img = await outDoc.embedJpg(imgBuf);
+    const outPage = outDoc.addPage([viewport.width, viewport.height]);
+    outPage.drawImage(img, { x: 0, y: 0, width: viewport.width, height: viewport.height });
+    onProgress?.(Math.round((i / total) * 90));
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  onProgress?.(98);
+  const bytes = await outDoc.save();
   onProgress?.(100);
   return bytes;
 }
 
 export default function CompressPDF() {
-  useSEO('Compress PDF Online Free � OM PDF | Reduce PDF Size','Reduce PDF file size without losing quality. Free client-side PDF compression � your file never leaves your browser.','https://om-pdf.netlify.app/compress-pdf');
+  
+  const { user } = useAuth();
   const [file, setFile]         = useState(null);
   const [progress, setProgress] = useState(0);
   const [compressing, setCompressing] = useState(false);
   const [error, setError]       = useState('');
   const [result, setResult]     = useState(null); // { bytes, origSize, newSize, name }
+  const [mode, setMode] = useState('lossless');
+  const [quality, setQuality] = useState(0.72);
+  const [scale, setScale] = useState(1.4);
+  const queueItems = file ? [{
+    id: file.name,
+    name: file.name,
+    status: compressing ? 'processing' : error ? 'error' : result ? 'done' : 'ready',
+    progress: compressing ? progress : result ? 100 : 0,
+    etaMs: file.size ? Math.max(1200, Math.round((file.size / (1024 * 1024)) * 900)) : null,
+    message: error || '',
+  }] : [];
 
   const loadFile = (raw) => {
     const f = raw[0];
@@ -42,11 +88,33 @@ export default function CompressPDF() {
     if (!file) return;
     setError(''); setResult(null); setCompressing(true); setProgress(0);
     try {
-      const bytes = await compressPDF(file, setProgress);
+      const bytes = mode === 'lossless'
+        ? await compressPDF(file, setProgress)
+        : await compressByRaster(file, { quality, scale }, setProgress);
       const savings = ((1 - bytes.byteLength / file.size) * 100).toFixed(1);
       setResult({ bytes, origSize: file.size, newSize: bytes.byteLength, savings, name: file.name.replace(/\.pdf$/i, '_compressed.pdf') });
+      addRecentFile({ tool: 'compress', name: file.name.replace(/\.pdf$/i, '_compressed.pdf'), size: bytes.byteLength || 0 });
+      bumpLocalJob();
+      await logUserAction(user, 'compress', {
+        tool: 'compress',
+        status: 'success',
+        meta: {
+          outputName: file.name.replace(/\.pdf$/i, '_compressed.pdf'),
+          originalSize: file.size,
+          newSize: bytes.byteLength,
+          savings: Number(savings),
+          mode,
+          quality,
+          scale,
+        }
+      });
     } catch (err) {
       setError('Compression failed: ' + (err.message || 'Unexpected error.'));
+      await logUserAction(user, 'compress', {
+        tool: 'compress',
+        status: 'error',
+        meta: { error: err?.message || 'Compression failed' }
+      });
     } finally { setCompressing(false); setProgress(0); }
   };
 
@@ -62,8 +130,10 @@ export default function CompressPDF() {
 
   return (
     <ToolPageLayout title="Compress PDF" subtitle="Reduce PDF file size using client-side stream optimization." icon="⚡">
+      <SEO keywords="compress pdf, reduce pdf size, shrink pdf, pdf optimizer, small pdf, local pdf compression" title="Compress PDF Online Free — Reduce PDF Size | OM PDF" description="Reduce PDF file size without losing quality. Free client-side PDF compression — your file never leaves your browser." url="https://om-pdf.netlify.app/compress-pdf" />
+      <SEO keywords="compress pdf, reduce pdf size, shrink pdf, pdf optimizer, small pdf, local pdf compression" title="Compress PDF Online Free � OM PDF | Reduce PDF Size" description="Reduce PDF file size without losing quality. Free client-side PDF compression � your file never leaves your browser." url="https://om-pdf.netlify.app/compress-pdf" />
       <div className="alert alert-warning" style={{ marginBottom: 16 }}>
-        <span>ℹ️ Client-side compression re-saves and optimises object streams. For heavy image-based PDFs, results may vary.</span>
+        <span>ℹ️ Choose lossless (safe) or lossy (smaller size). Lossy mode rasterizes pages to images.</span>
       </div>
 
       {!file ? (
@@ -82,6 +152,24 @@ export default function CompressPDF() {
           </div>
 
           {error && <div className="alert alert-error"><span>❌ {error}</span></div>}
+          <div className="split-option-panel">
+            <label className="split-label">Compression mode</label>
+            <div className="split-modes">
+              <button className={`split-mode-btn${mode === 'lossless' ? ' active' : ''}`} onClick={() => setMode('lossless')}>Lossless</button>
+              <button className={`split-mode-btn${mode === 'lossy' ? ' active' : ''}`} onClick={() => setMode('lossy')}>Lossy (smaller)</button>
+            </div>
+            {mode === 'lossy' && (
+              <div className="compress-controls">
+                <label className="split-label" htmlFor="qualityRange">JPEG quality ({Math.round(quality * 100)}%)</label>
+                <input id="qualityRange" type="range" min={50} max={95} value={Math.round(quality * 100)}
+                  onChange={e => setQuality(Math.min(0.95, Math.max(0.5, parseInt(e.target.value, 10) / 100)))} />
+                <label className="split-label" htmlFor="scaleRange">Render scale ({scale.toFixed(1)}x)</label>
+                <input id="scaleRange" type="range" min={10} max={20} value={Math.round(scale * 10)}
+                  onChange={e => setScale(Math.min(2, Math.max(1, parseInt(e.target.value, 10) / 10)))} />
+              </div>
+            )}
+          </div>
+          <QueuePanel title="File queue" items={queueItems} />
           {compressing && <ProgressBar pct={progress} label="Compressing PDF…" />}
 
           {result && (
@@ -111,6 +199,15 @@ export default function CompressPDF() {
           </div>
         </div>
       )}
+      <RecentFilesPanel tool="compress" title="Recent compressions" />
     </ToolPageLayout>
   );
 }
+
+
+
+
+
+
+
+

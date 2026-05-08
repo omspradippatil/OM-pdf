@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import useSEO from '../hooks/useSEO';
+﻿import React, { useState, useRef } from 'react';
+import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
@@ -8,9 +8,16 @@ import SaveToDriveButton from '../components/SaveToDriveButton';
 import { addPageNumbers, getPdfPageCount } from '../pageNumbers';
 import { downloadBytes } from '../splitPdf';
 import { formatBytes } from '../fileManager';
+import { useAuth } from '../context/AuthContext';
+import { logUserAction } from '../services/activityLog';
+import { addRecentFile } from '../services/recentFiles';
+import { bumpLocalJob } from '../services/privacyStats';
+import QueuePanel from '../components/QueuePanel';
+import RecentFilesPanel from '../components/RecentFilesPanel';
 
 export default function PageNumbers() {
-  useSEO('Add Page Numbers to PDF Free � OM PDF | Custom Position & Style','Stamp page numbers onto any PDF. Choose position, prefix, font size and starting number. Free, private, no upload.','https://om-pdf.netlify.app/page-numbers');
+  
+  const { user } = useAuth();
   const [file, setFile]     = useState(null);
   const [pages, setPages]   = useState(null);
   const [progress, setProgress] = useState(0);
@@ -24,6 +31,15 @@ export default function PageNumbers() {
   const [filename, setFilename] = useState('');
   const lastBytesRef = useRef(null);
   const lastNameRef  = useRef('');
+
+  const queueItems = file ? [{
+    id: file.name,
+    name: file.name,
+    status: working ? 'processing' : error ? 'error' : success ? 'done' : 'ready',
+    progress: working ? progress : success ? 100 : 0,
+    etaMs: file.size ? Math.max(1200, Math.round((file.size / (1024 * 1024)) * 900)) : null,
+    message: error || '',
+  }] : [];
 
   const loadFile = async (raw) => {
     const f = raw[0];
@@ -44,8 +60,28 @@ export default function PageNumbers() {
       lastBytesRef.current = bytes;
       lastNameRef.current  = name;
       setSuccess(`"${name}" — page numbers added`);
+      addRecentFile({ tool: 'page_numbers', name, size: bytes.byteLength || 0, pages });
+      bumpLocalJob();
+      await logUserAction(user, 'page_numbers', {
+        tool: 'page_numbers',
+        status: 'success',
+        meta: {
+          outputName: name,
+          startFrom: opts.startFrom,
+          startPage: opts.startPage,
+          position: opts.position,
+          prefix: opts.prefix,
+          showTotal: opts.showTotal,
+          fontSize: opts.fontSize,
+        }
+      });
     } catch (err) {
       setError('Failed: ' + (err.message || 'Unexpected error.'));
+      await logUserAction(user, 'page_numbers', {
+        tool: 'page_numbers',
+        status: 'error',
+        meta: { error: err?.message || 'Failed' }
+      });
     } finally { setWorking(false); setProgress(0); }
   };
 
@@ -53,6 +89,8 @@ export default function PageNumbers() {
 
   return (
     <ToolPageLayout title="Add Page Numbers" subtitle="Stamp customizable page numbers onto any PDF — locally, instantly." icon="🔢">
+      <SEO keywords="add page numbers to pdf, stamp pdf, number pdf pages, custom page numbering, paginate pdf" title="Add Page Numbers to PDF Free — Custom Style | OM PDF" description="Stamp page numbers onto any PDF. Choose position, prefix, font size and starting number. Free, private, no upload." url="https://om-pdf.netlify.app/page-numbers" />
+      <SEO keywords="add page numbers to pdf, stamp pdf, number pdf pages, custom page numbering, paginate pdf" title="Add Page Numbers to PDF Free � OM PDF | Custom Position & Style" description="Stamp page numbers onto any PDF. Choose position, prefix, font size and starting number. Free, private, no upload." url="https://om-pdf.netlify.app/page-numbers" />
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to add page numbers" hint="Single PDF · Max 200 MB" />
       ) : (
@@ -122,6 +160,7 @@ export default function PageNumbers() {
           </div>
 
           {error && <div className="alert alert-error"><span>❌ {error}</span></div>}
+          <QueuePanel title="File queue" items={queueItems} />
           {working && <ProgressBar pct={progress} label="Adding page numbers…" />}
           {success && (
             <SuccessBanner message="Page numbers added!" details={success} onDismiss={() => setSuccess('')}>
@@ -144,6 +183,15 @@ export default function PageNumbers() {
           </div>
         </div>
       )}
+      <RecentFilesPanel tool="page_numbers" title="Recent page numbering" />
     </ToolPageLayout>
   );
 }
+
+
+
+
+
+
+
+

@@ -3,67 +3,28 @@
 
 import { PDFDocument } from 'pdf-lib';
 
+import { runPdfWorkerTask } from './workers/workerClient';
+
 /**
  * Merge an array of { file, name, pageOrder? } objects.
  * onProgress(pct 0-100, label?) callback is optional.
  * Returns { bytes: Uint8Array, warnings: string[] }
  */
 export async function mergePDFs(fileEntries, onProgress) {
-  const merged   = await PDFDocument.create();
-  const total    = fileEntries.length;
-  const warnings = [];
+  const filesPayload = [];
+  const transferables = [];
 
-  merged.setTitle('Merged PDF – OM PDF');
-  merged.setCreator('OM PDF (https://om-pdf.netlify.app)');
-  merged.setProducer('OM PDF');
-  merged.setCreationDate(new Date());
-  merged.setModificationDate(new Date());
-
-  for (let i = 0; i < total; i++) {
-    const entry = fileEntries[i];
-    onProgress?.(5 + Math.round((i / total) * 85), `Merging file ${i + 1} of ${total}…`);
-
-    let srcDoc;
-    try {
-      const arrayBuffer = await entry.file.arrayBuffer();
-      try {
-        srcDoc = await PDFDocument.load(arrayBuffer);
-      } catch (encErr) {
-        if (encErr.message?.includes('encrypted')) {
-          srcDoc = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
-          warnings.push(`"${entry.name}" is password-protected — pages may appear blank.`);
-        } else { throw encErr; }
-      }
-    } catch {
-      warnings.push(`"${entry.name}" could not be read and was skipped.`);
-      await new Promise(r => setTimeout(r, 0));
-      continue;
-    }
-
-    const totalPages = srcDoc.getPageCount();
-    const pageIndices = Array.isArray(entry.pageOrder) && entry.pageOrder.length
-      ? entry.pageOrder.filter(idx => idx >= 0 && idx < totalPages)
-      : srcDoc.getPageIndices();
-
-    if (Array.isArray(entry.pageOrder) && pageIndices.length === 0) {
-      warnings.push(`"${entry.name}" has no selected pages and was skipped.`);
-      await new Promise(r => setTimeout(r, 0));
-      continue;
-    }
-
-    const copiedPages = await merged.copyPages(srcDoc, pageIndices);
-    copiedPages.forEach(page => merged.addPage(page));
-    await new Promise(r => setTimeout(r, 0));
+  for (const entry of fileEntries) {
+    const buffer = await entry.file.arrayBuffer();
+    filesPayload.push({
+      name: entry.name,
+      buffer,
+      pageOrder: entry.pageOrder
+    });
+    transferables.push(buffer);
   }
 
-  if (merged.getPageCount() === 0) {
-    throw new Error('No pages could be merged. All files may be corrupted or unreadable.');
-  }
-
-  onProgress?.(95, 'Saving PDF…');
-  const bytes = await merged.save();
-  onProgress?.(100, 'Done!');
-  return { bytes, warnings };
+  return runPdfWorkerTask('merge', { files: filesPayload }, transferables, onProgress);
 }
 
 /** Get page count from a File object */

@@ -1,14 +1,22 @@
 import React, { useRef, useState } from 'react';
 
-export default function DropZone({ onFiles, multiple = false, label, hint }) {
+export default function DropZone({
+  onFiles,
+  multiple = false,
+  label,
+  hint,
+  accept = '.pdf,application/pdf',
+  filter = null,
+}) {
   const inputRef   = useRef(null);
   const [active, setActive] = useState(false);
 
   /* Filter to only PDF files and pass valid ones */
   const dispatch = (fileList) => {
-    const arr = Array.from(fileList).filter(
-      f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
-    );
+    const defaultFilter = (f) =>
+      f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf');
+    const useFilter = filter || defaultFilter;
+    const arr = Array.from(fileList).filter(useFilter);
     if (arr.length) onFiles(arr);
   };
 
@@ -38,7 +46,7 @@ export default function DropZone({ onFiles, multiple = false, label, hint }) {
 
   return (
     <div
-      className={`dropzone${active ? ' drag-active' : ''}`}
+      className={`dropzone${active ? ' drag-over' : ''}`}
       role="button"
       tabIndex={0}
       aria-label={label || 'Upload PDF files'}
@@ -77,7 +85,7 @@ export default function DropZone({ onFiles, multiple = false, label, hint }) {
         <input
           ref={inputRef}
           type="file"
-          accept=".pdf,application/pdf"
+          accept={accept}
           multiple={multiple}
           hidden
           onChange={onInputChange}

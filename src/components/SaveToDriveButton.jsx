@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { uploadToDrive } from '../services/googleDrive';
+import { logUserAction } from '../services/activityLog';
+import { bumpDriveUpload } from '../services/privacyStats';
 
 const DriveIcon = () => (
   <svg width="14" height="14" viewBox="0 0 87.3 78" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -22,22 +24,51 @@ const DriveIcon = () => (
  * @prop {string}               [mimeType]  - defaults to 'application/pdf'
  */
 export default function SaveToDriveButton({ bytes, filename, toolFolder, mimeType = 'application/pdf' }) {
-  const { user }    = useAuth();
+  const { user, ensureDriveToken } = useAuth();
   const [status, setStatus] = useState('idle');   // idle | loading | success | error
   const [link, setLink]     = useState('');
   const [errMsg, setErrMsg] = useState('');
 
+  const getBytesSize = (value) => {
+    if (!value) return 0;
+    if (value instanceof Blob) return value.size || 0;
+    if (typeof value.byteLength === 'number') return value.byteLength;
+    if (typeof value.length === 'number') return value.length;
+    return 0;
+  };
+
   const handleSave = async () => {
     if (!bytes || status === 'loading') return;
+    if (!user) {
+      setErrMsg('Please sign in to save to Drive.');
+      setStatus('error');
+      return;
+    }
     setStatus('loading'); setLink(''); setErrMsg('');
     try {
+      await ensureDriveToken();
       const result = await uploadToDrive(bytes, filename, user?.email || null, toolFolder, mimeType);
       setLink(result.webViewLink || '');
       setStatus('success');
+      bumpDriveUpload();
+      await logUserAction(user, 'drive_upload', {
+        tool: toolFolder,
+        status: 'success',
+        meta: {
+          filename,
+          size: getBytesSize(bytes),
+          mimeType,
+        }
+      });
     } catch (err) {
       console.error('[Drive]', err);
       setErrMsg(err.message || 'Upload failed');
       setStatus('error');
+      await logUserAction(user, 'drive_upload', {
+        tool: toolFolder,
+        status: 'error',
+        meta: { filename, error: err?.message || 'Upload failed' }
+      });
     }
   };
 

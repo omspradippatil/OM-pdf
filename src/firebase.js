@@ -4,7 +4,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import {
   getFirestore, collection, addDoc, serverTimestamp,
-  query, where, getDocs, orderBy, deleteDoc, doc
+  query, where, getDocs, orderBy, deleteDoc, doc, setDoc, getDoc
 } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -22,10 +22,12 @@ const auth     = getAuth(app);
 const storage  = getStorage(app);
 const db       = getFirestore(app);
 const provider = new GoogleAuthProvider();
+provider.addScope('https://www.googleapis.com/auth/drive.file');
+provider.setCustomParameters({ prompt: 'select_account' });
 
 export {
-  auth, provider,
+  auth, provider, GoogleAuthProvider,
   signInWithPopup, signOut, onAuthStateChanged,
   storage, ref, uploadBytes, getDownloadURL, deleteObject,
-  db, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, deleteDoc, doc
+  db, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, deleteDoc, doc, setDoc, getDoc
 };

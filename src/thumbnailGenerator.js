@@ -1,10 +1,6 @@
 // thumbnailGenerator.js – renders first page of a PDF to a small canvas thumbnail
 
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Use CDN worker — avoids complex Vite worker bundling
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+import { pdfjsLib } from './utils/pdfjs';
 
 const THUMB_WIDTH = 72; // px — compact but clear
 const PAGE_THUMB_WIDTH = 92; // px — for page organizer grid
@@ -34,7 +30,7 @@ export async function generateThumbnail(file) {
  * Generate JPEG thumbnails for every page in a PDF file.
  * Returns an array of data URLs (null if a page fails).
  */
-export async function generatePageThumbnails(file) {
+export async function generatePageThumbnails(file, onProgress) {
   try {
     const buf  = await file.arrayBuffer();
     const pdf  = await pdfjsLib.getDocument({ data: buf, verbosity: 0 }).promise;
@@ -50,6 +46,7 @@ export async function generatePageThumbnails(file) {
       canvas.height = Math.floor(viewport.height);
       await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
       thumbs[i - 1] = canvas.toDataURL('image/jpeg', 0.7);
+      onProgress?.(Math.round((i / total) * 100));
       await new Promise(r => setTimeout(r, 0));
     }
 

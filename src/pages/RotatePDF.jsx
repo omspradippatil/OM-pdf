@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import useSEO from '../hooks/useSEO';
+﻿import React, { useEffect, useState } from 'react';
+import SEO from '../components/SEO';
 import { PDFDocument, degrees } from 'pdf-lib';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
@@ -7,21 +7,30 @@ import ProgressBar from '../components/ProgressBar';
 import SuccessBanner from '../components/SuccessBanner';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import { formatBytes } from '../fileManager';
+import { useAuth } from '../context/AuthContext';
+import { logUserAction } from '../services/activityLog';
+import { generatePageThumbnails } from '../thumbnailGenerator';
+import { addRecentFile } from '../services/recentFiles';
+import { bumpLocalJob } from '../services/privacyStats';
+import QueuePanel from '../components/QueuePanel';
+import RecentFilesPanel from '../components/RecentFilesPanel';
+import '../utils/pdfjs';
+import { Document, Page } from 'react-pdf';
 
-const ANGLES = [
-  { label: '90° Clockwise',         value: -90  },
-  { label: '180° (Flip)',            value: 180  },
-  { label: '90° Counter-Clockwise',  value: 90   },
-];
-
-async function rotatePDF(file, angle, onProgress) {
+async function rotatePDF(file, rotations, onProgress) {
   onProgress?.(10);
   const buf    = await file.arrayBuffer();
   onProgress?.(30);
   const pdfDoc = await PDFDocument.load(buf, { ignoreEncryption: true });
   const pages  = pdfDoc.getPages();
   onProgress?.(50);
-  pages.forEach(page => page.setRotation(degrees((page.getRotation().angle + angle + 360) % 360)));
+  pages.forEach((page, idx) => {
+    const delta = rotations?.[idx] || 0;
+    if (!delta) return;
+    const current = page.getRotation().angle;
+    const next = (current + ((delta % 360) + 360) % 360) % 360;
+    page.setRotation(degrees(next));
+  });
   onProgress?.(80);
   const bytes = await pdfDoc.save();
   onProgress?.(100);
@@ -37,9 +46,12 @@ function download(bytes, name) {
 }
 
 export default function RotatePDF() {
-  useSEO('Rotate PDF Online Free � OM PDF | 90� 180� 270�','Rotate all pages of a PDF by 90�, 180� or 270�. Fast, free and private � processed entirely in your browser.','https://om-pdf.netlify.app/rotate-pdf');
+  
+  const { user } = useAuth();
   const [file, setFile]         = useState(null);
-  const [angle, setAngle]       = useState(-90);
+  const [pageThumbs, setPageThumbs] = useState([]);
+  const [rotations, setRotations] = useState([]);
+  const [selectedPage, setSelectedPage] = useState(1);
   const [progress, setProgress] = useState(0);
   const [rotating, setRotating] = useState(false);
   const [error, setError]       = useState('');
@@ -47,32 +59,82 @@ export default function RotatePDF() {
   const [lastBytes, setLastBytes] = useState(null);
   const [lastName, setLastName]   = useState('');
 
+  const queueItems = file ? [{
+    id: file.name,
+    name: file.name,
+    status: rotating ? 'processing' : error ? 'error' : success ? 'done' : 'ready',
+    progress: rotating ? progress : success ? 100 : 0,
+    etaMs: file.size ? Math.max(1200, Math.round((file.size / (1024 * 1024)) * 900)) : null,
+    message: error || '',
+  }] : [];
+
   const loadFile = (raw) => {
     const f = Array.isArray(raw) ? raw[0] : raw[0];
     if (!f || f.type !== 'application/pdf') { setError('Select a valid PDF.'); return; }
     setFile(f); setError(''); setSuccess('');
+    setPageThumbs([]);
+    setRotations([]);
+    setSelectedPage(1);
+  };
+
+  useEffect(() => {
+    if (!file) return;
+    let active = true;
+    generatePageThumbnails(file).then(thumbs => {
+      if (!active) return;
+      const nextThumbs = thumbs || [];
+      setPageThumbs(nextThumbs);
+      setRotations(Array.from({ length: nextThumbs.length }, () => 0));
+      setSelectedPage(1);
+    });
+    return () => { active = false; };
+  }, [file]);
+
+  const rotatePage = (index, delta) => {
+    setRotations(prev => {
+      const next = [...prev];
+      const current = next[index] || 0;
+      next[index] = (current + delta + 360) % 360;
+      return next;
+    });
+  };
+
+  const rotateAll = (delta) => {
+    setRotations(prev => prev.map(v => (v + delta + 360) % 360));
   };
 
   const handleRotate = async () => {
     if (!file) return;
     setError(''); setSuccess(''); setRotating(true); setProgress(0);
     try {
-      const bytes = await rotatePDF(file, angle, setProgress);
+      const bytes = await rotatePDF(file, rotations, setProgress);
       const name  = file.name.replace(/\.pdf$/i, `_rotated.pdf`);
       setLastBytes(bytes); setLastName(name);
       download(bytes, name);
-      setSuccess(`"${name}" rotated ${Math.abs(angle)}°`);
+      setSuccess(`"${name}" rotated pages saved`);
+      addRecentFile({ tool: 'rotate', name, size: bytes.byteLength || 0, pages: rotations.length });
+      bumpLocalJob();
+      await logUserAction(user, 'rotate', {
+        tool: 'rotate',
+        status: 'success',
+        meta: { outputName: name }
+      });
     } catch (err) {
       setError('Rotation failed: ' + (err.message || 'Unexpected error.'));
+      await logUserAction(user, 'rotate', {
+        tool: 'rotate',
+        status: 'error',
+        meta: { error: err?.message || 'Rotation failed' }
+      });
     } finally { setRotating(false); setProgress(0); }
   };
 
   return (
-    <ToolPageLayout
-      title="Rotate PDF"
+    <ToolPageLayout title="Rotate PDF"
       subtitle="Rotate all pages in a PDF by 90°, 180°, or 270° — instantly in your browser."
       icon="🔄"
     >
+      <SEO keywords="rotate pdf, flip pdf, turn pdf, pdf page rotation, free online pdf tools" title="Rotate PDF Online Free � OM PDF | 90� 180� 270�" description="Rotate all pages of a PDF by 90�, 180� or 270�. Fast, free and private � processed entirely in your browser." url="https://om-pdf.netlify.app/rotate-pdf" />
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to rotate" hint="Single PDF · Max 200 MB" />
       ) : (
@@ -92,24 +154,40 @@ export default function RotatePDF() {
             </button>
           </div>
 
-          {/* Angle selector */}
           <div className="split-option-panel">
-            <label className="split-label">Rotation direction</label>
-            <div className="rotate-angle-grid">
-              {ANGLES.map(a => (
-                <button
-                  key={a.value}
-                  className={`rotate-angle-btn${angle === a.value ? ' active' : ''}`}
-                  onClick={() => setAngle(a.value)}
-                >
-                  <span className="rotate-icon" style={{ transform: `rotate(${a.value === -90 ? 90 : a.value === 90 ? -90 : 180}deg)` }}>↻</span>
-                  {a.label}
-                </button>
+            <label className="split-label">Rotate pages individually</label>
+            <div className="rotate-tools">
+              <button className="btn-text" type="button" onClick={() => rotateAll(90)}>Rotate all ↺</button>
+              <button className="btn-text" type="button" onClick={() => rotateAll(270)}>Rotate all ↻</button>
+            </div>
+            <div className="rotate-grid">
+              {pageThumbs.map((thumb, idx) => (
+                <div key={idx} className={`rotate-card${selectedPage === idx + 1 ? ' active' : ''}`}>
+                  <button type="button" className="rotate-thumb" onClick={() => setSelectedPage(idx + 1)}>
+                    {thumb
+                      ? <img src={thumb} alt={`Page ${idx + 1} preview`} />
+                      : <div className="page-thumb-placeholder" aria-hidden="true" />}
+                  </button>
+                  <div className="rotate-card-footer">
+                    <span>Page {idx + 1}</span>
+                    <div className="rotate-card-actions">
+                      <button type="button" onClick={() => rotatePage(idx, 270)}>↻</button>
+                      <button type="button" onClick={() => rotatePage(idx, 90)}>↺</button>
+                    </div>
+                  </div>
+                  {rotations[idx] ? <span className="rotate-badge">{rotations[idx]}°</span> : null}
+                </div>
               ))}
+            </div>
+            <div className="rotate-preview">
+              <Document file={file} loading="Loading preview…">
+                <Page pageNumber={selectedPage} width={420} renderAnnotationLayer={false} renderTextLayer={false} />
+              </Document>
             </div>
           </div>
 
           {error   && <div className="alert alert-error"><span>❌ {error}</span></div>}
+          <QueuePanel title="File queue" items={queueItems} />
           {rotating && <ProgressBar pct={progress} label="Rotating PDF…" />}
           {success && (
             <SuccessBanner message="PDF rotated!" details={success} onDismiss={() => setSuccess('')}>
@@ -151,6 +229,15 @@ export default function RotatePDF() {
           </div>
         </div>
       )}
+      <RecentFilesPanel tool="rotate" title="Recent rotations" />
     </ToolPageLayout>
   );
 }
+
+
+
+
+
+
+
+

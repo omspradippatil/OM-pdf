@@ -66,6 +66,39 @@ export async function splitEveryPage(file, baseName, onProgress) {
   return zipBlob;
 }
 
+/**
+ * Split PDF into chunks of N pages, bundled into a ZIP.
+ * Returns a Blob of the ZIP file.
+ */
+export async function splitEveryNPages(file, baseName, chunkSize, onProgress) {
+  const buf    = await file.arrayBuffer();
+  const srcDoc = await PDFDocument.load(buf, { ignoreEncryption: true });
+  const total  = srcDoc.getPageCount();
+  const zip    = new JSZip();
+  const folder = zip.folder(baseName);
+  const size   = Math.max(1, chunkSize || 1);
+
+  let fileIndex = 0;
+  for (let i = 0; i < total; i += size) {
+    const doc = await PDFDocument.create();
+    const slice = Array.from({ length: Math.min(size, total - i) }, (_, idx) => i + idx);
+    const pages = await doc.copyPages(srcDoc, slice);
+    pages.forEach(p => doc.addPage(p));
+    const bytes = await doc.save();
+    const start = String(i + 1).padStart(String(total).length, '0');
+    const end = String(i + slice.length).padStart(String(total).length, '0');
+    folder.file(`${baseName}_pages_${start}-${end}.pdf`, bytes);
+    fileIndex += 1;
+    onProgress && onProgress(Math.round((Math.min(i + size, total) / total) * 90));
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  onProgress && onProgress(95);
+  const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+  onProgress && onProgress(100);
+  return zipBlob;
+}
+
 /** Download bytes as PDF */
 export function downloadBytes(bytes, filename) {
   const blob = new Blob([bytes], { type: 'application/pdf' });

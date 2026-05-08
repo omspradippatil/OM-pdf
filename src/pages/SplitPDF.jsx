@@ -1,13 +1,19 @@
-import React, { useState, useRef } from 'react';
-import useSEO from '../hooks/useSEO';
+﻿import React, { useState, useRef } from 'react';
+import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SuccessBanner from '../components/SuccessBanner';
 import SaveToDriveButton from '../components/SaveToDriveButton';
-import { parsePageRanges, extractPages, splitEveryPage, downloadBytes } from '../splitPdf';
+import { useAuth } from '../context/AuthContext';
+import { parsePageRanges, extractPages, splitEveryPage, splitEveryNPages, downloadBytes } from '../splitPdf';
 import { formatBytes } from '../fileManager';
 import { PDFDocument } from 'pdf-lib';
+import { logUserAction } from '../services/activityLog';
+import { addRecentFile } from '../services/recentFiles';
+import { bumpLocalJob } from '../services/privacyStats';
+import QueuePanel from '../components/QueuePanel';
+import RecentFilesPanel from '../components/RecentFilesPanel';
 
 async function getPageCount(file) {
   try {
@@ -18,11 +24,13 @@ async function getPageCount(file) {
 }
 
 export default function SplitPDF() {
-  useSEO('Split PDF Online Free � OM PDF | Extract Pages Instantly','Split a PDF into individual pages or extract specific page ranges. Free, private, browser-based � no upload needed.','https://om-pdf.netlify.app/split-pdf');
+  
+  const { user } = useAuth();
   const [file, setFile]       = useState(null);
   const [pages, setPages]     = useState(null);
-  const [mode, setMode]       = useState('range'); // 'range' | 'every'
+  const [mode, setMode]       = useState('range'); // 'range' | 'every' | 'chunk'
   const [range, setRange]     = useState('');
+  const [chunkSize, setChunkSize] = useState(2);
   const [filename, setFilename] = useState('');
   const [progress, setProgress] = useState(0);
   const [splitting, setSplitting] = useState(false);
@@ -31,6 +39,15 @@ export default function SplitPDF() {
   const lastBytesRef = useRef(null); // Uint8Array (range) or Blob (ZIP)
   const lastNameRef  = useRef('');
   const lastMimeRef  = useRef('application/pdf');
+
+  const queueItems = file ? [{
+    id: file.name,
+    name: file.name,
+    status: splitting ? 'processing' : error ? 'error' : success ? 'done' : 'ready',
+    progress: splitting ? progress : success ? 100 : 0,
+    etaMs: file.size ? Math.max(1200, Math.round((file.size / (1024 * 1024)) * 900)) : null,
+    message: error || '',
+  }] : [];
 
   const loadFile = async (raw) => {
     const f = raw[0];
@@ -58,7 +75,14 @@ export default function SplitPDF() {
         lastNameRef.current  = name;
         lastMimeRef.current  = 'application/pdf';
         setSuccess(`"${baseName}.pdf" · ${indices.length} pages extracted`);
-      } else {
+        addRecentFile({ tool: 'split', name, size: bytes.byteLength || 0, pages: indices.length });
+        bumpLocalJob();
+        await logUserAction(user, 'split_range', {
+          tool: 'split',
+          status: 'success',
+          meta: { pages: indices.length, outputName: name }
+        });
+      } else if (mode === 'every') {
         const zip  = await splitEveryPage(file, baseName, p => setProgress(p));
         const name = `${baseName}_pages_${new Date().toISOString().slice(0,10)}.zip`;
         const url  = URL.createObjectURL(zip);
@@ -69,14 +93,46 @@ export default function SplitPDF() {
         lastNameRef.current  = name;
         lastMimeRef.current  = 'application/zip';
         setSuccess(`ZIP with ${pages} individual pages downloaded`);
+        addRecentFile({ tool: 'split', name, size: zip.size || 0, pages });
+        bumpLocalJob();
+        await logUserAction(user, 'split_every', {
+          tool: 'split',
+          status: 'success',
+          meta: { pages, outputName: name }
+        });
+      } else {
+        const zip  = await splitEveryNPages(file, baseName, chunkSize, p => setProgress(p));
+        const name = `${baseName}_chunks_${new Date().toISOString().slice(0,10)}.zip`;
+        const url  = URL.createObjectURL(zip);
+        const a = document.createElement('a'); a.href = url; a.download = name;
+        document.body.appendChild(a); a.click();
+        setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+        lastBytesRef.current = zip;
+        lastNameRef.current  = name;
+        lastMimeRef.current  = 'application/zip';
+        setSuccess(`ZIP with ${pages} pages in chunks of ${chunkSize}`);
+        addRecentFile({ tool: 'split', name, size: zip.size || 0, pages });
+        bumpLocalJob();
+        await logUserAction(user, 'split_chunk', {
+          tool: 'split',
+          status: 'success',
+          meta: { pages, chunkSize, outputName: name }
+        });
       }
     } catch (err) {
       setError('Split failed: ' + (err.message || 'Unexpected error.'));
+      await logUserAction(user, 'split', {
+        tool: 'split',
+        status: 'error',
+        meta: { error: err?.message || 'Split failed' }
+      });
     } finally { setSplitting(false); setProgress(0); }
   };
 
   return (
     <ToolPageLayout title="Split PDF" subtitle="Extract page ranges or split every page into individual PDFs." icon="✂️">
+      <SEO keywords="split pdf, extract pages, pdf splitter, cut pdf, separate pdf pages, free pdf tools" title="Split PDF Online Free — Extract Pages Instantly | OM PDF" description="Split a PDF into individual pages or extract specific page ranges. Free, private, browser-based — no upload needed." url="https://om-pdf.netlify.app/split-pdf" />
+      <SEO keywords="split pdf, extract pages, pdf splitter, cut pdf, separate pdf pages, free pdf tools" title="Split PDF Online Free � OM PDF | Extract Pages Instantly" description="Split a PDF into individual pages or extract specific page ranges. Free, private, browser-based � no upload needed." url="https://om-pdf.netlify.app/split-pdf" />
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to split" hint="Single PDF · Max 200 MB" />
       ) : (
@@ -98,6 +154,7 @@ export default function SplitPDF() {
           <div className="split-modes">
             <button className={`split-mode-btn${mode === 'range' ? ' active' : ''}`} onClick={() => setMode('range')}>📄 Extract Pages</button>
             <button className={`split-mode-btn${mode === 'every' ? ' active' : ''}`} onClick={() => setMode('every')}>✂️ Split Every Page</button>
+            <button className={`split-mode-btn${mode === 'chunk' ? ' active' : ''}`} onClick={() => setMode('chunk')}>🧩 Split Every N Pages</button>
           </div>
 
           <div className="split-option-panel">
@@ -116,15 +173,23 @@ export default function SplitPDF() {
                   </div>
                 </div>
               </>
-            ) : (
+            ) : mode === 'every' ? (
               <div className="split-every-info">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/><line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                 Each page will be saved as an individual PDF, bundled into a single <strong>ZIP file</strong>.
               </div>
+            ) : (
+              <>
+                <label className="split-label" htmlFor="chunkInput">Pages per file</label>
+                <input id="chunkInput" className="split-range-input" type="number" min={1} max={200}
+                  value={chunkSize} onChange={e => setChunkSize(Math.max(1, parseInt(e.target.value) || 1))} />
+                <p className="split-hint">Example: 2 → 1-2, 3-4, 5-6 …</p>
+              </>
             )}
           </div>
 
           {error   && <div className="alert alert-error"><span>❌ {error}</span></div>}
+          <QueuePanel title="File queue" items={queueItems} />
           {splitting && <ProgressBar pct={progress} label="Splitting PDF…" />}
           {success && (
             <SuccessBanner message="Split complete!" details={success} onDismiss={() => setSuccess('')}>
@@ -148,6 +213,15 @@ export default function SplitPDF() {
           </div>
         </div>
       )}
+      <RecentFilesPanel tool="split" title="Recent splits" />
     </ToolPageLayout>
   );
 }
+
+
+
+
+
+
+
+

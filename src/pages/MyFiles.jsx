@@ -1,10 +1,9 @@
+﻿import SEO from '../components/SEO';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { fetchUserFiles, deleteUserFile } from '../myFiles';
-import {
-  listDriveFiles, deleteFromDrive,
-  authorize, hasDriveAccess
-} from '../services/googleDrive';
+import { listDriveFiles, deleteFromDrive } from '../services/googleDrive';
+import { logUserAction } from '../services/activityLog';
 import ToolPageLayout from '../components/ToolPageLayout';
 
 /* ── Helpers ── */
@@ -86,7 +85,7 @@ function SectionHeader({ title, count, onRefresh, loading }) {
 
 /* ─── Main Component ── */
 export default function MyFiles() {
-  const { user, login } = useAuth();
+  const { user, login, ensureDriveToken } = useAuth();
 
   // Firebase files
   const [fbFiles, setFbFiles]     = useState([]);
@@ -97,7 +96,7 @@ export default function MyFiles() {
   const [driveFiles, setDriveFiles]       = useState([]);
   const [driveLoading, setDriveLoading]   = useState(false);
   const [driveError, setDriveError]       = useState('');
-  const [driveConnected, setDriveConnected] = useState(false);
+  const [driveReady, setDriveReady] = useState(false);
 
   // Active tab
   const [tab, setTab] = useState('firebase'); // 'firebase' | 'drive'
@@ -112,20 +111,21 @@ export default function MyFiles() {
   }, [user]);
 
   /* ── Load Drive files ── */
-  const loadDrive = useCallback(async (forceAuth = false) => {
+  const loadDrive = useCallback(async () => {
+    if (!user) return;
     setDriveLoading(true); setDriveError('');
     try {
-      if (forceAuth) await authorize(user?.email || null);
+      await ensureDriveToken();
       const list = await listDriveFiles(user?.email || null);
       setDriveFiles(list);
-      setDriveConnected(true);
+      setDriveReady(true);
     } catch (err) {
       setDriveError(err.message || 'Could not load Drive files.');
-      setDriveConnected(false);
+      setDriveReady(false);
     } finally {
       setDriveLoading(false);
     }
-  }, [user]);
+  }, [user, ensureDriveToken]);
 
   useEffect(() => { loadFirebase(); }, [user, loadFirebase]);
 
@@ -133,18 +133,26 @@ export default function MyFiles() {
   const deleteFirebase = async (docId, path) => {
     if (!confirm('Delete this file? This cannot be undone.')) return;
     const res = await deleteUserFile(docId, path);
-    if (res.ok) setFbFiles(f => f.filter(x => x.id !== docId));
-    else setFbError('Delete failed: ' + res.error);
+    if (res.ok) {
+      setFbFiles(f => f.filter(x => x.id !== docId));
+      await logUserAction(user, 'cloud_delete', { status: 'success', meta: { docId, path } });
+    } else {
+      setFbError('Delete failed: ' + res.error);
+      await logUserAction(user, 'cloud_delete', { status: 'error', meta: { docId, path, error: res.error } });
+    }
   };
 
   /* ── Delete Drive file ── */
   const deleteDriveFile = async (fileId) => {
     if (!confirm('Delete this file from Google Drive? This cannot be undone.')) return;
     try {
+      await ensureDriveToken();
       await deleteFromDrive(fileId, user?.email || null);
       setDriveFiles(f => f.filter(x => x.id !== fileId));
+      await logUserAction(user, 'drive_delete', { status: 'success', meta: { fileId } });
     } catch (err) {
       setDriveError('Delete failed: ' + err.message);
+      await logUserAction(user, 'drive_delete', { status: 'error', meta: { fileId, error: err?.message || 'Delete failed' } });
     }
   };
 
@@ -172,7 +180,7 @@ export default function MyFiles() {
           ☁️ Firebase Cloud
           {fbFiles.length > 0 && <span className="mf-tab-badge">{fbFiles.length}</span>}
         </button>
-        <button className={`mf-tab${tab === 'drive' ? ' active' : ''}`} onClick={() => { setTab('drive'); if (!driveConnected) loadDrive(false); }}>
+        <button className={`mf-tab${tab === 'drive' ? ' active' : ''}`} onClick={() => { setTab('drive'); if (!driveReady) loadDrive(); }}>
           <svg width="13" height="13" viewBox="0 0 87.3 78" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'inline', marginRight: 5 }}><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5l5.4 9.35z" fill="#0066DA"/><path d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.55A8.994 8.994 0 0 0 0 53.05h27.5l16.15-28.05z" fill="#00AC47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.85 11.2 7.9 12.6z" fill="#EA4335"/><path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.1.45-4.5 1.2L43.65 25z" fill="#00832D"/><path d="M59.8 53.05H27.5L13.75 76.8c1.4.8 2.95 1.2 4.5 1.2h50.8c1.6 0 3.1-.45 4.5-1.2L59.8 53.05z" fill="#2684FC"/><path d="M73.4 26.5l-13.1-22.7c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25l16.15 28.05H87.3c0-1.55-.4-3.1-1.2-4.5L73.4 26.5z" fill="#FFBA00"/></svg>
           Google Drive
           {driveFiles.length > 0 && <span className="mf-tab-badge">{driveFiles.length}</span>}
@@ -224,21 +232,18 @@ export default function MyFiles() {
           <SectionHeader
             title="🗂️ Google Drive — OM PDF folder"
             count={driveFiles.length}
-            onRefresh={() => loadDrive(false)}
+            onRefresh={loadDrive}
             loading={driveLoading}
           />
           {driveError && <div className="alert alert-warning"><span>⚠️ {driveError}</span></div>}
 
-          {!driveConnected && !driveLoading && (
+          {!driveReady && !driveLoading && (
             <div className="mf-empty">
               <div className="mf-empty-icon" style={{ fontSize: '2.5rem' }}>
                 <svg width="56" height="56" viewBox="0 0 87.3 78" fill="none"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5l5.4 9.35z" fill="#0066DA"/><path d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.55A8.994 8.994 0 0 0 0 53.05h27.5l16.15-28.05z" fill="#00AC47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.85 11.2 7.9 12.6z" fill="#EA4335"/><path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.1.45-4.5 1.2L43.65 25z" fill="#00832D"/><path d="M59.8 53.05H27.5L13.75 76.8c1.4.8 2.95 1.2 4.5 1.2h50.8c1.6 0 3.1-.45 4.5-1.2L59.8 53.05z" fill="#2684FC"/><path d="M73.4 26.5l-13.1-22.7c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25l16.15 28.05H87.3c0-1.55-.4-3.1-1.2-4.5L73.4 26.5z" fill="#FFBA00"/></svg>
               </div>
-              <p>Connect Google Drive to view your <strong>OM PDF</strong> folder.</p>
-              <p className="mf-empty-sub">Only files inside the "OM PDF" folder are shown — we never access anything else.</p>
-              <button className="btn-connect-drive" onClick={() => loadDrive(true)}>
-                <GoogleIcon /> Connect Google Drive
-              </button>
+              <p>Drive access uses your Google sign-in.</p>
+              <p className="mf-empty-sub">Click Refresh to load your "OM PDF" folder.</p>
             </div>
           )}
 
@@ -248,7 +253,7 @@ export default function MyFiles() {
             </div>
           )}
 
-          {driveConnected && !driveLoading && driveFiles.length === 0 && (
+          {driveReady && !driveLoading && driveFiles.length === 0 && (
             <div className="mf-empty">
               <div className="mf-empty-icon">🗂️</div>
               <p>No files in your <strong>OM PDF</strong> Drive folder yet.</p>
@@ -256,7 +261,7 @@ export default function MyFiles() {
             </div>
           )}
 
-          {driveConnected && !driveLoading && driveFiles.length > 0 && (
+          {driveReady && !driveLoading && driveFiles.length > 0 && (
             <div className="mf-grid">
               {driveFiles.map(f => (
                 <FileCard
@@ -276,3 +281,11 @@ export default function MyFiles() {
     </ToolPageLayout>
   );
 }
+
+
+
+
+
+
+
+

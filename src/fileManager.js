@@ -4,7 +4,7 @@ const MAX_FILE_SIZE_MB    = 200;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const LARGE_FILE_WARN_MB  = 100;
 
-let files  = []; // { id, file, name, size, pages, thumbnail, pageOrder, pageThumbs, pageThumbsLoaded }
+let files  = []; // { id, file, name, size, pages, thumbnail, pageOrder, pageThumbs, pageThumbsLoaded, status, progress, etaMs, message }
 let nextId = 0;
 
 const listeners = new Set();
@@ -41,7 +41,11 @@ export function addFiles(rawFiles) {
       thumbnail: null,
       pageOrder: null,
       pageThumbs: null,
-      pageThumbsLoaded: false
+      pageThumbsLoaded: false,
+      status: 'queued',
+      progress: 0,
+      etaMs: estimateMs(file.size),
+      message: ''
     });
     added++;
   }
@@ -86,6 +90,29 @@ export function setPageThumbnails(id, thumbs) {
   emit();
 }
 
+export function setFileStatus(id, status, message = '') {
+  const e = files.find(f => f.id === id);
+  if (!e) return;
+  e.status = status;
+  e.message = message || e.message;
+  emit();
+}
+
+export function setFileProgress(id, progress, etaMs = null) {
+  const e = files.find(f => f.id === id);
+  if (!e) return;
+  e.progress = Math.min(100, Math.max(0, progress));
+  if (etaMs !== null) e.etaMs = etaMs;
+  emit();
+}
+
+export function setFileMessage(id, message) {
+  const e = files.find(f => f.id === id);
+  if (!e) return;
+  e.message = message;
+  emit();
+}
+
 export function reorderPages(id, fromIndex, toIndex) {
   const e = files.find(f => f.id === id);
   if (!e || !e.pageOrder || fromIndex === toIndex) return;
@@ -112,4 +139,9 @@ export function formatBytes(bytes) {
   if (bytes < 1024)           return bytes + ' B';
   if (bytes < 1024 * 1024)    return (bytes / 1024).toFixed(1) + ' KB';
   return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function estimateMs(bytes) {
+  const mb = bytes / (1024 * 1024);
+  return Math.max(1000, Math.round(mb * 900));
 }

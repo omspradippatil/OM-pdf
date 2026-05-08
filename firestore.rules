@@ -17,5 +17,20 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // users collection
+    match /users/{uid} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == uid;
+    }
+
+    // user_actions collection
+    match /user_actions/{docId} {
+      allow read: if request.auth != null
+                  && request.auth.uid == resource.data.uid;
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.uid;
+      allow update, delete: if false;
+    }
+
   }
 }
