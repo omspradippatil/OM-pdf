@@ -1,97 +1,97 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://ompdf.com/</loc>
+    <loc>https://om-pdf.netlify.app/</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://ompdf.com/merge-pdf</loc>
+    <loc>https://om-pdf.netlify.app/merge-pdf</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ompdf.com/split-pdf</loc>
+    <loc>https://om-pdf.netlify.app/split-pdf</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ompdf.com/compress-pdf</loc>
+    <loc>https://om-pdf.netlify.app/compress-pdf</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ompdf.com/rotate-pdf</loc>
+    <loc>https://om-pdf.netlify.app/rotate-pdf</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ompdf.com/convert-pdf</loc>
+    <loc>https://om-pdf.netlify.app/convert-pdf</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ompdf.com/image-to-pdf</loc>
+    <loc>https://om-pdf.netlify.app/image-to-pdf</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ompdf.com/organize-pdf</loc>
+    <loc>https://om-pdf.netlify.app/organize-pdf</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ompdf.com/watermark-pdf</loc>
+    <loc>https://om-pdf.netlify.app/watermark-pdf</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ompdf.com/crop-pdf</loc>
+    <loc>https://om-pdf.netlify.app/crop-pdf</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ompdf.com/page-numbers</loc>
+    <loc>https://om-pdf.netlify.app/page-numbers</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ompdf.com/metadata-editor</loc>
+    <loc>https://om-pdf.netlify.app/metadata-editor</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ompdf.com/pdf-to-text</loc>
+    <loc>https://om-pdf.netlify.app/pdf-to-text</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://ompdf.com/protect-pdf</loc>
+    <loc>https://om-pdf.netlify.app/protect-pdf</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ompdf.com/unlock-pdf</loc>
+    <loc>https://om-pdf.netlify.app/unlock-pdf</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ompdf.com/pdf-permissions</loc>
+    <loc>https://om-pdf.netlify.app/pdf-permissions</loc>
     <lastmod>2026-05-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
