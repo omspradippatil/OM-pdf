@@ -77,47 +77,55 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    // Handle redirect-based sign-in / reauth results (works with COOP/COEP).
-    // This must run once on load before/alongside onAuthStateChanged.
+    let unsub = null;
+
+    // We use a self-invoking async function to handle the initialization sequence
     (async () => {
       try {
-        if (redirectHandledRef.current) return;
-        redirectHandledRef.current = true;
+        // 1. Check if we just returned from a redirect login
         const result = await getRedirectResult(auth);
-        if (!result?.user) return;
-
-        const intent = consumeAuthIntent() || 'login';
-        const cred = GoogleAuthProvider.credentialFromResult(result);
-        if (cred?.accessToken) {
-          setDriveAccessToken(cred.accessToken, undefined, result.user.uid);
-        }
-        await ensureUserProfile(result.user);
-
-        if (intent === 'login' || intent === 'drive') {
-          setAuthSuccess('Sign-in successful!');
-          setTimeout(() => setAuthSuccess(''), 5000);
-          await logUserAction(result.user, 'sign_in', {
-            status: 'success',
-            meta: { provider: 'google', flow: 'redirect', intent }
-          });
+        
+        if (result?.user) {
+          console.log('[OM PDF] Redirect login successful:', result.user.email);
+          const intent = consumeAuthIntent() || 'login';
+          const cred = GoogleAuthProvider.credentialFromResult(result);
+          
+          if (cred?.accessToken) {
+            setDriveAccessToken(cred.accessToken, undefined, result.user.uid);
+          }
+          
+          await ensureUserProfile(result.user);
+          
+          if (intent === 'login' || intent === 'drive') {
+            setAuthSuccess('Sign-in successful!');
+            setTimeout(() => setAuthSuccess(''), 5000);
+            await logUserAction(result.user, 'sign_in', {
+              status: 'success',
+              meta: { provider: 'google', flow: 'redirect', intent }
+            });
+          }
         }
       } catch (e) {
-        // Redirect result isn't always present; ignore unless it's a real auth failure.
-        console.warn('[OM PDF] Redirect auth handling error:', e);
+        console.warn('[OM PDF] Redirect handling error:', e.message);
+        setAuthError('Redirect sign-in failed. Please try again.');
+      } finally {
+        // 2. Start the main auth listener once redirect check is done
+        unsub = onAuthStateChanged(auth, (u) => {
+          setUser(u);
+          setLoading(false);
+          if (u) {
+            loadStoredDriveToken(u.uid);
+            void ensureUserProfile(u);
+          } else {
+            clearDriveAccessToken();
+          }
+        });
       }
     })();
 
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
-      if (u) {
-        loadStoredDriveToken(u.uid);
-        void ensureUserProfile(u);
-      } else {
-        clearDriveAccessToken();
-      }
-    });
-    return unsub;
+    return () => {
+      if (unsub) unsub();
+    };
   }, []);
 
   const login = async () => {
