@@ -175,60 +175,6 @@
   .comparison-grid { grid-template-columns: 1fr; }
 }
 
-/* Privacy Dashboard */
-.privacy-dashboard {
-  margin: 40px 0;
-  text-align: center;
-}
-.dashboard-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-@media (max-width: 800px) {
-  .dashboard-stats-grid {
-    grid-template-columns: 1fr;
-  }
-}
-.dashboard-stat-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 24px 16px;
-  box-shadow: var(--shadow-sm);
-  transition: transform var(--transition), box-shadow var(--transition);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.dashboard-stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
-}
-.stat-icon {
-  font-size: 1.8rem;
-  margin-bottom: 12px;
-}
-.stat-value {
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-.stat-label {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  font-weight: 600;
-}
-.privacy-note {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  margin-top: 4px;
-  opacity: 0.8;
-}
-.bad-stat .stat-value { color: var(--success); }
-.info-stat .stat-value { color: var(--primary); }
 
 /* SEO Section */
 .seo-content-section {

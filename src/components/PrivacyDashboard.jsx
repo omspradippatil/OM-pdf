@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getPrivacyStats } from '../services/privacyStats';
+import '../styles/PrivacyDashboard.css';
 
 export default function PrivacyDashboard() {
   const [stats, setStats] = useState(getPrivacyStats());
