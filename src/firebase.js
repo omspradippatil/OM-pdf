@@ -47,12 +47,11 @@ try {
   provider.setCustomParameters({ prompt: 'select_account' });
   firebaseReady = true;
 } catch (err) {
-  console.warn('[OM PDF] Firebase init skipped — local-only mode.', err.message);
-  // Create safe no-op fallbacks so the rest of the app doesn't crash
-  auth     = null;
-  storage  = null;
-  db       = null;
-  provider = null;
+  const missingVar = err.message.includes('VITE_FIREBASE_') ? err.message : '';
+  console.warn('[OM PDF] Firebase init skipped.', err.message);
+  auth = null; storage = null; db = null; provider = null;
+  firebaseReady = false;
+  window.__FIREBASE_ERROR__ = missingVar || err.message;
 }
 
 export {

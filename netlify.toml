@@ -3,9 +3,7 @@
   command = "npm install && npm run build"
 
   [build.environment]
-    NODE_VERSION = "20"
-    # VITE_FIREBASE_PROJECT_ID value ("om-pdf") is the app name / domain — not a real secret.
-    # It appears legitimately in package.json, sitemap, URLs etc.
+    NODE_VERSION = "22.13.0"
     SECRETS_SCAN_OMIT_KEYS = "VITE_FIREBASE_PROJECT_ID"
 
 # SPA routing — all paths serve index.html so React Router works
@@ -14,8 +12,10 @@
   to     = "/index.html"
   status = 200
 
+# Basic headers (removed strict COOP/COEP to allow Firebase Auth)
 [[headers]]
   for = "/*"
   [headers.values]
-    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
-    Cross-Origin-Embedder-Policy = "require-corp"
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

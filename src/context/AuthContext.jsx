@@ -122,7 +122,8 @@ export function AuthProvider({ children }) {
 
   const login = async () => {
     if (!firebaseReady || !auth) {
-      console.warn('[OM PDF] Firebase not configured — sign-in unavailable.');
+      const configErr = window.__FIREBASE_ERROR__ || 'Firebase environment variables are missing in Netlify settings.';
+      setAuthError(`Configuration Error: ${configErr}`);
       return;
     }
     setAuthError('');
