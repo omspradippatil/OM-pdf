@@ -2,16 +2,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 1. Logs & Activity Tracking (Privacy-Safe Public Create)
+    // 1. Logs & Activity Tracking
     match /logs/{docId} {
-      // Allows anyone to log an action, but nobody can read or steal the log data
-      allow create: if true; 
+      // Require authentication to create logs, but keep them read-only (Admin only)
+      allow create: if request.auth != null; 
       allow read, update, delete: if false; 
     }
 
-    // 2. User Profiles
+    // 2. User Profiles & Sub-collections
     match /users/{uid} {
+      // Allow user to read/write their main profile document
       allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // ALLOW private stats syncing
+      match /private/stats {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
     }
 
     // 3. User Files (Storage Metadata)
