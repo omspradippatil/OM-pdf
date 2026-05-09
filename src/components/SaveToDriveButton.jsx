@@ -24,7 +24,7 @@ const DriveIcon = () => (
  * @prop {string}               [mimeType]  - defaults to 'application/pdf'
  */
 export default function SaveToDriveButton({ bytes, filename, toolFolder, mimeType = 'application/pdf' }) {
-  const { user, ensureDriveToken } = useAuth();
+  const { user, login, ensureDriveToken } = useAuth();
   const [status, setStatus] = useState('idle');   // idle | loading | success | error
   const [link, setLink]     = useState('');
   const [errMsg, setErrMsg] = useState('');
@@ -40,8 +40,11 @@ export default function SaveToDriveButton({ bytes, filename, toolFolder, mimeTyp
   const handleSave = async () => {
     if (!bytes || status === 'loading') return;
     if (!user) {
-      setErrMsg('Please sign in to save to Drive.');
-      setStatus('error');
+      setErrMsg('Redirecting to sign-in...');
+      setStatus('loading');
+      setTimeout(() => {
+        login();
+      }, 500);
       return;
     }
     setStatus('loading'); setLink(''); setErrMsg('');

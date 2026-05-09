@@ -307,6 +307,37 @@ body {
   color: var(--text-primary);
 }
 
+.nav-auth-notif {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 12px;
+}
+.nav-auth-error-chip, .nav-auth-success-chip {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  animation: megaFadeIn 0.3s ease;
+}
+.nav-auth-error-chip {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error-border);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.nav-auth-error-chip:hover {
+  background: var(--error);
+  color: white;
+}
+.nav-auth-success-chip {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid var(--success-border);
+}
+
 /* ─── User Dropdown ─── */
 .user-profile { position: relative; }
 .dropdown-menu {

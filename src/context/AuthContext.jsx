@@ -34,25 +34,41 @@ function consumeAuthIntent() {
 function shouldPreferRedirectAuth() {
   // Popup flow breaks when the app is cross-origin isolated (COOP/COEP)
   // OR when the Firebase `authDomain` differs from the app origin (common on Netlify).
-  // On localhost/dev, prefer popup (redirect can be impacted by strict privacy settings).
   const host = window.location.hostname;
-  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return false;
+  
+  // Always use Redirect on mobile/tablets where popups are unreliable.
+  if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) return true;
+
+  // On localhost/dev, we usually try popup first, but redirect is safer for strict browsers.
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+    // If the browser is modern Chrome, Brave, or Safari, redirects are often more stable
+    // due to strict third-party cookie/iframe policies.
+    const isBrave = !!(navigator.brave && navigator.brave.isBrave);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (isBrave || isSafari) return true;
+    return false;
+  }
+  
   if (import.meta.env.DEV) return false;
+  
   try {
     if (window?.crossOriginIsolated) return true;
-  } catch {
-    // ignore
-  }
+  } catch { /* ignore */ }
+
   const configuredAuthDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN;
   if (!configuredAuthDomain) return false;
   const authHost = String(configuredAuthDomain).replace(/^https?:\/\//, '').replace(/\/$/, '');
+  
+  // If we are on a custom domain (like netlify) but auth is on firebaseapp.com, 
+  // popups often fail due to cross-site cookie restrictions.
   return authHost && authHost !== window.location.hostname;
 }
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState('');
+  const [authError, setAuthError]     = useState('');
+  const [authSuccess, setAuthSuccess] = useState('');
   const redirectHandledRef = useRef(false);
 
   useEffect(() => {
@@ -77,10 +93,12 @@ export function AuthProvider({ children }) {
         }
         await ensureUserProfile(result.user);
 
-        if (intent === 'login') {
+        if (intent === 'login' || intent === 'drive') {
+          setAuthSuccess('Sign-in successful!');
+          setTimeout(() => setAuthSuccess(''), 5000);
           await logUserAction(result.user, 'sign_in', {
             status: 'success',
-            meta: { provider: 'google', flow: 'redirect' }
+            meta: { provider: 'google', flow: 'redirect', intent }
           });
         }
       } catch (e) {
@@ -119,34 +137,45 @@ export function AuthProvider({ children }) {
       const cred = GoogleAuthProvider.credentialFromResult(result);
       if (cred?.accessToken) setDriveAccessToken(cred.accessToken, undefined, result.user.uid);
       await ensureUserProfile(result.user);
+      setAuthSuccess('Successfully signed in!');
+      setTimeout(() => setAuthSuccess(''), 5000);
       await logUserAction(result.user, 'sign_in', {
         status: 'success',
         meta: { provider: 'google', flow: 'popup', driveScope: true }
       });
     } catch (e) {
-      // Popup can hang or throw under COOP/COEP; if it errors, fall back to redirect.
+      // Popup can hang or throw under COOP/COEP or strict cross-site settings.
       const msg = String(e?.message || '');
-      const isPopupBlockedByCoop = msg.includes('Cross-Origin-Opener-Policy') || msg.includes('window.closed');
-      if (isPopupBlockedByCoop) {
+      const code = String(e?.code || '');
+      
+      const isPopupBlocked = 
+        msg.includes('Cross-Origin-Opener-Policy') || 
+        msg.includes('window.closed') ||
+        msg.includes('popup_closed_by_user') ||
+        msg.includes('cancelled-by-user') ||
+        msg.includes('Domains, protocols and ports must match') ||
+        code.includes('auth/popup-closed-by-user') ||
+        code.includes('auth/cancelled-by-user') ||
+        code.includes('auth/internal-error');
+
+      if (isPopupBlocked) {
+        console.warn('[OM PDF] Popup blocked or failed. Falling back to Redirect flow...');
         try {
           setAuthIntent('login');
           await signInWithRedirect(auth, provider);
           return;
         } catch (e2) {
           console.error('Redirect fallback error:', e2);
+          setAuthError('Sign-in redirect failed. Please check your browser settings.');
         }
+      } else {
+        console.error('Login error:', e);
+        setAuthError(e?.message || 'Login failed');
       }
-
-      console.error('Login error:', {
-        code: e?.code,
-        message: e?.message,
-        customData: e?.customData,
-        name: e?.name,
-      });
-      setAuthError(e?.message || 'Login failed');
+      
       await logUserAction(auth?.currentUser, 'sign_in', {
         status: 'error',
-        meta: { error: e?.message || 'Login failed' }
+        meta: { error: e?.message || 'Login failed', code: e?.code }
       });
     }
   };
@@ -203,7 +232,12 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, authError, setAuthError, login, logout, ensureDriveToken }}>
+    <AuthContext.Provider value={{ 
+      user, loading, 
+      authError, setAuthError, 
+      authSuccess, setAuthSuccess,
+      login, logout, ensureDriveToken 
+    }}>
       {children}
     </AuthContext.Provider>
   );

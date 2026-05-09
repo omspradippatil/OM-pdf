@@ -13,7 +13,7 @@ const GoogleIcon = () => (
 );
 
 export default function Navbar() {
-  const { user, login, logout, authError, setAuthError } = useAuth();
+  const { user, login, logout, authError, setAuthError, authSuccess, setAuthSuccess } = useAuth();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [toolsOpen, setToolsOpen]       = useState(false);
@@ -146,15 +146,21 @@ export default function Navbar() {
               <button className="btn-nav-login" onClick={login}>
                 Log In
               </button>
+            </div>
+          )}
+
+          {/* Auth Notifications */}
+          {(!!authError || !!authSuccess) && (
+            <div className="nav-auth-notif">
               {!!authError && (
-                <button
-                  className="nav-auth-error"
-                  onClick={() => setAuthError('')}
-                  title={authError}
-                  aria-label="Dismiss sign-in error"
-                >
+                <button className="nav-auth-error-chip" onClick={() => setAuthError('')} title={authError}>
                   ⚠️ {String(authError).slice(0, 44)}
                 </button>
+              )}
+              {!!authSuccess && (
+                <div className="nav-auth-success-chip">
+                  ✅ {authSuccess}
+                </div>
               )}
             </div>
           )}
