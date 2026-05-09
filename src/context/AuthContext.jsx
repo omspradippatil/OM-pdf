@@ -11,6 +11,7 @@ import {
   hasDriveAccess, loadStoredDriveToken
 } from '../services/googleDrive';
 import { ensureUserProfile } from '../services/userProfile';
+import { syncStatsWithCloud } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
 
 const AuthContext = createContext(null);
@@ -95,6 +96,7 @@ export function AuthProvider({ children }) {
           }
           
           await ensureUserProfile(result.user);
+          await syncStatsWithCloud(result.user);
           
           if (intent === 'login' || intent === 'drive') {
             setAuthSuccess('Sign-in successful!');
@@ -116,6 +118,7 @@ export function AuthProvider({ children }) {
           if (u) {
             loadStoredDriveToken(u.uid);
             void ensureUserProfile(u);
+            void syncStatsWithCloud(u);
           } else {
             clearDriveAccessToken();
           }
