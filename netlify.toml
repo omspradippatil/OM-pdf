@@ -4,7 +4,8 @@
 
   [build.environment]
     NODE_VERSION = "22.13.0"
-    SECRETS_SCAN_OMIT_KEYS = "VITE_FIREBASE_PROJECT_ID"
+    # These values are public but Netlify scanner blocks them because they match env vars.
+    SECRETS_SCAN_OMIT_KEYS = "VITE_FIREBASE_PROJECT_ID,VITE_FIREBASE_AUTH_DOMAIN"
 
 # Proxy Firebase Auth to avoid third-party cookie issues (First-party Auth)
 [[redirects]]
