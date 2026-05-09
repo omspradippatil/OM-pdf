@@ -19,9 +19,12 @@ import {
   query, where, getDocs, orderBy, deleteDoc, doc, setDoc, getDoc
 } from 'firebase/firestore';
 
+const isNetlify = typeof window !== 'undefined' && window.location.hostname.includes('netlify.app');
+
 const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  // Use the current domain on Netlify to bypass third-party cookie restrictions.
+  authDomain:        isNetlify ? window.location.hostname : import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,

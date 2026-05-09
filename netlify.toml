@@ -6,7 +6,13 @@
     NODE_VERSION = "22.13.0"
     SECRETS_SCAN_OMIT_KEYS = "VITE_FIREBASE_PROJECT_ID"
 
-# SPA routing — all paths serve index.html so React Router works
+# Proxy Firebase Auth to avoid third-party cookie issues (First-party Auth)
+[[redirects]]
+  from   = "/__/auth/*"
+  to     = "https://om-pdf.firebaseapp.com/__/auth/:splat"
+  status = 200
+
+# SPA routing — all paths serve index.html
 [[redirects]]
   from   = "/*"
   to     = "/index.html"
