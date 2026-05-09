@@ -46,7 +46,12 @@ export default function SaveToDriveButton({ bytes, filename, toolFolder, mimeTyp
     }
     setStatus('loading'); setLink(''); setErrMsg('');
     try {
-      await ensureDriveToken();
+      const ok = await ensureDriveToken();
+      if (ok === false) {
+        setStatus('idle');
+        setErrMsg('Continue in Google to grant Drive access, then try again.');
+        return;
+      }
       const result = await uploadToDrive(bytes, filename, user?.email || null, toolFolder, mimeType);
       setLink(result.webViewLink || '');
       setStatus('success');

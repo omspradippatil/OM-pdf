@@ -7,6 +7,7 @@ import SuccessBanner from '../components/SuccessBanner';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import QueuePanel from '../components/QueuePanel';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import '../styles/CropPDF.css';
 import { useAuth } from '../context/AuthContext';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';

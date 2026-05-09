@@ -1,0 +1,20 @@
+.wm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.wm-grid-compact { margin-top: 16px; }
+.wm-group { display: flex; flex-direction: column; gap: 6px; }
+.wm-color {
+  height: 40px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  padding: 4px;
+}
+.wm-file { font-size: 0.85rem; }
+.wm-file-name {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}

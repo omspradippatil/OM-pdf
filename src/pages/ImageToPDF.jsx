@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import SEO from '../components/SEO';
 import { PDFDocument } from 'pdf-lib';
 import ToolPageLayout from '../components/ToolPageLayout';
@@ -8,6 +8,7 @@ import SuccessBanner from '../components/SuccessBanner';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import QueuePanel from '../components/QueuePanel';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import '../styles/ImageToPDF.css';
 import { useAuth } from '../context/AuthContext';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';

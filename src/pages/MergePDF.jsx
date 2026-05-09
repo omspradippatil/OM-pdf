@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import SEO from '../components/SEO';
 import {
   addFiles, getFiles, clearFiles, removeFile,
@@ -18,6 +18,7 @@ import ProgressBar from '../components/ProgressBar';
 import SuccessBanner from '../components/SuccessBanner';
 import QueuePanel from '../components/QueuePanel';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import '../styles/MergePDF.css';
 
 export default function MergePDF() {
   

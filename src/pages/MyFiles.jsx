@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { listDriveFiles, deleteFromDrive } from '../services/googleDrive';
 import { logUserAction } from '../services/activityLog';
 import ToolPageLayout from '../components/ToolPageLayout';
+import '../styles/MyFiles.css';
 
 /* ── Helpers ── */
 function fmt(bytes) {
@@ -83,7 +84,12 @@ export default function MyFiles() {
     if (!user) return;
     setDriveLoading(true); setDriveError('');
     try {
-      await ensureDriveToken();
+      const ok = await ensureDriveToken();
+      if (ok === false) {
+        setDriveError('Complete Google authorization, then click Refresh.');
+        setDriveReady(false);
+        return;
+      }
       const list = await listDriveFiles(user?.email || null);
       setDriveFiles(list || []);
       setDriveReady(true);
@@ -102,7 +108,11 @@ export default function MyFiles() {
   const deleteDriveFile = async (fileId) => {
     if (!confirm('Delete this file from Google Drive? This cannot be undone.')) return;
     try {
-      await ensureDriveToken();
+      const ok = await ensureDriveToken();
+      if (ok === false) {
+        setDriveError('Complete Google authorization, then retry delete.');
+        return;
+      }
       await deleteFromDrive(fileId, user?.email || null);
       setDriveFiles(f => f.filter(x => x.id !== fileId));
       await logUserAction(user, 'drive_delete', { status: 'success', meta: { fileId } });

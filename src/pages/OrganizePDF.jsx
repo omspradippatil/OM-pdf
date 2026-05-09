@@ -12,6 +12,7 @@ import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
 import { formatBytes } from '../fileManager';
+import '../styles/OrganizePDF.css';
 import { generatePageThumbnails } from '../thumbnailGenerator';
 import { PDFDocument } from 'pdf-lib';
 import PdfCanvas from '../components/PdfCanvas';

@@ -1,0 +1,11 @@
+.split-filename-row { margin-top: 12px; }
+.split-every-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.btn-split-action { background: linear-gradient(135deg, #7c3aed, #2563EB); }
+.btn-split-action::before { background: linear-gradient(135deg, #6d28d9, #1d4ed8); }

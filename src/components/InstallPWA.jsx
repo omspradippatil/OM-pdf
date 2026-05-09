@@ -3,15 +3,51 @@ import React, { useEffect, useState } from 'react';
 export default function InstallPWA() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstall, setShowInstall] = useState(false);
+  const [mode, setMode] = useState('prompt'); // prompt | ios
+
+  const isStandalone = () => {
+    try {
+      const mq = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches;
+      const iosStandalone = window.navigator && window.navigator.standalone;
+      return !!(mq || iosStandalone);
+    } catch {
+      return false;
+    }
+  };
+
+  const isIos = () => {
+    try {
+      const ua = window.navigator.userAgent || '';
+      return /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    } catch {
+      return false;
+    }
+  };
 
   useEffect(() => {
     const handler = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
+      setMode('prompt');
       setShowInstall(true);
     };
     window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    const onInstalled = () => {
+      setDeferredPrompt(null);
+      setShowInstall(false);
+    };
+    window.addEventListener('appinstalled', onInstalled);
+
+    // iOS Safari doesn't fire beforeinstallprompt; show a helpful banner.
+    if (!isStandalone() && isIos()) {
+      setMode('ios');
+      setShowInstall(true);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', onInstalled);
+    };
   }, []);
 
   const handleInstallClick = async () => {
@@ -26,6 +62,8 @@ export default function InstallPWA() {
 
   if (!showInstall) return null;
 
+  if (isStandalone()) return null;
+
   return (
     <div className="install-pwa-banner">
       <div className="install-pwa-content">
@@ -37,7 +75,13 @@ export default function InstallPWA() {
         <span>Install OM PDF for offline access</span>
       </div>
       <div className="install-pwa-actions">
-        <button onClick={handleInstallClick} className="btn-action-sm">Install App</button>
+        {mode === 'prompt' ? (
+          <button onClick={handleInstallClick} className="btn-action-sm" disabled={!deferredPrompt}>
+            Install App
+          </button>
+        ) : (
+          <span className="install-pwa-hint">On iPhone/iPad: Share → Add to Home Screen</span>
+        )}
         <button onClick={() => setShowInstall(false)} className="btn-text">Dismiss</button>
       </div>
     </div>

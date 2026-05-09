@@ -1,8 +1,9 @@
-﻿import React, { useRef } from 'react';
+import React, { useRef } from 'react';
 import SEO from '../components/SEO';
 import { Link } from 'react-router-dom';
 import { TOOLS } from '../constants/tools';
 import PrivacyDashboard from '../components/PrivacyDashboard';
+import '../styles/Home.css';
 
 const FEATURES = [
   { icon: '⚡', title: 'Lightning Fast',    desc: 'No upload delays. Processing runs instantly in your browser.' },

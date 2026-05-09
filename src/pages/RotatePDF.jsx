@@ -7,6 +7,7 @@ import ProgressBar from '../components/ProgressBar';
 import SuccessBanner from '../components/SuccessBanner';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import { formatBytes } from '../fileManager';
+import '../styles/MyFiles.css';
 import { useAuth } from '../context/AuthContext';
 import { logUserAction } from '../services/activityLog';
 import { generatePageThumbnails } from '../thumbnailGenerator';
@@ -14,6 +15,7 @@ import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import QueuePanel from '../components/QueuePanel';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import '../styles/RotatePDF.css';
 import PdfCanvas from '../components/PdfCanvas';
 
 async function rotatePDF(file, rotations, onProgress) {

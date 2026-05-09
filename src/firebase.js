@@ -8,6 +8,8 @@ import {
   signInWithRedirect,
   getRedirectResult,
   reauthenticateWithRedirect,
+  setPersistence,
+  browserLocalPersistence,
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
@@ -34,6 +36,10 @@ try {
   if (!firebaseConfig.apiKey) throw new Error('Missing VITE_FIREBASE_API_KEY');
   app      = initializeApp(firebaseConfig);
   auth     = getAuth(app);
+  // Ensure auth survives reloads (some browsers can default to session-only).
+  setPersistence(auth, browserLocalPersistence).catch(() => {
+    // Ignore persistence errors (private mode / blocked storage).
+  });
   storage  = getStorage(app);
   db       = getFirestore(app);
   provider = new GoogleAuthProvider();

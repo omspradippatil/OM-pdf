@@ -52,6 +52,7 @@ function shouldPreferRedirectAuth() {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState('');
   const redirectHandledRef = useRef(false);
 
   useEffect(() => {
@@ -106,6 +107,7 @@ export function AuthProvider({ children }) {
       console.warn('[OM PDF] Firebase not configured — sign-in unavailable.');
       return;
     }
+    setAuthError('');
     try {
       if (shouldPreferRedirectAuth()) {
         setAuthIntent('login');
@@ -141,6 +143,7 @@ export function AuthProvider({ children }) {
         customData: e?.customData,
         name: e?.name,
       });
+      setAuthError(e?.message || 'Login failed');
       await logUserAction(auth?.currentUser, 'sign_in', {
         status: 'error',
         meta: { error: e?.message || 'Login failed' }
@@ -172,7 +175,7 @@ export function AuthProvider({ children }) {
     if (shouldPreferRedirectAuth()) {
       setAuthIntent('drive');
       await reauthenticateWithRedirect(auth.currentUser, provider);
-      throw new Error('Redirecting to Google to grant Drive access. After completing, retry your action.');
+      return false; // navigation
     }
 
     try {
@@ -187,7 +190,7 @@ export function AuthProvider({ children }) {
       if (isPopupBlockedByCoop) {
         setAuthIntent('drive');
         await reauthenticateWithRedirect(auth.currentUser, provider);
-        throw new Error('Redirecting to Google to grant Drive access. After completing, retry your action.');
+        return false; // navigation
       }
       console.error('Reauth error:', {
         code: e?.code,
@@ -200,7 +203,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, ensureDriveToken }}>
+    <AuthContext.Provider value={{ user, loading, authError, setAuthError, login, logout, ensureDriveToken }}>
       {children}
     </AuthContext.Provider>
   );

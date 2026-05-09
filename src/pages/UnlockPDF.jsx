@@ -13,6 +13,7 @@ import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import QueuePanel from '../components/QueuePanel';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import '../styles/UnlockPDF.css';
 
 export default function UnlockPDF() {
   const { user } = useAuth();

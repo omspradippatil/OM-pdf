@@ -13,7 +13,7 @@ const GoogleIcon = () => (
 );
 
 export default function Navbar() {
-  const { user, login, logout } = useAuth();
+  const { user, login, logout, authError, setAuthError } = useAuth();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [toolsOpen, setToolsOpen]       = useState(false);
@@ -142,9 +142,21 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <button className="btn-nav-login" onClick={login}>
-              Log In
-            </button>
+            <div className="nav-auth-wrap">
+              <button className="btn-nav-login" onClick={login}>
+                Log In
+              </button>
+              {!!authError && (
+                <button
+                  className="nav-auth-error"
+                  onClick={() => setAuthError('')}
+                  title={authError}
+                  aria-label="Dismiss sign-in error"
+                >
+                  ⚠️ {String(authError).slice(0, 44)}
+                </button>
+              )}
+            </div>
           )}
 
           <button className="hamburger" onClick={() => setMenuOpen(o => !o)}>
