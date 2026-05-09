@@ -1,7 +1,16 @@
 // firebase.js — initialised from environment variables (never hard-coded)
 // Graceful degradation: if Firebase is not configured, the app works in local-only mode.
 import { initializeApp }   from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  reauthenticateWithRedirect,
+  signOut,
+  onAuthStateChanged,
+} from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import {
   getFirestore, collection, addDoc, serverTimestamp,
@@ -43,7 +52,8 @@ try {
 export {
   firebaseReady,
   auth, provider, GoogleAuthProvider,
-  signInWithPopup, signOut, onAuthStateChanged,
+  signInWithPopup, signInWithRedirect, getRedirectResult, reauthenticateWithRedirect,
+  signOut, onAuthStateChanged,
   storage, ref, uploadBytes, getDownloadURL, deleteObject,
   db, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, deleteDoc, doc, setDoc, getDoc
 };
