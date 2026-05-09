@@ -169,6 +169,8 @@ export function AuthProvider({ children }) {
           console.error('Redirect fallback error:', e2);
           setAuthError('Sign-in redirect failed. Please check your browser settings.');
         }
+      } else if (code === 'auth/invalid-credential' || msg.includes('invalid_client')) {
+        setAuthError('Configuration Error: The Google Client Secret in your Firebase Console or .env is incorrect. Please check the setup instructions.');
       } else {
         console.error('Login error:', e);
         setAuthError(e?.message || 'Login failed');
