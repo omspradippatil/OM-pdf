@@ -14,9 +14,9 @@ import {
   onAuthStateChanged,
 } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import {
   getFirestore, collection, addDoc, serverTimestamp,
-  query, where, getDocs, orderBy, deleteDoc, doc, setDoc, getDoc
+  query, where, getDocs, orderBy, deleteDoc, doc, setDoc, getDoc,
+  increment
 } from 'firebase/firestore';
 
 const isNetlify = typeof window !== 'undefined' && window.location.hostname.includes('netlify.app');
@@ -63,5 +63,6 @@ export {
   signInWithPopup, signInWithRedirect, getRedirectResult, reauthenticateWithRedirect,
   signOut, onAuthStateChanged,
   storage, ref, uploadBytes, getDownloadURL, deleteObject,
-  db, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, deleteDoc, doc, setDoc, getDoc
+  db, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, deleteDoc, doc, setDoc, getDoc,
+  increment
 };
