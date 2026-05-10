@@ -3,7 +3,6 @@ import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
-import SuccessBanner from '../components/SuccessBanner';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import { pdfjsLib } from '../utils/pdfjs';
 import { formatBytes } from '../fileManager';
@@ -11,189 +10,174 @@ import { useAuth } from '../context/AuthContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
-import QueuePanel from '../components/QueuePanel';
+import { generateThumbnail } from '../thumbnailGenerator';
 import RecentFilesPanel from '../components/RecentFilesPanel';
 import '../styles/PdfToText.css';
 
 async function extractText(file, onProgress) {
-  const buffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: buffer, verbosity: 0 }).promise;
-  const numPages = pdf.numPages;
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  const total = pdf.numPages;
   let fullText = '';
-
-  for (let i = 1; i <= numPages; i++) {
+  for (let i = 1; i <= total; i++) {
     const page = await pdf.getPage(i);
-    const textContent = await page.getTextContent();
-    const pageText = textContent.items.map(item => item.str).join(' ');
-    fullText += `--- Page ${i} ---\n${pageText}\n\n`;
-    onProgress?.(Math.round((i / numPages) * 100));
+    const content = await page.getTextContent();
+    const strings = content.items.map(item => item.str);
+    fullText += strings.join(' ') + '\n\n';
+    onProgress?.(Math.round((i / total) * 95));
   }
-
   return fullText;
 }
 
 export default function PdfToText() {
   const { user } = useAuth();
-  const [file, setFile] = useState(null);
-  const [pages, setPages] = useState(null);
-  const [extractedText, setExtractedText] = useState('');
+  const [file, setFile]         = useState(null);
+  const [text, setText]         = useState('');
+  const [extracting, setExtracting] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [working, setWorking] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const lastBlobRef = useRef(null);
+  const [error, setError]       = useState('');
+  const [success, setSuccess]   = useState('');
+  const [thumbnail, setThumbnail] = useState(null);
   const lastNameRef = useRef('');
 
-  const queueItems = file ? [{
-    id: file.name,
-    name: file.name,
-    status: working ? 'processing' : error ? 'error' : success ? 'done' : 'ready',
-    progress: working ? progress : success ? 100 : 0,
-    etaMs: file.size ? Math.max(1000, Math.round((file.size / (1024 * 1024)) * 600)) : null,
-    message: error || '',
-  }] : [];
-
-  const loadFile = async (raw) => {
+  const loadFile = (raw) => {
     const f = Array.isArray(raw) ? raw[0] : (raw?.[0] || raw);
     if (!f || f.type !== 'application/pdf') { setError('Select a valid PDF.'); return; }
-    
-    setFile(f);
-    setError('');
-    setSuccess('');
-    setProgress(0);
-    setExtractedText('');
-
-    try {
-      const buffer = await f.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: buffer, verbosity: 0 }).promise;
-      setPages(pdf.numPages);
-    } catch {
-      setPages(null);
-    }
+    setFile(f); setError(''); setSuccess(''); setProgress(0); setThumbnail(null); setText('');
+    generateThumbnail(f).then(url => setThumbnail(url));
   };
 
   const handleExtract = async () => {
     if (!file) return;
-    setError('');
-    setSuccess('');
-    setWorking(true);
-    setProgress(0);
-
+    setError(''); setSuccess(''); setExtracting(true); setProgress(0);
     try {
-      const text = await extractText(file, setProgress);
-      setExtractedText(text);
-      
+      const result = await extractText(file, setProgress);
+      setText(result);
+      setProgress(100);
       const name = file.name.replace(/\.pdf$/i, '.txt');
-      const blob = new Blob([text], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = name;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-
-      lastBlobRef.current = blob;
       lastNameRef.current = name;
-      setSuccess(`Text extracted from ${pages} pages!`);
-
-      addRecentFile({ tool: 'text_extract', name, size: blob.size || 0, pages });
+      setSuccess(`Extracted text from ${file.name}`);
+      addRecentFile({ tool: 'pdf_to_text', name, size: result.length });
       bumpLocalJob();
-      await logUserAction(user, 'text_extract', {
-        tool: 'text_extract',
-        status: 'success',
-        meta: { outputName: name, pages }
-      });
+      await logUserAction(user, 'pdf_to_text', { tool: 'pdf_to_text', status: 'success', meta: { outputName: name } });
     } catch (err) {
       setError('Extraction failed: ' + (err.message || 'Unexpected error.'));
-      await logUserAction(user, 'text_extract', {
-        tool: 'text_extract',
-        status: 'error',
-        meta: { error: err?.message || 'Extraction failed' }
-      });
-    } finally {
-      setWorking(false);
-      setProgress(0);
-    }
+    } finally { setExtracting(false); setProgress(0); }
   };
+
+  const handleDownload = () => {
+    if (!text) return;
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = lastNameRef.current || 'extracted.txt';
+    a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const sidebarContent = (
+    <>
+      <p className="ux-section-label">Extraction Settings</p>
+
+      <div className="ux-option-card selected">
+        <div className="ux-option-title">📄 Standard Text Extraction</div>
+        <div className="ux-option-desc">Extracts selectable text layers from the PDF. Scanned images are not supported.</div>
+      </div>
+
+      {error   && <div className="alert alert-error"   style={{ marginTop: 12 }}><span>❌ {error}</span></div>}
+      {extracting && <ProgressBar pct={progress} label="Extracting text…" />}
+
+      {success && (
+        <div className="ux-result-card" style={{ marginTop: 12 }}>
+          <div className="ux-result-success-bar">
+            <div className="ux-result-check">✓</div>
+            <p className="ux-result-success-title">Text Extracted!</p>
+          </div>
+          <div className="ux-result-body">
+            <div className="ux-result-actions">
+              <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={handleDownload}>
+                ↓ Download .txt
+              </button>
+              <SaveToDriveButton bytes={new TextEncoder().encode(text)} filename={lastNameRef.current} toolFolder="Extracted" mimeType="text/plain" />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  const actionButton = (
+    <button className="ux-action-btn" onClick={handleExtract} disabled={extracting || !file}>
+      {extracting ? (
+        <span style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ animation:'spin 1s linear infinite' }}>
+            <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" strokeWidth="3"/>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" strokeWidth="3" strokeLinecap="round"/>
+          </svg>
+          Extracting…
+        </span>
+      ) : (
+        <span style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8L14 2z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M14 2v6h6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M9 13h6M9 17h6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+          </svg>
+          Extract Text
+        </span>
+      )}
+    </button>
+  );
 
   return (
     <ToolPageLayout
       title="PDF to Text"
-      subtitle="Extract and download all text content from your PDF files instantly in your browser."
-      icon="🔍"
+      subtitle="Extract editable text from your PDF files instantly. 100% local."
+      icon="📄"
+      sidebarContent={sidebarContent}
+      actionButton={actionButton}
     >
-      <SEO
-        keywords="pdf to text, extract text from pdf, pdf text converter, pdf to txt"
-        title="PDF to Text Online Free — Extract Content Instantly | OM PDF"
-        description="Convert your PDF files to plain text locally. Fast, free and 100% private — your documents are processed entirely in your browser."
-        url="https://om-pdf.netlify.app/pdf-to-text"
-      />
+      <SEO title="PDF to Text Online Free — Extract PDF Text | OM PDF" description="Convert PDF to plain text locally in your browser. Fast, free, and private." url="https://om-pdf.netlify.app/pdf-to-text" keywords="pdf to text, extract text from pdf, pdf to txt" />
 
       {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a PDF to extract text" hint="Single PDF - Max 200 MB" />
+        <DropZone onFiles={loadFile} label="Drop a PDF to extract text" hint="Single PDF · Max 200 MB" />
       ) : (
-        <div className="split-file-info">
-          <div className="split-file-card">
-            <div className="file-icon">📄</div>
-            <div className="file-info">
-              <div className="file-name">{file.name}</div>
-              <div className="file-meta">
-                <span className="file-size">{formatBytes(file.size)}</span>
-                <span className="file-pages">{pages ? `${pages} pages` : 'counting…'}</span>
+        <div className="ux-workspace-content">
+          <div className="ux-toolbar-inline">
+            <div>
+              <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Workspace</h2>
+              <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>{text ? 'Text extraction complete.' : 'Ready to extract text.'}</p>
+            </div>
+            <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFile(null); setSuccess(''); setError(''); setText(''); setThumbnail(null); }}>
+              Remove File
+            </button>
+          </div>
+
+          {!text ? (
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flex:1, minHeight:280, gap:14, background:'var(--bg-card)', borderRadius:'16px', border:'1px solid var(--border)' }}>
+              <div className="ux-page-card" style={{ width: '220px', cursor: 'default' }}>
+                <div className="ux-page-thumb-wrap" style={{ height: '300px' }}>
+                  {thumbnail ? <img className="ux-page-thumb-img" src={thumbnail} alt="PDF Preview" /> : <div className="ux-page-thumb-placeholder" />}
+                </div>
               </div>
+              <p style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--text-primary)', margin:0 }}>{file.name}</p>
+              <p style={{ fontSize:'0.85rem', color:'var(--text-muted)', margin:0 }}>{formatBytes(file.size)} · Ready to extract</p>
             </div>
-            <button className="btn-remove" onClick={() => { setFile(null); setSuccess(''); setError(''); setExtractedText(''); }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-            </button>
-          </div>
-
-          {extractedText && (
-            <div className="split-option-panel" style={{ maxHeight: '300px', overflowY: 'auto', background: '#f9fafb', borderRadius: '8px', padding: '16px', fontSize: '14px', whiteSpace: 'pre-wrap', border: '1px solid #e5e7eb' }}>
-              <label className="split-label" style={{ marginBottom: '8px', display: 'block' }}>Preview</label>
-              {extractedText.slice(0, 2000)}{extractedText.length > 2000 ? '...' : ''}
+          ) : (
+            <div style={{ flex:1, display:'flex', flexDirection:'column', background:'var(--bg-card)', borderRadius:'16px', border:'1px solid var(--border)', overflow:'hidden' }}>
+              <div style={{ padding:'12px 20px', borderBottom:'1px solid var(--border)', background:'rgba(0,0,0,0.02)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <span style={{ fontSize:'0.85rem', fontWeight:700, color:'var(--text-muted)' }}>EXTRACTED CONTENT</span>
+                <button className="ux-btn-secondary" style={{ fontSize:'0.75rem', padding:'4px 10px' }} onClick={() => { navigator.clipboard.writeText(text); alert('Copied to clipboard!'); }}>Copy All</button>
+              </div>
+              <textarea
+                readOnly
+                value={text}
+                style={{ flex:1, width:'100%', border:'none', background:'none', padding:'20px', fontSize:'0.95rem', lineHeight:'1.6', color:'var(--text-primary)', resize:'none', outline:'none', fontFamily:'var(--font-mono)' }}
+              />
             </div>
           )}
-
-          {error && <div className="alert alert-error"><span>! {error}</span></div>}
-          <QueuePanel title="File queue" items={queueItems} />
-          {working && <ProgressBar pct={progress} label="Extracting Text..." />}
-
-          {success && (
-            <SuccessBanner message="Extraction complete!" details={success} onDismiss={() => setSuccess('')}>
-              <button
-                className="btn-action-sm btn-action-download"
-                onClick={() => {
-                  const url = URL.createObjectURL(lastBlobRef.current);
-                  const a = document.createElement('a');
-                  a.href = url; a.download = lastNameRef.current;
-                  document.body.appendChild(a); a.click();
-                  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-                }}
-              >
-                Download .txt
-              </button>
-            </SuccessBanner>
-          )}
-
-          <div className="merge-section">
-            <button
-              className="btn-merge"
-              style={{ background: 'linear-gradient(135deg,#6366F1,#4F46E5)' }}
-              onClick={handleExtract}
-              disabled={working}
-            >
-              <span className="btn-merge-inner">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polyline points="7 10 12 15 17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                Extract Text
-              </span>
-            </button>
-            <p className="merge-hint">Processed locally - no upload</p>
-          </div>
         </div>
       )}
 
-      <RecentFilesPanel tool="text_extract" title="Recent extractions" />
+      <RecentFilesPanel tool="pdf_to_text" title="Recent extractions" />
     </ToolPageLayout>
   );
 }

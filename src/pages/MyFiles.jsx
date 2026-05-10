@@ -90,7 +90,21 @@ export default function MyFiles() {
         setDriveReady(false);
         return;
       }
-      const list = await listDriveFiles(user?.email || null);
+      let list;
+      try {
+        list = await listDriveFiles(user?.email || null);
+      } catch (listErr) {
+        if (listErr.message.includes('401')) {
+          const retryOk = await ensureDriveToken(true);
+          if (retryOk) {
+            list = await listDriveFiles(user?.email || null);
+          } else {
+            throw listErr;
+          }
+        } else {
+          throw listErr;
+        }
+      }
       setDriveFiles(list || []);
       setDriveReady(true);
     } catch (err) {

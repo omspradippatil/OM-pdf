@@ -3,7 +3,6 @@ import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
-import SuccessBanner from '../components/SuccessBanner';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import { protectPdf } from '../utils/pdfGuard';
 import { formatBytes } from '../fileManager';
@@ -11,176 +10,173 @@ import { useAuth } from '../context/AuthContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
-import QueuePanel from '../components/QueuePanel';
+import { generateThumbnail } from '../thumbnailGenerator';
 import RecentFilesPanel from '../components/RecentFilesPanel';
 import '../styles/ProtectPDF.css';
 
 export default function ProtectPDF() {
   const { user } = useAuth();
-  const [file, setFile] = useState(null);
+  const [file, setFile]         = useState(null);
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [working, setWorking] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [working, setWorking]   = useState(false);
+  const [error, setError]       = useState('');
+  const [success, setSuccess]   = useState('');
+  const [thumbnail, setThumbnail] = useState(null);
   const lastBytesRef = useRef(null);
-  const lastNameRef = useRef('');
-
-  const queueItems = file ? [{
-    id: file.name,
-    name: file.name,
-    status: working ? 'processing' : error ? 'error' : success ? 'done' : 'ready',
-    progress: working ? progress : success ? 100 : 0,
-    etaMs: file.size ? Math.max(1000, Math.round((file.size / (1024 * 1024)) * 1200)) : null,
-    message: error || '',
-  }] : [];
+  const lastNameRef  = useRef('');
 
   const loadFile = (raw) => {
     const f = Array.isArray(raw) ? raw[0] : (raw?.[0] || raw);
     if (!f || f.type !== 'application/pdf') { setError('Select a valid PDF.'); return; }
-    setFile(f);
-    setError('');
-    setSuccess('');
-    setProgress(0);
+    setFile(f); setError(''); setSuccess(''); setProgress(0); setThumbnail(null);
+    generateThumbnail(f).then(url => setThumbnail(url));
   };
 
   const handleProtect = async () => {
     if (!file) return;
     if (!password) { setError('Please enter a password.'); return; }
-    if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
-
-    setError('');
-    setSuccess('');
-    setWorking(true);
-    setProgress(20);
-
+    setError(''); setSuccess(''); setWorking(true); setProgress(30);
     try {
       const buffer = await file.arrayBuffer();
-      setProgress(40);
-      
+      setProgress(60);
       const inputData = new Uint8Array(buffer);
-      
-      const args = {
-        userPassword: password,
-        ownerPassword: password,
-      };
-      
-      const outputData = await protectPdf(inputData, args);
+      const outputData = await protectPdf(inputData, password);
       setProgress(90);
-      
       const name = file.name.replace(/\.pdf$/i, '_protected.pdf');
       const blob = new Blob([outputData], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.body.appendChild(document.createElement('a'));
+      const url  = URL.createObjectURL(blob);
+      const a    = document.body.appendChild(document.createElement('a'));
       a.href = url; a.download = name; a.click();
       setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-
-      lastBytesRef.current = outputData;
-      lastNameRef.current = name;
-      setSuccess(`"${name}" encrypted with AES-256!`);
+      lastBytesRef.current = outputData; lastNameRef.current = name;
+      setSuccess('Successfully encrypted!');
       setProgress(100);
-
       addRecentFile({ tool: 'protect', name, size: outputData.byteLength || 0 });
       bumpLocalJob();
-      await logUserAction(user, 'protect', { tool: 'protect', status: 'success', meta: { outputName: name, encryption: 'AES-256' } });
+      await logUserAction(user, 'protect', { tool: 'protect', status: 'success', meta: { outputName: name } });
     } catch (err) {
-      setError(err.message || 'Protection failed. Please try again.');
-      await logUserAction(user, 'protect', { tool: 'protect', status: 'error', meta: { error: err?.message } });
-    } finally {
-      setWorking(false);
-      setProgress(0);
-    }
+      setError('Failed to protect PDF. ' + err.message);
+    } finally { setWorking(false); setProgress(0); }
   };
+
+  const sidebarContent = (
+    <>
+      <p className="ux-section-label">Security Settings</p>
+
+      <div className="ux-field">
+        <label className="ux-label" htmlFor="protectPass">Set Password</label>
+        <div className="ux-input-with-ext" style={{ paddingRight: 8 }}>
+          <input
+            id="protectPass"
+            className="ux-input-bare"
+            type={showPass ? 'text' : 'password'}
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="Min 4 characters recommended…"
+            spellCheck={false}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPass(v => !v)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '0 4px', fontSize: '1.2rem' }}
+          >
+            {showPass ? '🙈' : '👁'}
+          </button>
+        </div>
+        <p className="ux-hint" style={{ marginTop: 8 }}>This password will be required to open the PDF.</p>
+      </div>
+
+      <div className="ux-option-card selected">
+        <div className="ux-option-title">🛡️ AES-256 Encryption</div>
+        <div className="ux-option-desc">Strong military-grade encryption processed 100% locally in your browser.</div>
+      </div>
+
+      {error   && <div className="alert alert-error"   style={{ marginTop: 12 }}><span>❌ {error}</span></div>}
+      {working && <ProgressBar pct={progress} label="Encrypting document…" />}
+
+      {success && (
+        <div className="ux-result-card" style={{ marginTop: 12 }}>
+          <div className="ux-result-success-bar">
+            <div className="ux-result-check">✓</div>
+            <p className="ux-result-success-title">Password Protected!</p>
+          </div>
+          <div className="ux-result-body">
+            <div className="ux-result-actions">
+              <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => {
+                 const blob = new Blob([lastBytesRef.current], { type: 'application/pdf' });
+                 const url = URL.createObjectURL(blob);
+                 const a = document.createElement('a'); a.href = url; a.download = lastNameRef.current;
+                 a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+              }}>↓ Download</button>
+              <SaveToDriveButton bytes={lastBytesRef.current} filename={lastNameRef.current} toolFolder="Secured" />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  const actionButton = (
+    <button className="ux-action-btn" onClick={handleProtect} disabled={working || !file}>
+      {working ? (
+        <span style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ animation:'spin 1s linear infinite' }}>
+            <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" strokeWidth="3"/>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" strokeWidth="3" strokeLinecap="round"/>
+          </svg>
+          Protecting…
+        </span>
+      ) : (
+        <span style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" strokeWidth="2.5"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+          </svg>
+          Protect PDF
+        </span>
+      )}
+    </button>
+  );
 
   return (
     <ToolPageLayout
       title="Protect PDF"
-      subtitle="Secure your PDF files with military-grade AES-256 encryption right in your browser."
-      icon="🛡️"
+      subtitle="Encrypted your PDF with a strong password. 100% private."
+      icon="🔒"
+      sidebarContent={sidebarContent}
+      actionButton={actionButton}
     >
-      <SEO
-        keywords="protect pdf, encrypt pdf aes-256, secure pdf password, private pdf encryption"
-        title="Protect PDF Online Free — Strong AES-256 Encryption | OM PDF"
-        description="Add a strong password to your PDF files using AES-256 encryption. 100% private local processing — your files never leave your device."
-        url="https://om-pdf.netlify.app/protect-pdf"
-      />
+      <SEO title="Password Protect PDF Online Free — Encrypt PDF | OM PDF" description="Encrypt your PDF files with a password locally in your browser. No files are uploaded to any server." url="https://om-pdf.netlify.app/protect-pdf" keywords="protect pdf, encrypt pdf, pdf password, aes-256 pdf" />
 
       {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a PDF to protect" hint="Single PDF - Max 200 MB" />
+        <DropZone onFiles={loadFile} label="Drop a PDF to protect" hint="Single PDF · Max 200 MB" />
       ) : (
-        <div className="split-file-info">
-          <div className="split-file-card">
-            <div className="file-icon">📄</div>
-            <div className="file-info">
-              <div className="file-name">{file.name}</div>
-              <div className="file-meta"><span className="file-size">{formatBytes(file.size)}</span></div>
+        <div className="ux-workspace-content">
+          <div className="ux-toolbar-inline">
+            <div>
+              <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Workspace</h2>
+              <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>Enter a password in the right panel to secure this file.</p>
             </div>
-            <button className="btn-remove" onClick={() => { setFile(null); setSuccess(''); setError(''); setPassword(''); setConfirmPassword(''); }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFile(null); setSuccess(''); setError(''); setPassword(''); setThumbnail(null); }}>
+              Remove File
             </button>
           </div>
 
-          <div className="split-option-panel">
-            <div className="protect-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div className="pn-option-group">
-                <label className="split-label" htmlFor="pass">Set Password</label>
-                <input
-                  id="pass"
-                  className="split-range-input"
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Enter secure password..."
-                  style={{ padding: '12px 16px' }}
-                />
-              </div>
-              <div className="pn-option-group">
-                <label className="split-label" htmlFor="confirm">Confirm Password</label>
-                <input
-                  id="confirm"
-                  className="split-range-input"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  placeholder="Repeat password..."
-                  style={{ padding: '12px 16px' }}
-                />
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flex:1, minHeight:280, gap:14, background:'var(--bg-card)', borderRadius:'16px', border:'1px solid var(--border)' }}>
+            <div className="ux-page-card" style={{ width: '220px', cursor: 'default' }}>
+              <div className="ux-page-thumb-wrap" style={{ height: '300px' }}>
+                {thumbnail ? <img className="ux-page-thumb-img" src={thumbnail} alt="PDF Preview" /> : <div className="ux-page-thumb-placeholder" />}
               </div>
             </div>
-            <div className="alert alert-warning" style={{ marginTop: 20 }}>
-              <span>ℹ️ Using <strong>AES-256 bit</strong> encryption. Make sure to remember your password!</span>
-            </div>
-          </div>
-
-          {error && <div className="alert alert-error"><span>! {error}</span></div>}
-          <QueuePanel title="File queue" items={queueItems} />
-          {working && <ProgressBar pct={progress} label="Encrypting PDF with AES-256..." />}
-
-          {success && (
-            <SuccessBanner message="PDF Protected!" details={success} onDismiss={() => setSuccess('')}>
-              <SaveToDriveButton bytes={lastBytesRef.current} filename={lastNameRef.current} toolFolder="Protected" />
-            </SuccessBanner>
-          )}
-
-          <div className="merge-section">
-            <button
-              className="btn-merge"
-              style={{ background: 'linear-gradient(135deg,#6366F1,#4F46E5)' }}
-              onClick={handleProtect}
-              disabled={working}
-            >
-              <span className="btn-merge-inner">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                Encrypt PDF
-              </span>
-            </button>
-            <p className="merge-hint">🔒 Secure local processing - Your file never leaves your device</p>
+            <p style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--text-primary)', margin:0 }}>{file.name}</p>
+            <p style={{ fontSize:'0.85rem', color:'var(--text-muted)', margin:0 }}>{formatBytes(file.size)} · Ready to protect</p>
           </div>
         </div>
       )}
 
-      <RecentFilesPanel tool="protect" title="Recent protections" />
+      <RecentFilesPanel tool="protect" title="Recent security edits" />
     </ToolPageLayout>
   );
 }

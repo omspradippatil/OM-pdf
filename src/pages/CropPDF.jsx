@@ -3,9 +3,7 @@ import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
-import SuccessBanner from '../components/SuccessBanner';
 import SaveToDriveButton from '../components/SaveToDriveButton';
-import QueuePanel from '../components/QueuePanel';
 import RecentFilesPanel from '../components/RecentFilesPanel';
 import '../styles/CropPDF.css';
 import { useAuth } from '../context/AuthContext';
@@ -18,8 +16,7 @@ import PdfCanvas from '../components/PdfCanvas';
 
 function downloadBytes(bytes, name) {
   const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-  const a = document.createElement('a');
-  a.href = url; a.download = name;
+  const a = document.createElement('a'); a.href = url; a.download = name;
   document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
 }
@@ -71,22 +68,10 @@ export default function CropPDF() {
   const [uniform, setUniform] = useState(true);
   const [uniformValue, setUniformValue] = useState(24);
 
-  const queueItems = file ? [{
-    id: file.name,
-    name: file.name,
-    status: working ? 'processing' : error ? 'error' : success ? 'done' : 'ready',
-    progress: working ? progress : success ? 100 : 0,
-    etaMs: file.size ? Math.max(1200, Math.round((file.size / (1024 * 1024)) * 900)) : null,
-    message: error || '',
-  }] : [];
-
   const loadFile = (raw) => {
     const f = Array.isArray(raw) ? raw[0] : (raw?.[0] || raw);
     if (!f || f.type !== 'application/pdf') { setError('Select a valid PDF.'); return; }
-    setFile(f);
-    setError('');
-    setSuccess('');
-    setProgress(0);
+    setFile(f); setError(''); setSuccess(''); setProgress(0);
   };
 
   const convertToPt = (value) => {
@@ -111,13 +96,12 @@ export default function CropPDF() {
   };
 
   const derived = useMemo(() => {
-    const values = {
+    return {
       top: convertToPt(margins.top),
       right: convertToPt(margins.right),
       bottom: convertToPt(margins.bottom),
       left: convertToPt(margins.left),
     };
-    return values;
   }, [margins, unit]);
 
   const preview = useMemo(() => {
@@ -133,247 +117,169 @@ export default function CropPDF() {
 
   const handleApply = async () => {
     if (!file) return;
-    setError('');
-    setSuccess('');
-    setWorking(true);
-    setProgress(0);
-
+    setError(''); setSuccess(''); setWorking(true); setProgress(0);
     try {
       const bytes = await cropPdf(file, derived, setProgress);
       const name = file.name.replace(/\.pdf$/i, '_cropped.pdf');
       downloadBytes(bytes, name);
-      setLastBytes(bytes);
-      setLastName(name);
-      setSuccess(`"${name}" saved`);
-
+      setLastBytes(bytes); setLastName(name);
+      setSuccess(`"${name}" created!`);
       addRecentFile({ tool: 'crop', name, size: bytes.byteLength || 0 });
       bumpLocalJob();
-      await logUserAction(user, 'crop', {
-        tool: 'crop',
-        status: 'success',
-        meta: {
-          outputName: name,
-          unit,
-          margins: derived,
-        }
-      });
+      await logUserAction(user, 'crop', { tool: 'crop', status: 'success', meta: { outputName: name, unit, margins: derived } });
     } catch (err) {
       setError('Crop failed: ' + (err.message || 'Unexpected error.'));
-      await logUserAction(user, 'crop', {
-        tool: 'crop',
-        status: 'error',
-        meta: { error: err?.message || 'Crop failed' }
-      });
-    } finally {
-      setWorking(false);
-      setProgress(0);
-    }
+      await logUserAction(user, 'crop', { tool: 'crop', status: 'error', meta: { error: err?.message } });
+    } finally { setWorking(false); setProgress(0); }
   };
+
+  const sidebarContent = (
+    <>
+      <p className="ux-section-label">Crop Settings</p>
+
+      <div className="ux-field">
+        <label className="ux-label" htmlFor="cropUnit">Measurement Units</label>
+        <select id="cropUnit" className="ux-input" value={unit} onChange={e => setUnit(e.target.value)}>
+          <option value="pt">Points (pt)</option>
+          <option value="mm">Millimeters (mm)</option>
+          <option value="in">Inches (in)</option>
+        </select>
+      </div>
+
+      <div className="ux-field">
+        <label className="ux-label">Presets</label>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+          <button type="button" className="ux-chip" onClick={() => applyPreset(0)}>None</button>
+          <button type="button" className="ux-chip" onClick={() => applyPreset(12)}>Small</button>
+          <button type="button" className="ux-chip" onClick={() => applyPreset(24)}>Medium</button>
+          <button type="button" className="ux-chip" onClick={() => applyPreset(36)}>Large</button>
+        </div>
+      </div>
+
+      <div className="ux-toggle-row">
+        <div className="ux-toggle-info">
+          <p>Uniform Margins</p>
+          <span>Apply same value to all sides</span>
+        </div>
+        <label className="ux-toggle">
+          <input type="checkbox" checked={uniform} onChange={e => { setUniform(e.target.checked); if (e.target.checked) applyUniform(uniformValue); }} />
+          <span className="ux-toggle-slider" />
+        </label>
+      </div>
+
+      {uniform ? (
+        <div className="ux-field" style={{ marginTop:12 }}>
+          <label className="ux-label" htmlFor="cropAll">All Sides ({unit})</label>
+          <input id="cropAll" className="ux-input" type="number" min={0} step={1} value={uniformValue} onChange={e => applyUniform(parseFloat(e.target.value) || 0)} />
+          <input className="ux-range" type="range" min={0} max={200} value={uniformValue} onChange={e => applyUniform(parseInt(e.target.value, 10) || 0)} style={{ marginTop:8 }} />
+        </div>
+      ) : (
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginTop:12 }}>
+          {['top','right','bottom','left'].map(side => (
+            <div className="ux-field" key={side}>
+              <label className="ux-label" style={{ textTransform:'capitalize' }}>{side}</label>
+              <input className="ux-input" type="number" min={0} value={margins[side]} onChange={e => onChangeMargin(side, parseFloat(e.target.value) || 0)} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {error   && <div className="alert alert-error"   style={{ marginTop:12 }}><span>❌ {error}</span></div>}
+      {working && <ProgressBar pct={progress} label="Cropping pages…" />}
+
+      {success && (
+        <div className="ux-result-card" style={{ marginTop:12 }}>
+          <div className="ux-result-success-bar">
+            <div className="ux-result-check">✓</div>
+            <p className="ux-result-success-title">Successfully Cropped!</p>
+          </div>
+          <div className="ux-result-body">
+            <div className="ux-result-actions">
+               <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => downloadBytes(lastBytes, lastName)}>
+                ↓ Download
+              </button>
+              <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Cropped" />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  const actionButton = (
+    <button className="ux-action-btn" onClick={handleApply} disabled={working || !file}>
+      {working ? (
+        <span style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ animation:'spin 1s linear infinite' }}>
+            <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" strokeWidth="3"/>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" strokeWidth="3" strokeLinecap="round"/>
+          </svg>
+          Cropping…
+        </span>
+      ) : (
+        <span style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M4 4h16v16H4z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M9 9h6v6H9z" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Apply Crop
+        </span>
+      )}
+    </button>
+  );
 
   return (
     <ToolPageLayout
       title="Crop PDF"
-      subtitle="Trim white margins on every page with precise controls."
+      subtitle="Trim white margins or focus on specific areas. 100% local."
       icon="✂️"
+      sidebarContent={sidebarContent}
+      actionButton={actionButton}
     >
-      <SEO
-        keywords="crop pdf, trim pdf margins"
-        title="Crop PDF Online Free — Trim Margins | OM PDF"
-        description="Trim PDF margins locally in your browser. No upload required."
-        url="https://om-pdf.netlify.app/crop-pdf"
-      />
+      <SEO title="Crop PDF Online Free — Trim Margins | OM PDF" description="Trim PDF margins locally in your browser. No upload required." url="https://om-pdf.netlify.app/crop-pdf" keywords="crop pdf, trim pdf margins" />
 
       {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a PDF to crop" hint="Single PDF - Max 200 MB" />
+        <DropZone onFiles={loadFile} label="Drop a PDF to crop" hint="Single PDF · Max 200 MB" />
       ) : (
-        <div className="split-file-info">
-          <div className="split-file-card">
-            <div className="file-icon">📄</div>
-            <div className="file-info">
-              <div className="file-name">{file.name}</div>
-              <div className="file-meta"><span className="file-size">{formatBytes(file.size)}</span></div>
+        <div className="ux-workspace-content">
+          <div className="ux-toolbar-inline">
+            <div>
+              <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Workspace</h2>
+              <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>Blue box shows the area that will be kept.</p>
             </div>
-            <button className="btn-remove" onClick={() => { setFile(null); setSuccess(''); setError(''); }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFile(null); setSuccess(''); setError(''); }}>
+              Remove File
             </button>
           </div>
 
-          <div className="split-option-panel">
-            <div className="crop-toolbar">
-              <div>
-                <div className="crop-title">Crop margins</div>
-                <div className="crop-sub">Apply to all pages (best for removing white borders)</div>
-              </div>
-              <div className="crop-unit">
-                <label className="split-label" htmlFor="cropUnit">Units</label>
-                <select id="cropUnit" className="pn-select" value={unit} onChange={e => setUnit(e.target.value)}>
-                  <option value="pt">pt</option>
-                  <option value="mm">mm</option>
-                  <option value="in">in</option>
-                </select>
+          <div style={{ display:'flex', flex:1, minHeight:400, gap:20, padding:'20px', background:'var(--bg-card)', borderRadius:'16px', border:'1px solid var(--border)', overflow:'auto' }}>
+            <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+              <p style={{ fontSize:'0.8rem', fontWeight:700, color:'var(--text-muted)', textTransform:'uppercase' }}>Original</p>
+              <div style={{ position:'relative', boxShadow:'0 10px 30px rgba(0,0,0,0.1)', borderRadius:'4px', overflow:'hidden' }}>
+                <PdfCanvas file={file} pageNumber={1} width={400}
+                  onRender={({ width, height, scale }) => { setPreviewDims({ width, height, scale }); setPreviewError(''); }}
+                  onError={(err) => setPreviewError(err?.message || 'Preview failed to load.')}
+                />
+                {preview && (
+                  <div className="crop-preview-overlay" style={{ left: preview.left, top: preview.top, width: preview.width, height: preview.height, border:'2px solid var(--primary)', background:'rgba(79, 70, 229, 0.1)', position:'absolute' }} />
+                )}
               </div>
             </div>
 
-            <div className="crop-presets">
-              <span className="crop-presets-label">Presets</span>
-              <button type="button" className="crop-chip" onClick={() => applyPreset(0)}>None</button>
-              <button type="button" className="crop-chip" onClick={() => applyPreset(12)}>Small</button>
-              <button type="button" className="crop-chip" onClick={() => applyPreset(24)}>Medium</button>
-              <button type="button" className="crop-chip" onClick={() => applyPreset(36)}>Large</button>
-              <button type="button" className="crop-chip" onClick={() => applyPreset(60)}>Extra</button>
-            </div>
-
-            <label className="crop-toggle">
-              <input
-                type="checkbox"
-                checked={uniform}
-                onChange={(e) => {
-                  const next = e.target.checked;
-                  setUniform(next);
-                  if (next) applyUniform(uniformValue);
-                }}
-              />
-              Use uniform margins
-            </label>
-
-            {uniform ? (
-              <div className="crop-grid">
-                <div className="crop-field">
-                  <label className="split-label" htmlFor="cropAll">All sides</label>
-                  <input
-                    id="cropAll"
-                    className="split-range-input"
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={uniformValue}
-                    onChange={e => applyUniform(parseFloat(e.target.value) || 0)}
-                  />
-                  <input
-                    className="crop-range"
-                    type="range"
-                    min={0}
-                    max={200}
-                    value={uniformValue}
-                    onChange={e => applyUniform(parseInt(e.target.value, 10) || 0)}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="crop-grid">
-                <div className="crop-field">
-                  <label className="split-label" htmlFor="cropTop">Top</label>
-                  <input id="cropTop" className="split-range-input" type="number" min={0} step={1}
-                    value={margins.top} onChange={e => onChangeMargin('top', parseFloat(e.target.value) || 0)} />
-                  <input className="crop-range" type="range" min={0} max={200} value={margins.top}
-                    onChange={e => onChangeMargin('top', parseInt(e.target.value, 10) || 0)} />
-                </div>
-                <div className="crop-field">
-                  <label className="split-label" htmlFor="cropRight">Right</label>
-                  <input id="cropRight" className="split-range-input" type="number" min={0} step={1}
-                    value={margins.right} onChange={e => onChangeMargin('right', parseFloat(e.target.value) || 0)} />
-                  <input className="crop-range" type="range" min={0} max={200} value={margins.right}
-                    onChange={e => onChangeMargin('right', parseInt(e.target.value, 10) || 0)} />
-                </div>
-                <div className="crop-field">
-                  <label className="split-label" htmlFor="cropBottom">Bottom</label>
-                  <input id="cropBottom" className="split-range-input" type="number" min={0} step={1}
-                    value={margins.bottom} onChange={e => onChangeMargin('bottom', parseFloat(e.target.value) || 0)} />
-                  <input className="crop-range" type="range" min={0} max={200} value={margins.bottom}
-                    onChange={e => onChangeMargin('bottom', parseInt(e.target.value, 10) || 0)} />
-                </div>
-                <div className="crop-field">
-                  <label className="split-label" htmlFor="cropLeft">Left</label>
-                  <input id="cropLeft" className="split-range-input" type="number" min={0} step={1}
-                    value={margins.left} onChange={e => onChangeMargin('left', parseFloat(e.target.value) || 0)} />
-                  <input className="crop-range" type="range" min={0} max={200} value={margins.left}
-                    onChange={e => onChangeMargin('left', parseInt(e.target.value, 10) || 0)} />
-                </div>
-              </div>
-            )}
-
-            <div className="crop-hint">Tip: 24pt = 1/3 inch. Adjust margins until borders disappear.</div>
-          </div>
-
-          <div className="crop-preview">
-            <div className="crop-preview-card">
-              <div className="crop-preview-label">Original</div>
-              <div className="crop-preview-frame">
-                <div
-                  className="crop-preview-canvas"
-                  style={{
-                    width: previewDims?.width || 'auto',
-                    height: previewDims?.height || 'auto',
-                  }}
-                >
-                  <PdfCanvas
-                    file={file}
-                    pageNumber={1}
-                    width={420}
-                    onRender={({ width, height, scale }) => {
-                      setPreviewDims({ width, height, scale });
-                      setPreviewError('');
-                    }}
-                    onError={(err) => setPreviewError(err?.message || 'Preview failed to load.')}
-                  />
-                  {preview ? (
-                    <div
-                      className="crop-preview-overlay"
-                      style={{
-                        left: preview.left,
-                        top: preview.top,
-                        width: preview.width,
-                        height: preview.height,
-                      }}
-                    />
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
-            <div className="crop-preview-card">
-              <div className="crop-preview-label">Cropped preview</div>
-              <div className="crop-preview-frame">
+            <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:10 }}>
+              <p style={{ fontSize:'0.8rem', fontWeight:700, color:'var(--text-muted)', textTransform:'uppercase' }}>Cropped Preview</p>
+              <div style={{ boxShadow:'0 10px 30px rgba(0,0,0,0.1)', borderRadius:'4px', overflow:'hidden', width: preview?.width || 0, height: preview?.height || 0, background:'#fff' }}>
                 {preview ? (
-                  <div
-                    className="crop-preview-crop"
-                    style={{ width: preview.width, height: preview.height }}
-                  >
-                    <div
-                      className="crop-preview-shift"
-                      style={{ transform: `translate(${-preview.left}px, ${-preview.top}px)` }}
-                    >
-                      <PdfCanvas file={file} pageNumber={1} width={420} />
-                    </div>
+                  <div style={{ transform: `translate(${-preview.left}px, ${-preview.top}px)` }}>
+                    <PdfCanvas file={file} pageNumber={1} width={400} />
                   </div>
                 ) : (
-                  <div className="crop-preview-empty">Adjust margins to see crop preview.</div>
+                  <div style={{ height:400, width:300, display:'flex', alignItems:'center', justifyContent:'center', color:'var(--text-muted)', fontSize:'0.8rem' }}>Loading preview…</div>
                 )}
               </div>
             </div>
           </div>
-
-          {previewError ? <div className="alert alert-error"><span>! {previewError}</span></div> : null}
-
-          {error && <div className="alert alert-error"><span>! {error}</span></div>}
-          <QueuePanel title="File queue" items={queueItems} />
-          {working && <ProgressBar pct={progress} label="Cropping pages..." />}
-
-          {success && (
-            <SuccessBanner message="Crop complete!" details={success} onDismiss={() => setSuccess('')}>
-              <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Cropped" />
-            </SuccessBanner>
-          )}
-
-          <div className="merge-section">
-            <button className="btn-merge" onClick={handleApply} disabled={working}>
-              <span className="btn-merge-inner">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9 9h6v6H9z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                Apply Crop
-              </span>
-            </button>
-            <p className="merge-hint">Processed locally - no upload</p>
-          </div>
+          {previewError && <div className="alert alert-error" style={{ marginTop:12 }}><span>❌ {previewError}</span></div>}
         </div>
       )}
 

@@ -48,7 +48,8 @@ try {
   db       = getFirestore(app);
   provider = new GoogleAuthProvider();
   provider.addScope('https://www.googleapis.com/auth/drive.file');
-  provider.setCustomParameters({ prompt: 'select_account' });
+  // Removed forced 'select_account' to allow smoother background re-auth for Drive.
+  // provider.setCustomParameters({ prompt: 'select_account' });
   firebaseReady = true;
 } catch (err) {
   const missingVar = err.message.includes('VITE_FIREBASE_') ? err.message : '';

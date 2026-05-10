@@ -141,10 +141,12 @@ export function AuthProvider({ children }) {
     try {
       if (shouldPreferRedirectAuth()) {
         setAuthIntent('login');
+        provider.setCustomParameters({ prompt: 'select_account' });
         await signInWithRedirect(auth, provider);
         return; // navigation
       }
 
+      provider.setCustomParameters({ prompt: 'select_account' });
       const result = await signInWithPopup(auth, provider);
       const cred = GoogleAuthProvider.credentialFromResult(result);
       if (cred?.accessToken) setDriveAccessToken(cred.accessToken, undefined, result.user.uid);
@@ -217,11 +219,16 @@ export function AuthProvider({ children }) {
 
     if (shouldPreferRedirectAuth()) {
       setAuthIntent('drive');
+      provider.setCustomParameters({ 
+        login_hint: auth.currentUser.email || undefined
+      });
       await reauthenticateWithRedirect(auth.currentUser, provider);
       return false; // navigation
     }
 
     try {
+      // Use login_hint to make the re-auth as silent as possible
+      provider.setCustomParameters({ login_hint: auth.currentUser.email || undefined });
       const result = await reauthenticateWithPopup(auth.currentUser, provider);
       const cred = GoogleAuthProvider.credentialFromResult(result);
       if (!cred?.accessToken) throw new Error('Drive access not granted.');

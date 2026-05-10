@@ -3,7 +3,6 @@ import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
-import SuccessBanner from '../components/SuccessBanner';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import { pdfjsLib } from '../utils/pdfjs';
 import { formatBytes } from '../fileManager';
@@ -11,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
-import QueuePanel from '../components/QueuePanel';
+import { generateThumbnail } from '../thumbnailGenerator';
 import RecentFilesPanel from '../components/RecentFilesPanel';
 import '../styles/ConvertPDF.css';
 
@@ -28,9 +27,7 @@ async function pdfToImages(file, onProgress) {
     const ctx     = canvas.getContext('2d');
     await page.render({ canvasContext: ctx, viewport: vp }).promise;
     const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
-    if (!blob) {
-      throw new Error('Failed to render a page image for conversion.');
-    }
+    if (!blob) throw new Error('Failed to render a page image for conversion.');
     blobs.push({ blob, name: `page_${String(i).padStart(3,'0')}.jpg` });
     onProgress?.(Math.round((i / total) * 90));
   }
@@ -38,29 +35,22 @@ async function pdfToImages(file, onProgress) {
 }
 
 export default function ConvertPDF() {
-  
   const { user } = useAuth();
-  const [file, setFile]     = useState(null);
-  const [pages, setPages]   = useState(null);
+  const [file, setFile]         = useState(null);
+  const [pages, setPages]       = useState(null);
   const [converting, setConverting] = useState(false);
-  const [progress, setProgress]     = useState(0);
-  const [error, setError]   = useState('');
-  const [success, setSuccess] = useState('');
+  const [progress, setProgress] = useState(0);
+  const [error, setError]       = useState('');
+  const [success, setSuccess]   = useState('');
+  const [thumbnail, setThumbnail] = useState(null);
   const lastBlobRef = useRef(null);
   const lastNameRef = useRef('');
-  const queueItems = file ? [{
-    id: file.name,
-    name: file.name,
-    status: converting ? 'processing' : error ? 'error' : success ? 'done' : 'ready',
-    progress: converting ? progress : success ? 100 : 0,
-    etaMs: file.size ? Math.max(1200, Math.round((file.size / (1024 * 1024)) * 900)) : null,
-    message: error || '',
-  }] : [];
 
   const loadFile = async (raw) => {
-    const f = raw[0];
+    const f = Array.isArray(raw) ? raw[0] : (raw?.[0] || raw);
     if (!f || f.type !== 'application/pdf') { setError('Select a valid PDF.'); return; }
-    setFile(f); setError(''); setSuccess('');
+    setFile(f); setError(''); setSuccess(''); setThumbnail(null);
+    generateThumbnail(f).then(url => setThumbnail(url));
     try {
       const buf = await f.arrayBuffer();
       const doc = await pdfjsLib.getDocument({ data: buf }).promise;
@@ -101,86 +91,115 @@ export default function ConvertPDF() {
       setSuccess(`Converted ${images.length} page${images.length !== 1 ? 's' : ''} to JPG${images.length > 1 ? ' (ZIP)' : ''}`);
       addRecentFile({ tool: 'convert', name: outputName, size: lastBlobRef.current?.size || 0, pages: images.length });
       bumpLocalJob();
-      await logUserAction(user, 'convert', {
-        tool: 'convert',
-        status: 'success',
-        meta: {
-          pages: images.length,
-          outputName,
-          format: 'jpg',
-          zipped: images.length > 1,
-        }
-      });
+      await logUserAction(user, 'convert', { tool: 'convert', status: 'success', meta: { pages: images.length, outputName, format: 'jpg', zipped: images.length > 1 } });
     } catch (err) {
       setError('Conversion failed: ' + (err.message || 'Unexpected error.'));
-      await logUserAction(user, 'convert', {
-        tool: 'convert',
-        status: 'error',
-        meta: { error: err?.message || 'Conversion failed' }
-      });
+      await logUserAction(user, 'convert', { tool: 'convert', status: 'error', meta: { error: err?.message } });
     } finally { setConverting(false); setProgress(0); }
   };
 
-  return (
-    <ToolPageLayout title="Convert PDF to Images" subtitle="Export each page as a high-quality JPG image, right in your browser." icon="🖼️">
-      <SEO keywords="pdf to jpg, convert pdf to image, extract images from pdf, pdf to jpeg, high quality pdf conversion" title="PDF to JPG Online Free — Convert PDF to Images | OM PDF" description="Convert PDF pages to high-quality JPG images instantly. Free, private, no upload — download as ZIP for multi-page PDFs." url="https://om-pdf.netlify.app/convert-pdf" />
-      <div className="alert alert-warning" style={{ marginBottom: 16 }}>
-        <span>ℹ️ Currently supports <strong>PDF → JPG</strong>. Doc/Word conversion requires a server and is not available client-side.</span>
+  const sidebarContent = (
+    <>
+      <p className="ux-section-label">Conversion Settings</p>
+
+      <div className="ux-option-card selected recommended">
+        <div className="ux-recommended-badge">ONLY</div>
+        <div>
+          <div className="ux-option-title">🖼️ PDF → JPG Images</div>
+          <div className="ux-option-desc">Pages rendered at 2× resolution. Multiple pages download as ZIP.</div>
+        </div>
       </div>
+
+      {file && (
+        <div className="ux-summary">
+          <div className="ux-summary-row"><span>Pages</span><strong>{pages ? `${pages} JPGs` : 'Counting…'}</strong></div>
+        </div>
+      )}
+
+      {error && <div className="alert alert-error" style={{ marginTop:12 }}><span>❌ {error}</span></div>}
+      {converting && <ProgressBar pct={progress} label="Converting pages…" />}
+
+      {success && (
+        <div className="ux-result-card" style={{ marginTop:12 }}>
+          <div className="ux-result-success-bar">
+            <div className="ux-result-check">✓</div>
+            <p className="ux-result-success-title">Converted Successfully!</p>
+          </div>
+          <div className="ux-result-body">
+            <div className="ux-result-actions">
+               <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => {
+                const url = URL.createObjectURL(lastBlobRef.current);
+                const a = document.createElement('a'); a.href = url; a.download = lastNameRef.current;
+                a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+              }}>↓ Download</button>
+              <SaveToDriveButton bytes={lastBlobRef.current} filename={lastNameRef.current} toolFolder="Converted" mimeType={lastNameRef.current?.endsWith('.zip') ? 'application/zip' : 'image/jpeg'} />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  const actionButton = (
+    <button className="ux-action-btn" onClick={handleConvert} disabled={converting || !file}>
+      {converting ? (
+        <span style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ animation:'spin 1s linear infinite' }}>
+            <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" strokeWidth="3"/>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" strokeWidth="3" strokeLinecap="round"/>
+          </svg>
+          Converting…
+        </span>
+      ) : (
+        <span style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <polyline points="16 3 21 3 21 8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <line x1="4" y1="20" x2="21" y2="3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <polyline points="21 16 21 21 16 21" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Convert to JPG
+        </span>
+      )}
+    </button>
+  );
+
+  return (
+    <ToolPageLayout
+      title="Convert PDF to Images"
+      subtitle="Export pages as high-quality JPG images. 100% local."
+      icon="🖼️"
+      sidebarContent={sidebarContent}
+      actionButton={actionButton}
+    >
+      <SEO title="PDF to JPG Online Free — Convert PDF to Images | OM PDF" description="Convert PDF pages to high-quality JPG images instantly. Free, private, no upload." url="https://om-pdf.netlify.app/convert-pdf" keywords="pdf to jpg, convert pdf to image, extract images from pdf, pdf to jpeg" />
 
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to convert" hint="Single PDF · Max 200 MB" />
       ) : (
-        <div className="split-file-info">
-          <div className="split-file-card">
-            <div className="file-icon">📄</div>
-            <div className="file-info">
-              <div className="file-name">{file.name}</div>
-              <div className="file-meta">
-                <span className="file-size">{formatBytes(file.size)}</span>
-                <span className="file-pages">{pages ? `${pages} pages → ${pages} JPGs` : 'counting…'}</span>
-              </div>
+        <div className="ux-workspace-content">
+          <div className="ux-toolbar-inline">
+            <div>
+              <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Workspace</h2>
+              <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>Visual preview of the first page.</p>
             </div>
-            <button className="btn-remove" onClick={() => { setFile(null); setPages(null); setSuccess(''); }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFile(null); setPages(null); setSuccess(''); }}>
+              Remove File
             </button>
           </div>
 
-          {error && <div className="alert alert-error"><span>❌ {error}</span></div>}
-          <QueuePanel title="File queue" items={queueItems} />
-          {converting && <ProgressBar pct={progress} label="Converting pages to JPG…" />}
-          {success && (
-            <SuccessBanner message="Conversion complete!" details={success} onDismiss={() => setSuccess('')}>
-              <SaveToDriveButton
-                bytes={lastBlobRef.current}
-                filename={lastNameRef.current}
-                toolFolder="Converted"
-                mimeType={lastNameRef.current?.endsWith('.zip') ? 'application/zip' : 'image/jpeg'}
-              />
-            </SuccessBanner>
-          )}
-
-          <div className="merge-section">
-            <button className="btn-merge" style={{ background: 'linear-gradient(135deg,#10B981,#2563EB)' }}
-              onClick={handleConvert} disabled={converting}>
-              <span className="btn-merge-inner">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polyline points="16 3 21 3 21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><line x1="4" y1="20" x2="21" y2="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polyline points="21 16 21 21 16 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                Convert to JPG
-              </span>
-            </button>
-            <p className="merge-hint">🔒 Processed locally — no server upload</p>
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flex:1, minHeight:280, gap:14, background:'var(--bg-card)', borderRadius:'16px', border:'1px solid var(--border)' }}>
+            <div className="ux-page-card" style={{ width: '220px', cursor: 'default' }}>
+              <div className="ux-page-thumb-wrap" style={{ height: '300px' }}>
+                {thumbnail ? <img className="ux-page-thumb-img" src={thumbnail} alt="PDF Preview" /> : <div className="ux-page-thumb-placeholder" />}
+              </div>
+            </div>
+            <p style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--text-primary)', margin:0 }}>{file.name}</p>
+            <p style={{ fontSize:'0.85rem', color:'var(--text-muted)', margin:0 }}>{formatBytes(file.size)} · Ready to convert</p>
           </div>
         </div>
       )}
+
       <RecentFilesPanel tool="convert" title="Recent conversions" />
     </ToolPageLayout>
   );
 }
-
-
-
-
-
-
-
-

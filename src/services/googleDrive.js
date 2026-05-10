@@ -2,7 +2,7 @@
 // Google Drive API helpers using the Firebase auth access token.
 
 const ROOT_FOLDER = 'OM PDF';
-const TOKEN_TTL_MS = 55 * 60 * 1000;
+const TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days (Local "perceived" validity)
 const STORAGE_TOKEN = 'om_pdf_drive_token';
 const STORAGE_EXP = 'om_pdf_drive_token_exp';
 const STORAGE_UID = 'om_pdf_drive_uid';
@@ -79,6 +79,9 @@ async function driveRequest(path, _loginHint = null, options = {}) {
     headers: { Authorization: `Bearer ${token}`, ...(options.headers || {}) },
   });
   if (!r.ok) {
+    if (r.status === 401) {
+      clearDriveAccessToken(); // Token is dead, clear it so we re-auth next time
+    }
     const body = await r.json().catch(() => ({}));
     throw new Error(body?.error?.message || `Drive API error ${r.status}: ${r.statusText}`);
   }

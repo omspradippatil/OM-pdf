@@ -3,239 +3,146 @@ import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
-import SuccessBanner from '../components/SuccessBanner';
 import SaveToDriveButton from '../components/SaveToDriveButton';
-import { PDFDocument } from 'pdf-lib';
+import RecentFilesPanel from '../components/RecentFilesPanel';
 import { formatBytes } from '../fileManager';
 import { useAuth } from '../context/AuthContext';
-import { logUserAction } from '../services/activityLog';
-import { pdfjsLib } from '../utils/pdfjs';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
-import QueuePanel from '../components/QueuePanel';
-import RecentFilesPanel from '../components/RecentFilesPanel';
-import '../styles/CompressPDF.css';
-
+import { logUserAction } from '../services/activityLog';
 import { runPdfWorkerTask } from '../workers/workerClient';
+import { generateThumbnail } from '../thumbnailGenerator';
 
-/**
- * Basic client-side PDF "compression":
- * Re-saves the PDF with pdf-lib which can remove some redundancy and clean object streams.
- * This is lightweight but real — not image recompression.
- */
-async function compressPDF(file, onProgress) {
-  const buffer = await file.arrayBuffer();
-  const { bytes } = await runPdfWorkerTask('compress_lossless', { buffer }, [buffer], onProgress);
-  return bytes;
-}
-
-async function compressByRaster(file, { quality, scale }, onProgress) {
-  onProgress?.(5);
-  const buf = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: buf, verbosity: 0 }).promise;
-  const total = pdf.numPages;
-  const outDoc = await PDFDocument.create();
-
-  for (let i = 1; i <= total; i++) {
-    const page = await pdf.getPage(i);
-    const viewport = page.getViewport({ scale });
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.floor(viewport.width);
-    canvas.height = Math.floor(viewport.height);
-    const ctx = canvas.getContext('2d');
-    await page.render({ canvasContext: ctx, viewport }).promise;
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
-    if (!blob) {
-      throw new Error('Failed to render a page image for compression.');
-    }
-    const imgBuf = await blob.arrayBuffer();
-    const img = await outDoc.embedJpg(imgBuf);
-    const outPage = outDoc.addPage([viewport.width, viewport.height]);
-    outPage.drawImage(img, { x: 0, y: 0, width: viewport.width, height: viewport.height });
-    onProgress?.(Math.round((i / total) * 90));
-    await new Promise(r => setTimeout(r, 0));
-  }
-
-  onProgress?.(98);
-  const bytes = await outDoc.save();
-  onProgress?.(100);
-  return bytes;
-}
-
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
-
-function deriveLossySettings(originalBytes, targetMB, currentQuality, currentScale) {
-  if (!targetMB || targetMB <= 0) return { quality: currentQuality, scale: currentScale };
-  const targetBytes = targetMB * 1024 * 1024;
-  const ratio = targetBytes / Math.max(1, originalBytes);
-  if (ratio >= 1) return { quality: currentQuality, scale: currentScale };
-  const quality = clamp(0.95 * Math.pow(ratio, 0.6), 0.45, 0.95);
-  const scale = clamp(1.6 * Math.pow(ratio, 0.5), 0.8, 2);
-  return { quality, scale };
-}
+const LEVELS = [
+  { id: 'screen',  label: 'Maximum',  desc: 'Smallest size (72 dpi images)', badge: '85%+ reduction' },
+  { id: 'ebook',   label: 'Balanced', desc: 'Good quality (150 dpi images)', badge: 'Recommended' },
+  { id: 'printer', label: 'Minimal',  desc: 'High quality (300 dpi images)', badge: 'Best quality' },
+];
 
 export default function CompressPDF() {
-  
   const { user } = useAuth();
-  const [file, setFile]         = useState(null);
-  const [progress, setProgress] = useState(0);
+  const [file, setFile]           = useState(null);
+  const [level, setLevel]         = useState('ebook');
+  const [progress, setProgress]   = useState(0);
   const [compressing, setCompressing] = useState(false);
-  const [error, setError]       = useState('');
-  const [result, setResult]     = useState(null); // { bytes, origSize, newSize, name }
-  const [mode, setMode] = useState('lossless');
-  const [quality, setQuality] = useState(0.72);
-  const [scale, setScale] = useState(1.4);
-  const [targetSizeMB, setTargetSizeMB] = useState('');
-  const queueItems = file ? [{
-    id: file.name,
-    name: file.name,
-    status: compressing ? 'processing' : error ? 'error' : result ? 'done' : 'ready',
-    progress: compressing ? progress : result ? 100 : 0,
-    etaMs: file.size ? Math.max(1200, Math.round((file.size / (1024 * 1024)) * 900)) : null,
-    message: error || '',
-  }] : [];
+  const [error, setError]         = useState('');
+  const [result, setResult]       = useState(null);
+  const [thumbnail, setThumbnail] = useState(null);
 
   const loadFile = (raw) => {
-    const f = raw[0];
-    if (!f || f.type !== 'application/pdf') { setError('Please select a valid PDF.'); return; }
-    setFile(f); setError(''); setResult(null);
+    const f = Array.isArray(raw) ? raw[0] : (raw?.[0] || raw);
+    if (!f || f.type !== 'application/pdf') { setError('Select a valid PDF.'); return; }
+    setFile(f); setError(''); setResult(null); setThumbnail(null);
+    generateThumbnail(f).then(url => {
+      if (url) setThumbnail(url);
+    });
   };
+  const fileInputRef = React.useRef(null);
 
   const handleCompress = async () => {
     if (!file) return;
     setError(''); setResult(null); setCompressing(true); setProgress(0);
     try {
-      let bytes;
-      let appliedQuality = quality;
-      let appliedScale = scale;
-      if (mode === 'lossless') {
-        bytes = await compressPDF(file, setProgress);
-      } else {
-        const targetValue = parseFloat(targetSizeMB);
-        const derived = deriveLossySettings(file.size, Number.isFinite(targetValue) ? targetValue : 0, quality, scale);
-        appliedQuality = derived.quality;
-        appliedScale = derived.scale;
-        bytes = await compressByRaster(file, { quality: appliedQuality, scale: appliedScale }, setProgress);
-      }
-      const savings = ((1 - bytes.byteLength / file.size) * 100).toFixed(1);
-      setResult({ bytes, origSize: file.size, newSize: bytes.byteLength, savings, name: file.name.replace(/\.pdf$/i, '_compressed.pdf') });
-      addRecentFile({ tool: 'compress', name: file.name.replace(/\.pdf$/i, '_compressed.pdf'), size: bytes.byteLength || 0 });
+      const buffer = await file.arrayBuffer();
+      const { bytes: out } = await runPdfWorkerTask('compress_lossless', { buffer, level }, [buffer], setProgress);
+      setProgress(100);
+      const name = file.name.replace(/\.pdf$/i, '_compressed.pdf');
+      const blob = new Blob([out], { type: 'application/pdf' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a'); a.href = url; a.download = name;
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+      const saved = Math.max(0, file.size - out.byteLength);
+      const pct   = file.size ? Math.round((saved / file.size) * 100) : 0;
+      setResult({ bytes: out, name, originalSize: file.size, compressedSize: out.byteLength, saved, pct });
+      addRecentFile({ tool: 'compress', name, size: out.byteLength || 0 });
       bumpLocalJob();
-      await logUserAction(user, 'compress', {
-        tool: 'compress',
-        status: 'success',
-        meta: {
-          outputName: file.name.replace(/\.pdf$/i, '_compressed.pdf'),
-          originalSize: file.size,
-          newSize: bytes.byteLength,
-          savings: Number(savings),
-          mode,
-          quality: appliedQuality,
-          scale: appliedScale,
-          targetSizeMB: targetSizeMB ? Number(targetSizeMB) : null,
-        }
-      });
+      await logUserAction(user, 'compress', { tool: 'compress', status: 'success', meta: { outputName: name, level, pct } });
     } catch (err) {
       setError('Compression failed: ' + (err.message || 'Unexpected error.'));
-      await logUserAction(user, 'compress', {
-        tool: 'compress',
-        status: 'error',
-        meta: { error: err?.message || 'Compression failed' }
-      });
+      await logUserAction(user, 'compress', { tool: 'compress', status: 'error', meta: { error: err?.message } });
     } finally { setCompressing(false); setProgress(0); }
   };
 
-  const downloadResult = () => {
-    if (!result) return;
-    const blob = new Blob([result.bytes], { type: 'application/pdf' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = result.name;
-    document.body.appendChild(a); a.click();
-    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-  };
+  const sidebarContent = (
+    <>
+      <p className="ux-section-label">Compression Level</p>
+      {LEVELS.map(lv => (
+        <div key={lv.id} className={`ux-option-card${level===lv.id?' selected':''}`} onClick={() => setLevel(lv.id)}>
+          {lv.badge==='Recommended' && <div className="ux-recommended-badge">BEST</div>}
+          <div>
+            <div className="ux-option-title">{lv.label}</div>
+            <div className="ux-option-desc">{lv.desc}</div>
+            {lv.id !== 'ebook' && <div className="ux-option-desc" style={{ color:'var(--primary)', fontWeight:700, marginTop:3 }}>{lv.badge}</div>}
+          </div>
+        </div>
+      ))}
+
+      {error     && <div className="alert alert-error" style={{ marginTop:10 }}><span>❌ {error}</span></div>}
+      {compressing && <ProgressBar pct={progress} label="Compressing…" />}
+
+      {/* Result */}
+      {result && (
+        <div className="ux-result-card" style={{ marginTop:12 }}>
+          <div className="ux-result-success-bar">
+            <div className="ux-result-check">✓</div>
+            <p className="ux-result-success-title">Compressed!</p>
+          </div>
+          <div className="ux-result-body">
+            <div className="ux-size-comparison">
+              <div className="ux-size-before"><p>Before</p><strong>{formatBytes(result.originalSize)}</strong></div>
+              <span className="ux-size-arrow">→</span>
+              <div className="ux-size-after"><p>After</p><strong>{formatBytes(result.compressedSize)}</strong></div>
+            </div>
+            <div className="ux-savings-row">
+              <span>Space saved</span>
+              <span className="ux-savings-badge">−{result.pct}% ({formatBytes(result.saved)})</span>
+            </div>
+            <div className="ux-result-actions">
+              <SaveToDriveButton bytes={result.bytes} filename={result.name} toolFolder="Compressed" />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 
   return (
-    <ToolPageLayout title="Compress PDF" subtitle="Reduce PDF file size using client-side stream optimization." icon="⚡">
-      <SEO keywords="compress pdf, reduce pdf size, shrink pdf, pdf optimizer, small pdf, local pdf compression" title="Compress PDF Online Free — Reduce PDF Size | OM PDF" description="Reduce PDF file size without losing quality. Free client-side PDF compression — your file never leaves your browser." url="https://om-pdf.netlify.app/compress-pdf" />
-      <div className="alert alert-warning" style={{ marginBottom: 16 }}>
-        <span>ℹ️ Choose lossless (safe) or lossy (smaller size). Lossy mode rasterizes pages to images.</span>
-      </div>
-
+    <ToolPageLayout
+      title="Compress PDF"
+      subtitle="Reduce file size while keeping quality. 100% local."
+      icon="📦"
+      sidebarContent={sidebarContent}
+      actionLabel={compressing ? 'Compressing…' : 'Compress PDF'}
+      onAction={handleCompress}
+      actionDisabled={compressing || !file}
+    >
+      <SEO title="Compress PDF Online Free — Reduce PDF Size | OM PDF"
+        description="Compress PDF files to reduce their size. Private, fast, local processing — no uploads."
+        url="https://om-pdf.netlify.app/compress-pdf"
+        keywords="compress pdf, reduce pdf size, pdf compressor" />
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to compress" hint="Single PDF · Max 200 MB" />
       ) : (
-        <div className="split-file-info">
-          <div className="split-file-card">
-            <div className="file-icon">📄</div>
-            <div className="file-info">
-              <div className="file-name">{file.name}</div>
-              <div className="file-meta"><span className="file-size">{formatBytes(file.size)}</span></div>
+        <div className="ux-workspace-content">
+          <div className="ux-toolbar-inline">
+            <div>
+              <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Workspace</h2>
+              <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>Configure compression settings in the right panel.</p>
             </div>
-            <button className="btn-remove" onClick={() => { setFile(null); setResult(null); }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFile(null); setResult(null); setError(''); }}>
+              Remove File
             </button>
           </div>
 
-          {error && <div className="alert alert-error"><span>❌ {error}</span></div>}
-          <div className="split-option-panel">
-            <label className="split-label">Compression mode</label>
-            <div className="split-modes">
-              <button className={`split-mode-btn${mode === 'lossless' ? ' active' : ''}`} onClick={() => setMode('lossless')}>Lossless</button>
-              <button className={`split-mode-btn${mode === 'lossy' ? ' active' : ''}`} onClick={() => setMode('lossy')}>Lossy (smaller)</button>
-            </div>
-            {mode === 'lossy' && (
-              <div className="compress-controls">
-                <label className="split-label" htmlFor="targetSize">Target size (MB, best effort)</label>
-                <input
-                  id="targetSize"
-                  className="split-range-input"
-                  type="number"
-                  min={1}
-                  step={1}
-                  value={targetSizeMB}
-                  onChange={e => setTargetSizeMB(e.target.value)}
-                  placeholder="e.g. 3"
-                />
-                <label className="split-label" htmlFor="qualityRange">JPEG quality ({Math.round(quality * 100)}%)</label>
-                <input id="qualityRange" type="range" min={50} max={95} value={Math.round(quality * 100)}
-                  onChange={e => setQuality(Math.min(0.95, Math.max(0.5, parseInt(e.target.value, 10) / 100)))} />
-                <label className="split-label" htmlFor="scaleRange">Render scale ({scale.toFixed(1)}x)</label>
-                <input id="scaleRange" type="range" min={8} max={20} value={Math.round(scale * 10)}
-                  onChange={e => setScale(Math.min(2, Math.max(0.8, parseInt(e.target.value, 10) / 10)))} />
-                <div className="compress-hint">Target size is best effort; results vary by document complexity.</div>
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flex:1, minHeight:280, gap:14, background:'var(--bg-card)', borderRadius:'16px', border:'1px solid var(--border)' }}>
+            <div className="ux-page-card" style={{ width: '220px', cursor: 'default' }}>
+              <div className="ux-page-thumb-wrap" style={{ height: '300px' }}>
+                {thumbnail ? <img className="ux-page-thumb-img" src={thumbnail} alt="PDF Preview" /> : <div className="ux-page-thumb-placeholder" />}
               </div>
-            )}
-          </div>
-          <QueuePanel title="File queue" items={queueItems} />
-          {compressing && <ProgressBar pct={progress} label="Compressing PDF…" />}
-
-          {result && (
-            <SuccessBanner
-              message="Compression complete!"
-              details={`${formatBytes(result.origSize)} → ${formatBytes(result.newSize)} (${result.savings > 0 ? '-' + result.savings + '%' : 'no reduction'})`}
-              onDismiss={() => setResult(null)}
-            >
-              <button className="btn-action-sm btn-action-download" onClick={downloadResult}>↓ Download</button>
-              <SaveToDriveButton
-                bytes={result.bytes}
-                filename={result.name}
-                toolFolder="Compressed"
-              />
-            </SuccessBanner>
-          )}
-
-          <div className="merge-section">
-            <button className="btn-merge" style={{ background: 'linear-gradient(135deg,#0EA5E9,#2563EB)' }}
-              onClick={handleCompress} disabled={compressing}>
-              <span className="btn-merge-inner">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                Compress PDF
-              </span>
-            </button>
-            <p className="merge-hint">🔒 Processed locally — no upload</p>
+            </div>
+            <p style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--text-primary)', margin:0 }}>{file.name}</p>
+            <p style={{ fontSize:'0.85rem', color:'var(--text-muted)', margin:0 }}>{formatBytes(file.size)} · Ready to compress</p>
           </div>
         </div>
       )}
@@ -243,11 +150,3 @@ export default function CompressPDF() {
     </ToolPageLayout>
   );
 }
-
-
-
-
-
-
-
-

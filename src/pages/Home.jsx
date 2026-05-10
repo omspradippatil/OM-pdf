@@ -5,6 +5,8 @@ import { TOOLS } from '../constants/tools';
 import PrivacyDashboard from '../components/PrivacyDashboard';
 import '../styles/Home.css';
 
+
+
 const FEATURES = [
   { icon: '⚡', title: 'Lightning Fast',    desc: 'No upload delays. Processing runs instantly in your browser.' },
   { icon: '🔒', title: '100% Private',      desc: 'Your files never leave your device. Zero server contact.' },
@@ -14,7 +16,6 @@ const FEATURES = [
   { icon: '⚙️', title: 'All-in-One Suite',  desc: 'Merge, split, rotate, compress, and more in one place.' },
 ];
 
-/* Floating icon in hero illustration */
 const FloatIcon = ({ icon, style }) => (
   <div className="float-icon" style={style} aria-hidden="true">{icon}</div>
 );
@@ -68,16 +69,16 @@ export default function Home() {
 
   return (
     <div className="home-page">
-      <SEO keywords="pdf to jpg, convert pdf to image, extract images from pdf, pdf to jpeg, high quality pdf conversion" 
-        title="Free PDF Tools Online | Merge, Split, Compress, Convert" 
-        description="Merge PDF, split PDF, compress PDF, convert PDF to JPG and add page numbers — all free, private and instant in your browser. No upload. No sign-up." 
-        url="https://om-pdf.netlify.app/" 
-        schema={faqSchema} 
+      <SEO
+        keywords="pdf to jpg, convert pdf to image, extract images from pdf, pdf to jpeg, high quality pdf conversion"
+        title="Free PDF Tools Online | Merge, Split, Compress, Convert"
+        description="Merge PDF, split PDF, compress PDF, convert PDF to JPG and add page numbers — all free, private and instant in your browser. No upload. No sign-up."
+        url="https://om-pdf.netlify.app/"
+        schema={faqSchema}
       />
 
       {/* ══════════ HERO ══════════ */}
       <section className="home-hero" aria-label="Hero">
-        {/* Animated background blobs */}
         <div className="hero-bg-shapes" aria-hidden="true">
           <div className="blob blob-1" />
           <div className="blob blob-2" />
@@ -85,7 +86,6 @@ export default function Home() {
         </div>
 
         <div className="hero-content">
-          {/* Left: Headline + CTAs */}
           <div className="hero-left">
             <div className="hero-badge">
               <span className="badge-dot" />
@@ -104,14 +104,14 @@ export default function Home() {
 
             <div className="hero-ctas">
               <Link to="/merge-pdf" className="btn-primary">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M8 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <rect x="8" y="3" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="2"/>
                 </svg>
                 Merge PDF
               </Link>
               <a href="#tools" className="btn-secondary" onClick={scrollToTools}>
-                Explore All Tools ↓
+                Explore All Tools →
               </a>
             </div>
 
@@ -122,11 +122,10 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right: Animated illustration */}
           <div className="hero-right" aria-hidden="true">
             <div className="hero-illustration">
               <div className="hero-center-icon">
-                <svg width="56" height="56" viewBox="0 0 24 24" fill="none">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
                   <path d="M14 2H6C4.9 2 4 2.9 4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8L14 2z"
                     stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M14 2v6h6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -142,6 +141,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+
 
       {/* ══════════ ALL TOOLS GRID ══════════ */}
       <section
@@ -164,7 +165,10 @@ export default function Home() {
               style={{ '--card-color': tool.color }}
               aria-label={`Open ${tool.title} tool`}
             >
-              <div className="tool-card-icon" style={{ background: tool.color + '18', color: tool.color }}>
+              <div
+                className="tool-card-icon"
+                style={{ background: tool.color + '18', color: tool.color }}
+              >
                 {tool.icon}
               </div>
               <h3 className="tool-card-title">{tool.title}</h3>
@@ -179,7 +183,7 @@ export default function Home() {
       <section className="privacy-section" aria-label="Privacy comparison">
         <div className="privacy-inner">
           <h2 className="section-title">Your Privacy is Our Priority</h2>
-          <p className="section-sub">Unlike other PDF tools, OM PDF never touches your files on any server.</p>
+          <p className="section-sub" style={{ marginBottom: 36 }}>Unlike other PDF tools, OM PDF never touches your files on any server.</p>
 
           <PrivacyDashboard />
 
@@ -224,7 +228,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── SEO CONTENT & FAQ ── */}
+      {/* ══════════ SEO CONTENT & FAQ ══════════ */}
       <section className="seo-content-section" aria-label="About OM PDF">
         <div className="seo-inner">
           <article className="seo-article">
@@ -235,7 +239,7 @@ export default function Home() {
             <h3>Secure, Fast, and Free PDF Tools</h3>
             <p>We believe essential document management should be accessible to everyone. That's why OM PDF offers premium features like drag-and-drop page reordering, offline Progressive Web App (PWA) support, and high-quality image extraction completely free of charge. No watermarks, no account registration, and no limits.</p>
           </article>
-          
+
           <div className="faq-section">
             <h2>Frequently Asked Questions</h2>
             <div className="faq-grid">
@@ -275,6 +279,3 @@ export default function Home() {
     </div>
   );
 }
-
-
-

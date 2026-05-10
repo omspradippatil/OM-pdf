@@ -4,16 +4,13 @@ import { PDFDocument, degrees } from 'pdf-lib';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
-import SuccessBanner from '../components/SuccessBanner';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import { formatBytes } from '../fileManager';
-import '../styles/MyFiles.css';
 import { useAuth } from '../context/AuthContext';
 import { logUserAction } from '../services/activityLog';
 import { generatePageThumbnails } from '../thumbnailGenerator';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
-import QueuePanel from '../components/QueuePanel';
 import RecentFilesPanel from '../components/RecentFilesPanel';
 import '../styles/RotatePDF.css';
 import PdfCanvas from '../components/PdfCanvas';
@@ -47,39 +44,24 @@ function download(bytes, name) {
 }
 
 export default function RotatePDF() {
-  
   const { user } = useAuth();
-  const [file, setFile]         = useState(null);
-  const [pageThumbs, setPageThumbs] = useState([]);
-  const [rotations, setRotations] = useState([]);
+  const [file, setFile]               = useState(null);
+  const [pageThumbs, setPageThumbs]   = useState([]);
+  const [rotations, setRotations]     = useState([]);
   const [selectedPage, setSelectedPage] = useState(1);
-  const [pageCount, setPageCount] = useState(null);
-  const [progress, setProgress] = useState(0);
-  const [rotating, setRotating] = useState(false);
-  const [error, setError]       = useState('');
+  const [progress, setProgress]       = useState(0);
+  const [rotating, setRotating]       = useState(false);
+  const [error, setError]             = useState('');
   const [previewError, setPreviewError] = useState('');
-  const [success, setSuccess]   = useState('');
-  const [lastBytes, setLastBytes] = useState(null);
-  const [lastName, setLastName]   = useState('');
-
-  const queueItems = file ? [{
-    id: file.name,
-    name: file.name,
-    status: rotating ? 'processing' : error ? 'error' : success ? 'done' : 'ready',
-    progress: rotating ? progress : success ? 100 : 0,
-    etaMs: file.size ? Math.max(1200, Math.round((file.size / (1024 * 1024)) * 900)) : null,
-    message: error || '',
-  }] : [];
+  const [success, setSuccess]         = useState('');
+  const [lastBytes, setLastBytes]     = useState(null);
+  const [lastName, setLastName]       = useState('');
 
   const loadFile = (raw) => {
     const f = Array.isArray(raw) ? raw[0] : (raw?.[0] || raw);
     if (!f || f.type !== 'application/pdf') { setError('Select a valid PDF.'); return; }
     setFile(f); setError(''); setSuccess('');
-    setPageThumbs([]);
-    setRotations([]);
-    setSelectedPage(1);
-    setPageCount(null);
-    setPreviewError('');
+    setPageThumbs([]); setRotations([]); setSelectedPage(1); setPreviewError('');
   };
 
   useEffect(() => {
@@ -98,168 +80,182 @@ export default function RotatePDF() {
   }, [file]);
 
   const rotatePage = (index, delta) => {
-    setRotations(prev => {
-      const next = [...prev];
-      const current = next[index] || 0;
-      next[index] = (current + delta + 360) % 360;
-      return next;
-    });
+    setRotations(prev => { const next = [...prev]; next[index] = (next[index] + delta + 360) % 360; return next; });
   };
-
-  const rotateAll = (delta) => {
-    setRotations(prev => prev.map(v => (v + delta + 360) % 360));
-  };
+  const rotateAll = (delta) => setRotations(prev => prev.map(v => (v + delta + 360) % 360));
 
   const handleRotate = async () => {
     if (!file) return;
     setError(''); setSuccess(''); setRotating(true); setProgress(0);
     try {
       const bytes = await rotatePDF(file, rotations, setProgress);
-      const name  = file.name.replace(/\.pdf$/i, `_rotated.pdf`);
+      const name  = file.name.replace(/\.pdf$/i, '_rotated.pdf');
       setLastBytes(bytes); setLastName(name);
       download(bytes, name);
-      setSuccess(`"${name}" rotated pages saved`);
+      setSuccess(`"${name}" rotated and saved`);
       addRecentFile({ tool: 'rotate', name, size: bytes.byteLength || 0, pages: rotations.length });
       bumpLocalJob();
-      await logUserAction(user, 'rotate', {
-        tool: 'rotate',
-        status: 'success',
-        meta: { outputName: name }
-      });
+      await logUserAction(user, 'rotate', { tool: 'rotate', status: 'success', meta: { outputName: name } });
     } catch (err) {
       setError('Rotation failed: ' + (err.message || 'Unexpected error.'));
-      await logUserAction(user, 'rotate', {
-        tool: 'rotate',
-        status: 'error',
-        meta: { error: err?.message || 'Rotation failed' }
-      });
+      await logUserAction(user, 'rotate', { tool: 'rotate', status: 'error', meta: { error: err?.message } });
     } finally { setRotating(false); setProgress(0); }
   };
+
+  const sidebarContent = (
+    <>
+      <p className="ux-section-label">Rotation Options</p>
+
+      {/* Bulk rotate buttons */}
+      {pageThumbs.length > 0 && (
+        <div className="ux-field">
+          <label className="ux-label">Rotate All Pages</label>
+          <div style={{ display:'flex', gap:10 }}>
+            <button className="ux-btn-secondary" style={{ flex:1 }} onClick={() => rotateAll(270)}>
+              ↺ 90° Left
+            </button>
+            <button className="ux-btn-secondary" style={{ flex:1 }} onClick={() => rotateAll(90)}>
+              ↻ 90° Right
+            </button>
+          </div>
+          <button className="ux-btn-secondary" style={{ width:'100%', marginTop:10 }} onClick={() => rotateAll(180)}>
+            ⟳ Rotate All 180°
+          </button>
+        </div>
+      )}
+
+      {/* Selected page info */}
+      {pageThumbs.length > 0 && (
+        <div className="ux-summary">
+          <div className="ux-summary-row">
+            <span>Selected Page</span>
+            <strong>Page {selectedPage} / {pageThumbs.length}</strong>
+          </div>
+          <div className="ux-summary-row">
+            <span>Current Angle</span>
+            <strong>{rotations[selectedPage - 1] || 0}°</strong>
+          </div>
+        </div>
+      )}
+
+      {/* Per-page rotate */}
+      {pageThumbs.length > 0 && (
+        <div className="ux-field">
+          <label className="ux-label">Rotate Selected Page</label>
+          <div style={{ display:'flex', gap:8 }}>
+            <button className="ux-btn-secondary" style={{ flex:1, padding:'12px' }} onClick={() => rotatePage(selectedPage - 1, 270)}>↺ Left</button>
+            <button className="ux-btn-secondary" style={{ flex:1, padding:'12px' }} onClick={() => rotatePage(selectedPage - 1, 90)}>↻ Right</button>
+            <button className="ux-btn-secondary" style={{ flex:1, padding:'12px' }} onClick={() => rotatePage(selectedPage - 1, 180)}>⟳ 180</button>
+          </div>
+        </div>
+      )}
+
+      {error   && <div className="alert alert-error"   style={{ marginTop:12 }}><span>❌ {error}</span></div>}
+      {rotating && <ProgressBar pct={progress} label="Rotating PDF…" />}
+
+      {success && (
+        <div className="ux-result-card" style={{ marginTop:12 }}>
+          <div className="ux-result-success-bar">
+            <div className="ux-result-check">✓</div>
+            <p className="ux-result-success-title">Rotated Successfully!</p>
+          </div>
+          <div className="ux-result-body">
+            <div className="ux-result-actions">
+              <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => download(lastBytes, lastName)}>
+                ↓ Download
+              </button>
+              <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Rotated" />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  const actionButton = (
+    <button className="ux-action-btn" onClick={handleRotate} disabled={rotating || !file}>
+      {rotating ? (
+        <span style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ animation:'spin 1s linear infinite' }}>
+            <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" strokeWidth="3"/>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" strokeWidth="3" strokeLinecap="round"/>
+          </svg>
+          Rotating…
+        </span>
+      ) : (
+        <span style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M23 4v6h-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Save Rotated PDF
+        </span>
+      )}
+    </button>
+  );
 
   return (
     <ToolPageLayout
       title="Rotate PDF"
-      subtitle="Rotate all pages in a PDF by 90 deg, 180 deg, or 270 deg instantly in your browser."
+      subtitle="Rotate individual pages or all pages at once. 100% local."
       icon="🔄"
+      sidebarContent={sidebarContent}
+      actionButton={actionButton}
     >
-      <SEO keywords="rotate pdf, flip pdf, turn pdf, pdf page rotation, free online pdf tools" title="Rotate PDF Online Free - OM PDF | 90 180 270" description="Rotate all pages of a PDF by 90, 180 or 270 degrees. Fast, free and private - processed entirely in your browser." url="https://om-pdf.netlify.app/rotate-pdf" />
+      <SEO title="Rotate PDF Online Free — 90 180 270° | OM PDF" description="Rotate all pages of a PDF by 90, 180 or 270 degrees. Fast, free and private." url="https://om-pdf.netlify.app/rotate-pdf" keywords="rotate pdf, flip pdf, turn pdf, pdf page rotation" />
+
       {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a PDF to rotate" hint="Single PDF - Max 200 MB" />
+        <DropZone onFiles={loadFile} label="Drop a PDF to rotate" hint="Single PDF · Max 200 MB" />
       ) : (
-        <div className="split-file-info">
-          {/* File card */}
-          <div className="split-file-card">
-            <div className="file-icon">📄</div>
-            <div className="file-info">
-              <div className="file-name">{file.name}</div>
-              <div className="file-meta"><span className="file-size">{formatBytes(file.size)}</span></div>
+        <div className="ux-workspace-content">
+          <div className="ux-toolbar-inline">
+            <div>
+              <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Workspace</h2>
+              <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>Click pages to select, use buttons below to rotate.</p>
             </div>
-            <button className="btn-remove" onClick={() => { setFile(null); setSuccess(''); setError(''); }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
+            <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFile(null); setSuccess(''); setError(''); }}>
+              Remove File
             </button>
           </div>
 
-          <div className="split-option-panel">
-            <label className="split-label">Rotate pages individually</label>
-            <div className="rotate-tools">
-              <button className="btn-text" type="button" onClick={() => rotateAll(90)}>Rotate all right</button>
-              <button className="btn-text" type="button" onClick={() => rotateAll(270)}>Rotate all left</button>
-            </div>
-            <div className="rotate-grid">
+          <div style={{ display:'flex', gap:24, alignItems:'flex-start' }}>
+            {/* Thumbnail grid */}
+            <div className="ux-page-grid" style={{ flex:1 }}>
               {pageThumbs.map((thumb, idx) => (
-                <div key={idx} className={`rotate-card${selectedPage === idx + 1 ? ' active' : ''}`}>
-                  <button type="button" className="rotate-thumb" onClick={() => setSelectedPage(idx + 1)}>
+                <div key={idx} className={`ux-page-card${selectedPage === idx + 1 ? ' selected-for-split' : ''}`} onClick={() => setSelectedPage(idx + 1)} style={{ cursor:'pointer' }}>
+                  <div className="ux-page-thumb-wrap">
                     {thumb
-                      ? (
-                        <img
-                          src={thumb}
-                          alt={`Page ${idx + 1} preview`}
-                          className="rotate-thumb-img"
-                          style={{ transform: rotations[idx] ? `rotate(${rotations[idx]}deg)` : undefined }}
-                        />
-                      )
-                      : <div className="page-thumb-placeholder" aria-hidden="true" />}
-                  </button>
-                  <div className="rotate-card-footer">
-                    <span>Page {idx + 1}</span>
-                    <div className="rotate-card-actions">
-                      <button type="button" onClick={() => rotatePage(idx, 270)}>Left</button>
-                      <button type="button" onClick={() => rotatePage(idx, 90)}>Right</button>
-                    </div>
+                      ? <img src={thumb} alt={`Page ${idx + 1}`} className="ux-page-thumb-img" style={{ transform: rotations[idx] ? `rotate(${rotations[idx]}deg)` : undefined }} />
+                      : <div className="ux-page-thumb-placeholder" aria-hidden="true" />}
                   </div>
-                  {rotations[idx] ? <span className="rotate-badge">{rotations[idx]} deg</span> : null}
+                  <div className="ux-page-num" style={{ fontWeight: selectedPage === idx + 1 ? 700 : 500 }}>Pg {idx + 1} {rotations[idx] ? `(${rotations[idx]}°)` : ''}</div>
                 </div>
               ))}
             </div>
-            <div className="rotate-preview">
-              <PdfCanvas
-                file={file}
-                pageNumber={selectedPage}
-                width={420}
-                rotate={rotations[selectedPage - 1] || 0}
-                onRender={() => setPreviewError('')}
-                onError={(err) => setPreviewError(err?.message || 'Preview failed to load.')}
-              />
-              {previewError ? <div className="rotate-preview-error">{previewError}</div> : null}
+
+            {/* Live preview (Focused) */}
+            <div className="rotate-preview" style={{ sticky: 'top 0', padding:'20px', background:'var(--bg-card)', borderRadius:'16px', border:'1px solid var(--border)', display:'flex', flexDirection:'column', alignItems:'center' }}>
+              <p className="ux-section-label" style={{ marginBottom:16 }}>Focused Preview (Page {selectedPage})</p>
+              <div style={{ transform: rotations[selectedPage - 1] ? `rotate(${rotations[selectedPage - 1]}deg)` : undefined, transition:'transform 0.3s ease' }}>
+                <PdfCanvas
+                  file={file}
+                  pageNumber={selectedPage}
+                  width={340}
+                  onRender={() => setPreviewError('')}
+                  onError={(err) => setPreviewError(err?.message || 'Preview failed.')}
+                />
+              </div>
+              {previewError && <div className="rotate-preview-error">{previewError}</div>}
+              <div style={{ display:'flex', gap:10, marginTop:20 }}>
+                 <button className="ux-btn-secondary" onClick={() => rotatePage(selectedPage - 1, 270)}>↺ Left</button>
+                 <button className="ux-btn-secondary" onClick={() => rotatePage(selectedPage - 1, 90)}>↻ Right</button>
+              </div>
             </div>
-          </div>
-
-          {error   && <div className="alert alert-error"><span>! {error}</span></div>}
-          <QueuePanel title="File queue" items={queueItems} />
-          {rotating && <ProgressBar pct={progress} label="Rotating PDF..." />}
-          {success && (
-            <SuccessBanner message="PDF rotated!" details={success} onDismiss={() => setSuccess('')}>
-              <button
-                className="btn-action-sm btn-action-download"
-                onClick={() => download(lastBytes, lastName)}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="7 10 12 15 17 10"/>
-                  <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Download Again
-              </button>
-              <SaveToDriveButton
-                bytes={lastBytes}
-                filename={lastName}
-                toolFolder="Rotated"
-              />
-            </SuccessBanner>
-          )}
-
-          <div className="merge-section">
-            <button
-              className="btn-merge"
-              style={{ background: 'linear-gradient(135deg,#7C3AED,#2563EB)' }}
-              onClick={handleRotate}
-              disabled={rotating}
-            >
-              <span className="btn-merge-inner">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M23 4v6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Rotate PDF
-              </span>
-            </button>
-            <p className="merge-hint">Processed locally - no upload</p>
           </div>
         </div>
       )}
+
       <RecentFilesPanel tool="rotate" title="Recent rotations" />
     </ToolPageLayout>
   );
 }
-
-
-
-
-
-
-
-
-

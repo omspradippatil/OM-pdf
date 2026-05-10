@@ -3,9 +3,7 @@ import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
-import SuccessBanner from '../components/SuccessBanner';
 import SaveToDriveButton from '../components/SaveToDriveButton';
-import QueuePanel from '../components/QueuePanel';
 import RecentFilesPanel from '../components/RecentFilesPanel';
 import '../styles/WatermarkPDF.css';
 import { useAuth } from '../context/AuthContext';
@@ -13,51 +11,32 @@ import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
 import { formatBytes } from '../fileManager';
+import { generateThumbnail } from '../thumbnailGenerator';
 import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 
 function downloadBytes(bytes, name) {
   const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-  const a = document.createElement('a');
-  a.href = url; a.download = name;
+  const a = document.createElement('a'); a.href = url; a.download = name;
   document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
 }
-
 function hexToRgb(hex) {
   const clean = hex.replace('#', '').trim();
   if (clean.length !== 6) return rgb(0.2, 0.2, 0.2);
-  const r = parseInt(clean.slice(0, 2), 16) / 255;
-  const g = parseInt(clean.slice(2, 4), 16) / 255;
-  const b = parseInt(clean.slice(4, 6), 16) / 255;
-  return rgb(r, g, b);
+  return rgb(parseInt(clean.slice(0,2),16)/255, parseInt(clean.slice(2,4),16)/255, parseInt(clean.slice(4,6),16)/255);
 }
-
 function computePosition(page, { width, height }, position, margin) {
   const { width: pw, height: ph } = page.getSize();
   switch (position) {
-    case 'top-left': return { x: margin, y: ph - height - margin };
-    case 'top-right': return { x: pw - width - margin, y: ph - height - margin };
-    case 'bottom-left': return { x: margin, y: margin };
+    case 'top-left':     return { x: margin, y: ph - height - margin };
+    case 'top-right':    return { x: pw - width - margin, y: ph - height - margin };
+    case 'bottom-left':  return { x: margin, y: margin };
     case 'bottom-right': return { x: pw - width - margin, y: margin };
-    case 'center':
-    default:
-      return { x: (pw - width) / 2, y: (ph - height) / 2 };
+    default:             return { x: (pw - width) / 2, y: (ph - height) / 2 };
   }
 }
-
 async function applyTextWatermark(file, opts, onProgress) {
-  const {
-    text,
-    fontSize,
-    color,
-    opacity,
-    rotation,
-    position,
-    margin,
-    pattern,
-    spacing,
-  } = opts;
-
+  const { text, fontSize, color, opacity, rotation, position, margin, pattern, spacing } = opts;
   const buf = await file.arrayBuffer();
   const pdfDoc = await PDFDocument.load(buf, { ignoreEncryption: true });
   const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -65,319 +44,268 @@ async function applyTextWatermark(file, opts, onProgress) {
   const total = pages.length;
   const textWidth = font.widthOfTextAtSize(text, fontSize);
   const textHeight = fontSize;
-
   pages.forEach((page, idx) => {
     if (pattern === 'tile') {
       const { width: pw, height: ph } = page.getSize();
-      const stepX = textWidth + spacing;
-      const stepY = textHeight + spacing;
-      for (let y = margin; y <= ph + stepY; y += stepY) {
-        for (let x = margin; x <= pw + stepX; x += stepX) {
-          page.drawText(text, {
-            x,
-            y,
-            size: fontSize,
-            font,
-            color: hexToRgb(color),
-            opacity,
-            rotate: degrees(rotation),
-          });
-        }
-      }
+      const stepX = textWidth + spacing; const stepY = textHeight + spacing;
+      for (let y = margin; y <= ph + stepY; y += stepY)
+        for (let x = margin; x <= pw + stepX; x += stepX)
+          page.drawText(text, { x, y, size: fontSize, font, color: hexToRgb(color), opacity, rotate: degrees(rotation) });
     } else {
       const { x, y } = computePosition(page, { width: textWidth, height: textHeight }, position, margin);
-      page.drawText(text, {
-        x,
-        y,
-        size: fontSize,
-        font,
-        color: hexToRgb(color),
-        opacity,
-        rotate: degrees(rotation),
-      });
+      page.drawText(text, { x, y, size: fontSize, font, color: hexToRgb(color), opacity, rotate: degrees(rotation) });
     }
     onProgress?.(Math.round(((idx + 1) / total) * 90));
   });
-
   onProgress?.(98);
   return pdfDoc.save();
 }
-
 async function applyImageWatermark(file, imageFile, opts, onProgress) {
   const { scale, opacity, rotation, position, margin, pattern, spacing } = opts;
   const buf = await file.arrayBuffer();
   const pdfDoc = await PDFDocument.load(buf, { ignoreEncryption: true });
-  const pages = pdfDoc.getPages();
-  const total = pages.length;
-
+  const pages = pdfDoc.getPages(); const total = pages.length;
   const imageBytes = await imageFile.arrayBuffer();
-  const isPng = imageFile.type === 'image/png';
-  const isJpg = imageFile.type === 'image/jpeg' || imageFile.type === 'image/jpg';
-  const img = isPng
-    ? await pdfDoc.embedPng(imageBytes)
-    : await pdfDoc.embedJpg(imageBytes);
-
+  const img = imageFile.type === 'image/png' ? await pdfDoc.embedPng(imageBytes) : await pdfDoc.embedJpg(imageBytes);
   const imgDims = img.scale(scale);
-
   pages.forEach((page, idx) => {
     if (pattern === 'tile') {
       const { width: pw, height: ph } = page.getSize();
-      const stepX = imgDims.width + spacing;
-      const stepY = imgDims.height + spacing;
-      for (let y = margin; y <= ph + stepY; y += stepY) {
-        for (let x = margin; x <= pw + stepX; x += stepX) {
-          page.drawImage(img, {
-            x,
-            y,
-            width: imgDims.width,
-            height: imgDims.height,
-            opacity,
-            rotate: degrees(rotation),
-          });
-        }
-      }
+      const stepX = imgDims.width + spacing; const stepY = imgDims.height + spacing;
+      for (let y = margin; y <= ph + stepY; y += stepY)
+        for (let x = margin; x <= pw + stepX; x += stepX)
+          page.drawImage(img, { x, y, width: imgDims.width, height: imgDims.height, opacity, rotate: degrees(rotation) });
     } else {
       const { x, y } = computePosition(page, { width: imgDims.width, height: imgDims.height }, position, margin);
-      page.drawImage(img, {
-        x,
-        y,
-        width: imgDims.width,
-        height: imgDims.height,
-        opacity,
-        rotate: degrees(rotation),
-      });
+      page.drawImage(img, { x, y, width: imgDims.width, height: imgDims.height, opacity, rotate: degrees(rotation) });
     }
     onProgress?.(Math.round(((idx + 1) / total) * 90));
   });
-
   onProgress?.(98);
   return pdfDoc.save();
 }
 
+const POSITIONS = ['center','top-left','top-right','bottom-left','bottom-right'];
+
 export default function WatermarkPDF() {
   const { user } = useAuth();
-  const [file, setFile] = useState(null);
+  const [file, setFile]           = useState(null);
   const [imageFile, setImageFile] = useState(null);
-  const [mode, setMode] = useState('text');
-  const [text, setText] = useState('CONFIDENTIAL');
-  const [fontSize, setFontSize] = useState(36);
-  const [color, setColor] = useState('#111827');
-  const [opacity, setOpacity] = useState(0.2);
-  const [rotation, setRotation] = useState(0);
-  const [position, setPosition] = useState('center');
-  const [scale, setScale] = useState(0.35);
-  const [pattern, setPattern] = useState('single');
-  const [spacing, setSpacing] = useState(140);
-  const [progress, setProgress] = useState(0);
-  const [working, setWorking] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [mode, setMode]           = useState('text');
+  const [text, setText]           = useState('CONFIDENTIAL');
+  const [fontSize, setFontSize]   = useState(36);
+  const [color, setColor]         = useState('#111827');
+  const [opacity, setOpacity]     = useState(0.2);
+  const [rotation, setRotation]   = useState(0);
+  const [position, setPosition]   = useState('center');
+  const [scale, setScale]         = useState(0.35);
+  const [pattern, setPattern]     = useState('single');
+  const [spacing, setSpacing]     = useState(140);
+  const [progress, setProgress]   = useState(0);
+  const [working, setWorking]     = useState(false);
+  const [error, setError]         = useState('');
+  const [success, setSuccess]     = useState('');
+  const [thumbnail, setThumbnail] = useState(null);
   const [lastBytes, setLastBytes] = useState(null);
-  const [lastName, setLastName] = useState('');
-
-  const queueItems = file ? [{
-    id: file.name,
-    name: file.name,
-    status: working ? 'processing' : error ? 'error' : success ? 'done' : 'ready',
-    progress: working ? progress : success ? 100 : 0,
-    etaMs: file.size ? Math.max(1200, Math.round((file.size / (1024 * 1024)) * 900)) : null,
-    message: error || '',
-  }] : [];
+  const [lastName, setLastName]   = useState('');
 
   const loadFile = (raw) => {
     const f = Array.isArray(raw) ? raw[0] : (raw?.[0] || raw);
     if (!f || f.type !== 'application/pdf') { setError('Select a valid PDF.'); return; }
-    setFile(f);
-    setError('');
-    setSuccess('');
-    setProgress(0);
+    setFile(f); setError(''); setSuccess(''); setProgress(0); setThumbnail(null);
+    generateThumbnail(f).then(url => setThumbnail(url));
   };
-
-  const imageLabel = useMemo(() => imageFile?.name || 'Choose watermark image', [imageFile]);
-
   const onPickImage = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (!f.type.startsWith('image/')) {
-      setError('Select a valid image.');
-      return;
-    }
-    setImageFile(f);
-    setError('');
+    if (!f.type.startsWith('image/')) { setError('Select a valid image.'); return; }
+    setImageFile(f); setError('');
   };
-
   const handleApply = async () => {
     if (!file) return;
     if (mode === 'text' && !text.trim()) { setError('Enter watermark text.'); return; }
     if (mode === 'image' && !imageFile) { setError('Select a watermark image.'); return; }
-
-    setError('');
-    setSuccess('');
-    setWorking(true);
-    setProgress(0);
-
+    setError(''); setSuccess(''); setWorking(true); setProgress(0);
     try {
       const margin = 24;
       const opts = { opacity, rotation, position, margin, pattern, spacing };
       const bytes = mode === 'text'
         ? await applyTextWatermark(file, { ...opts, text, fontSize, color }, setProgress)
         : await applyImageWatermark(file, imageFile, { ...opts, scale }, setProgress);
-
       const name = file.name.replace(/\.pdf$/i, '_watermarked.pdf');
       downloadBytes(bytes, name);
-      setLastBytes(bytes);
-      setLastName(name);
-      setSuccess(`"${name}" saved`);
-
+      setLastBytes(bytes); setLastName(name);
+      setSuccess(`"${name}" created!`);
       addRecentFile({ tool: 'watermark', name, size: bytes.byteLength || 0 });
       bumpLocalJob();
-      await logUserAction(user, 'watermark', {
-        tool: 'watermark',
-        status: 'success',
-        meta: {
-          outputName: name,
-          mode,
-          pattern,
-          position,
-          rotation,
-          spacing: pattern === 'tile' ? spacing : null,
-        }
-      });
+      await logUserAction(user, 'watermark', { tool: 'watermark', status: 'success', meta: { outputName: name, mode, pattern, position, rotation } });
     } catch (err) {
       setError('Watermark failed: ' + (err.message || 'Unexpected error.'));
-      await logUserAction(user, 'watermark', {
-        tool: 'watermark',
-        status: 'error',
-        meta: { error: err?.message || 'Watermark failed' }
-      });
-    } finally {
-      setWorking(false);
-      setProgress(0);
-    }
+      await logUserAction(user, 'watermark', { tool: 'watermark', status: 'error', meta: { error: err?.message } });
+    } finally { setWorking(false); setProgress(0); }
   };
+
+  const sidebarContent = (
+    <>
+      <p className="ux-section-label">Watermark Options</p>
+
+      <div className="ux-field">
+        <label className="ux-label">Type</label>
+        <div className="ux-mode-tabs">
+          <button className={`ux-mode-tab${mode==='text'?' active':''}`} onClick={() => setMode('text')}>Text</button>
+          <button className={`ux-mode-tab${mode==='image'?' active':''}`} onClick={() => setMode('image')}>Image</button>
+        </div>
+      </div>
+
+      {mode === 'text' && (
+        <>
+          <div className="ux-field">
+            <label className="ux-label" htmlFor="wmText">Text</label>
+            <input id="wmText" className="ux-input" type="text" value={text} onChange={e => setText(e.target.value)} placeholder="CONFIDENTIAL" />
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+            <div className="ux-field">
+              <label className="ux-label" htmlFor="wmSize">Size (pt)</label>
+              <input id="wmSize" className="ux-input" type="number" min={8} max={120} value={fontSize} onChange={e => setFontSize(Math.max(8,parseInt(e.target.value)||36))} />
+            </div>
+            <div className="ux-field">
+              <label className="ux-label" htmlFor="wmColor">Color</label>
+              <input id="wmColor" type="color" value={color} onChange={e => setColor(e.target.value)} style={{ width:'100%', height:36, padding:2, borderRadius:8, border:'1px solid var(--border)', cursor:'pointer' }} />
+            </div>
+          </div>
+        </>
+      )}
+
+      {mode === 'image' && (
+        <div className="ux-field">
+          <label className="ux-label">Image File</label>
+          <input id="wmImg" type="file" accept="image/*" onChange={onPickImage} style={{ display:'none' }} />
+          <label htmlFor="wmImg" className="ux-btn-secondary" style={{ display:'flex', justifyContent:'center', cursor:'pointer', padding:'8px' }}>
+            {imageFile ? imageFile.name : '📁 Choose Image'}
+          </label>
+          <div className="ux-range-header" style={{ marginTop:12 }}>
+            <label className="ux-label" style={{ margin:0 }}>Scale</label>
+            <span className="ux-range-value">{scale.toFixed(2)}×</span>
+          </div>
+          <input type="range" className="ux-range" min={10} max={120} value={Math.round(scale*100)} onChange={e => setScale(parseInt(e.target.value)/100)} />
+        </div>
+      )}
+
+      <p className="ux-section-label" style={{ marginTop:20 }}>Appearance</p>
+      
+      <div className="ux-field">
+        <label className="ux-label">Pattern</label>
+        <div className="ux-mode-tabs">
+          <button className={`ux-mode-tab${pattern==='single'?' active':''}`} onClick={() => setPattern('single')}>Single</button>
+          <button className={`ux-mode-tab${pattern==='tile'  ?' active':''}`} onClick={() => setPattern('tile')}>Tile</button>
+        </div>
+      </div>
+
+      <div className="ux-field">
+        <div className="ux-range-header">
+          <label className="ux-label" style={{ margin:0 }}>Opacity</label>
+          <span className="ux-range-value">{Math.round(opacity*100)}%</span>
+        </div>
+        <input type="range" className="ux-range" min={5} max={80} value={Math.round(opacity*100)} onChange={e => setOpacity(parseInt(e.target.value)/100)} />
+      </div>
+
+      <div className="ux-field">
+        <div className="ux-range-header">
+          <label className="ux-label" style={{ margin:0 }}>Rotation</label>
+          <span className="ux-range-value">{rotation}°</span>
+        </div>
+        <input type="range" className="ux-range" min={-180} max={180} value={rotation} onChange={e => setRotation(parseInt(e.target.value))} />
+      </div>
+
+      {pattern === 'single' ? (
+        <div className="ux-field">
+          <label className="ux-label" htmlFor="wmPos">Position</label>
+          <select id="wmPos" className="ux-input" value={position} onChange={e => setPosition(e.target.value)}>
+            {POSITIONS.map(p => <option key={p} value={p}>{p.replace('-',' ').replace(/\b\w/g,c=>c.toUpperCase())}</option>)}
+          </select>
+        </div>
+      ) : (
+        <div className="ux-field">
+          <label className="ux-label" htmlFor="wmSpacing">Spacing (pt)</label>
+          <input id="wmSpacing" className="ux-input" type="number" min={40} max={300} step={10} value={spacing} onChange={e => setSpacing(Math.max(40,Math.min(300,parseInt(e.target.value)||140)))} />
+        </div>
+      )}
+
+      {error   && <div className="alert alert-error"   style={{ marginTop:12 }}><span>❌ {error}</span></div>}
+      {working && <ProgressBar pct={progress} label="Applying watermark…" />}
+
+      {success && (
+        <div className="ux-result-card" style={{ marginTop:12 }}>
+          <div className="ux-result-success-bar">
+            <div className="ux-result-check">✓</div>
+            <p className="ux-result-success-title">Successfully Applied!</p>
+          </div>
+          <div className="ux-result-body">
+            <div className="ux-result-actions">
+               <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => downloadBytes(lastBytes, lastName)}>
+                ↓ Download
+              </button>
+              <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Watermarked" />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  const actionButton = (
+    <button className="ux-action-btn" onClick={handleApply} disabled={working || !file}>
+      {working ? (
+        <span style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ animation:'spin 1s linear infinite' }}>
+            <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.3)" strokeWidth="3"/>
+            <path d="M12 2a10 10 0 0 1 10 10" stroke="#fff" strokeWidth="3" strokeLinecap="round"/>
+          </svg>
+          Applying…
+        </span>
+      ) : (
+        <span style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2v20M2 12h20" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Apply Watermark
+        </span>
+      )}
+    </button>
+  );
 
   return (
     <ToolPageLayout
       title="Watermark PDF"
-      subtitle="Add text or image watermarks to every page in seconds."
+      subtitle="Add text or image watermarks to every page instantly. 100% local."
       icon="💧"
+      sidebarContent={sidebarContent}
+      actionButton={actionButton}
     >
-      <SEO
-        keywords="watermark pdf, stamp pdf, add watermark"
-        title="Watermark PDF Online Free — Text or Image | OM PDF"
-        description="Add a text or image watermark to any PDF. 100% private, processed locally."
-        url="https://om-pdf.netlify.app/watermark-pdf"
-      />
+      <SEO title="Watermark PDF Online Free — Text or Image | OM PDF" description="Add a text or image watermark to any PDF. 100% private, processed locally." url="https://om-pdf.netlify.app/watermark-pdf" keywords="watermark pdf, stamp pdf, add watermark" />
 
       {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a PDF to watermark" hint="Single PDF - Max 200 MB" />
+        <DropZone onFiles={loadFile} label="Drop a PDF to watermark" hint="Single PDF · Max 200 MB" />
       ) : (
-        <div className="split-file-info">
-          <div className="split-file-card">
-            <div className="file-icon">📄</div>
-            <div className="file-info">
-              <div className="file-name">{file.name}</div>
-              <div className="file-meta"><span className="file-size">{formatBytes(file.size)}</span></div>
+        <div className="ux-workspace-content">
+          <div className="ux-toolbar-inline">
+            <div>
+              <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Workspace</h2>
+              <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>Visual preview of the first page.</p>
             </div>
-            <button className="btn-remove" onClick={() => { setFile(null); setSuccess(''); setError(''); }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFile(null); setSuccess(''); setError(''); setThumbnail(null); }}>
+              Remove File
             </button>
           </div>
 
-          <div className="split-option-panel">
-            <label className="split-label">Watermark type</label>
-            <div className="split-modes">
-              <button className={`split-mode-btn${mode === 'text' ? ' active' : ''}`} onClick={() => setMode('text')}>Text</button>
-              <button className={`split-mode-btn${mode === 'image' ? ' active' : ''}`} onClick={() => setMode('image')}>Image</button>
-            </div>
-
-            <label className="split-label" style={{ marginTop: 12 }}>Pattern</label>
-            <div className="split-modes">
-              <button className={`split-mode-btn${pattern === 'single' ? ' active' : ''}`} onClick={() => setPattern('single')}>Single</button>
-              <button className={`split-mode-btn${pattern === 'tile' ? ' active' : ''}`} onClick={() => setPattern('tile')}>Full page</button>
-            </div>
-
-            {mode === 'text' ? (
-              <div className="wm-grid">
-                <div className="wm-group">
-                  <label className="split-label" htmlFor="wmText">Text</label>
-                  <input id="wmText" className="split-range-input" type="text" value={text}
-                    onChange={e => setText(e.target.value)} placeholder="CONFIDENTIAL" />
-                </div>
-                <div className="wm-group">
-                  <label className="split-label" htmlFor="wmSize">Font size</label>
-                  <input id="wmSize" className="split-range-input" type="number" min={8} max={120} value={fontSize}
-                    onChange={e => setFontSize(Math.max(8, parseInt(e.target.value) || 36))} />
-                </div>
-                <div className="wm-group">
-                  <label className="split-label" htmlFor="wmColor">Color</label>
-                  <input id="wmColor" className="wm-color" type="color" value={color} onChange={e => setColor(e.target.value)} />
-                </div>
-              </div>
-            ) : (
-              <div className="wm-grid">
-                <div className="wm-group">
-                  <label className="split-label" htmlFor="wmImage">Image</label>
-                  <input id="wmImage" className="wm-file" type="file" accept="image/*" onChange={onPickImage} />
-                  <div className="wm-file-name">{imageLabel}</div>
-                </div>
-                <div className="wm-group">
-                  <label className="split-label" htmlFor="wmScale">Scale</label>
-                  <input id="wmScale" className="split-range-input" type="number" step={0.05} min={0.1} max={1.2} value={scale}
-                    onChange={e => setScale(Math.max(0.1, Math.min(1.2, parseFloat(e.target.value) || 0.35)))} />
-                </div>
-              </div>
-            )}
-
-            <div className="wm-grid wm-grid-compact">
-              <div className="wm-group">
-                <label className="split-label" htmlFor="wmOpacity">Opacity</label>
-                <input id="wmOpacity" className="split-range-input" type="number" step={0.05} min={0.05} max={0.8} value={opacity}
-                  onChange={e => setOpacity(Math.max(0.05, Math.min(0.8, parseFloat(e.target.value) || 0.2)))} />
-              </div>
-              {pattern === 'tile' && (
-                <div className="wm-group">
-                  <label className="split-label" htmlFor="wmSpacing">Spacing (pt)</label>
-                  <input id="wmSpacing" className="split-range-input" type="number" step={10} min={40} max={300} value={spacing}
-                    onChange={e => setSpacing(Math.max(40, Math.min(300, parseInt(e.target.value) || 140)))} />
-                </div>
-              )}
-              <div className="wm-group">
-                <label className="split-label" htmlFor="wmRotation">Rotation (deg)</label>
-                <input id="wmRotation" className="split-range-input" type="number" step={5} min={-180} max={180} value={rotation}
-                  onChange={e => setRotation(parseInt(e.target.value) || 0)} />
-              </div>
-              <div className="wm-group">
-                <label className="split-label" htmlFor="wmPosition">Position</label>
-                <select id="wmPosition" className="pn-select" value={position} onChange={e => setPosition(e.target.value)}>
-                  <option value="center">Center</option>
-                  <option value="top-left">Top left</option>
-                  <option value="top-right">Top right</option>
-                  <option value="bottom-left">Bottom left</option>
-                  <option value="bottom-right">Bottom right</option>
-                </select>
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flex:1, minHeight:280, gap:14, background:'var(--bg-card)', borderRadius:'16px', border:'1px solid var(--border)' }}>
+            <div className="ux-page-card" style={{ width: '220px', cursor: 'default' }}>
+              <div className="ux-page-thumb-wrap" style={{ height: '300px' }}>
+                {thumbnail ? <img className="ux-page-thumb-img" src={thumbnail} alt="PDF Preview" /> : <div className="ux-page-thumb-placeholder" />}
               </div>
             </div>
-          </div>
-
-          {error && <div className="alert alert-error"><span>! {error}</span></div>}
-          <QueuePanel title="File queue" items={queueItems} />
-          {working && <ProgressBar pct={progress} label="Applying watermark..." />}
-
-          {success && (
-            <SuccessBanner message="Watermark applied!" details={success} onDismiss={() => setSuccess('')}>
-              <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Watermarked" />
-            </SuccessBanner>
-          )}
-
-          <div className="merge-section">
-            <button className="btn-merge" onClick={handleApply} disabled={working}>
-              <span className="btn-merge-inner">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2v20M2 12h20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                Apply Watermark
-              </span>
-            </button>
-            <p className="merge-hint">Processed locally - no upload</p>
+            <p style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--text-primary)', margin:0 }}>{file.name}</p>
+            <p style={{ fontSize:'0.85rem', color:'var(--text-muted)', margin:0 }}>{formatBytes(file.size)} · Document ready</p>
           </div>
         </div>
       )}

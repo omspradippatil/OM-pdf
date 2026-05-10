@@ -49,24 +49,38 @@ export default function SaveToDriveButton({ bytes, filename, toolFolder, mimeTyp
     }
     setStatus('loading'); setLink(''); setErrMsg('');
     try {
-      const ok = await ensureDriveToken();
+      let ok = await ensureDriveToken();
       if (ok === false) {
         setStatus('idle');
         setErrMsg('Continue in Google to grant Drive access, then try again.');
         return;
       }
-      const result = await uploadToDrive(bytes, filename, user?.email || null, toolFolder, mimeType);
+
+      let result;
+      try {
+        result = await uploadToDrive(bytes, filename, user?.email || null, toolFolder, mimeType);
+      } catch (uploadErr) {
+        // If 401, token was cleared in service. Try to renew once automatically.
+        if (uploadErr.message.includes('401')) {
+          console.log('[Drive] Token expired, attempting auto-renewal...');
+          const retryOk = await ensureDriveToken(true);
+          if (retryOk) {
+            result = await uploadToDrive(bytes, filename, user?.email || null, toolFolder, mimeType);
+          } else {
+            throw uploadErr;
+          }
+        } else {
+          throw uploadErr;
+        }
+      }
+
       setLink(result.webViewLink || '');
       setStatus('success');
       bumpDriveUpload();
       await logUserAction(user, 'drive_upload', {
         tool: toolFolder,
         status: 'success',
-        meta: {
-          filename,
-          size: getBytesSize(bytes),
-          mimeType,
-        }
+        meta: { filename, size: getBytesSize(bytes), mimeType }
       });
     } catch (err) {
       console.error('[Drive]', err);
