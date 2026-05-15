@@ -139,7 +139,7 @@ export default function PdfToText() {
       <ToolSeoHead toolKey="pdfToText" />
 
       {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a PDF to extract text" hint="Single PDF · Max 200 MB" />
+        <DropZone onFiles={loadFile} label="Drop a PDF to extract text" hint="Single PDF · 200 MB Recommended" />
       ) : (
         <div className="ux-workspace-content">
           <div className="ux-toolbar-inline">

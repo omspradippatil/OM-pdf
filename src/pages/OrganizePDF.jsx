@@ -220,7 +220,7 @@ export default function OrganizePDF() {
       <input type="file" ref={fileInputRef} style={{ display:'none' }} accept=".pdf" multiple onChange={e => loadFiles(e.target.files)} />
 
       {!files.length ? (
-        <DropZone onFiles={loadFiles} label="Drop PDFs to Organize" hint="Multiple PDFs supported · Max 200MB each" />
+        <DropZone onFiles={loadFiles} label="Drop PDFs to Organize" hint="Multiple PDFs supported · 200 MB Recommended each" />
       ) : (
         <div className="ux-workspace-content">
           <div className="ux-toolbar-inline">

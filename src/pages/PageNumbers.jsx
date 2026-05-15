@@ -178,7 +178,7 @@ export default function PageNumbers() {
       <ToolSeoHead toolKey="pageNumbers" />
 
       {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a PDF to add page numbers" hint="Single PDF · Max 200 MB" />
+        <DropZone onFiles={loadFile} label="Drop a PDF to add page numbers" hint="Single PDF · 200 MB Recommended" />
       ) : (
         <div className="ux-workspace-content">
           <div className="ux-toolbar-inline">

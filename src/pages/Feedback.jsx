@@ -16,10 +16,26 @@ export default function Feedback() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const [cooldown, setCooldown] = useState(0); // 60s cooldown in ms
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!feedback.trim() || sending) return;
+    
+    // Client-side rate limiting check
+    const now = Date.now();
+    if (now < cooldown) {
+      const wait = Math.ceil((cooldown - now) / 1000);
+      setError(`Please wait ${wait}s before sending another message.`);
+      return;
+    }
+
+    if (feedback.length > 3000) {
+      setError('Message too long. Max 3000 characters.');
+      return;
+    }
+
     setSending(true);
     setError('');
 
@@ -35,6 +51,7 @@ export default function Feedback() {
       });
       setSent(true);
       setFeedback('');
+      setCooldown(Date.now() + 60000); // 60s cooldown
     } catch (err) {
       console.error('Feedback failed:', err);
       setError('Failed to send feedback. Please try again.');
@@ -101,9 +118,15 @@ export default function Feedback() {
                 placeholder="Describe your experience or suggest a feature..."
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
+                maxLength={3000}
                 required
                 disabled={sending}
               />
+              <div style={{ display:'flex', justifyContent:'flex-end', marginTop:'8px' }}>
+                <span style={{ fontSize:'0.75rem', color: feedback.length > 2800 ? 'var(--error)' : 'var(--text-muted)' }}>
+                  {feedback.length} / 3000
+                </span>
+              </div>
             </div>
 
             {error && <div className="alert alert-error" style={{ margin: 0 }}><span>❌ {error}</span></div>}

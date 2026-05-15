@@ -152,7 +152,7 @@ export default function UnlockPDF() {
       <ToolSeoHead toolKey="unlock" />
 
       {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a locked PDF to unlock" hint="Single PDF · Max 200 MB" />
+        <DropZone onFiles={loadFile} label="Drop a locked PDF to unlock" hint="Single PDF · 200 MB Recommended" />
       ) : (
         <div className="ux-workspace-content">
           <div className="ux-toolbar-inline">

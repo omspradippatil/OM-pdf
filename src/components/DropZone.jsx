@@ -80,7 +80,7 @@ export default function DropZone({
           Choose {multiple ? 'PDF Files' : 'PDF File'}
         </button>
         <p className="dropzone-hint">
-          {hint || `PDF files only · Max 200 MB${multiple ? ' per file' : ''}`}
+          {hint || `PDF files only · 200 MB Recommended${multiple ? ' per file' : ''}`}
         </p>
         <input
           ref={inputRef}

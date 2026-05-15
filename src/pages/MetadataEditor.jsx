@@ -111,6 +111,7 @@ export default function MetadataEditor() {
             value={metadata[key]}
             onChange={handleChange}
             placeholder={placeholder}
+            maxLength={500}
           />
         </div>
       ))}
@@ -173,7 +174,7 @@ export default function MetadataEditor() {
       <ToolSeoHead toolKey="metadata" />
 
       {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a PDF to edit metadata" hint="Single PDF · Max 200 MB" />
+        <DropZone onFiles={loadFile} label="Drop a PDF to edit metadata" hint="Single PDF · 200 MB Recommended" />
       ) : (
         <div className="ux-workspace-content">
           <div className="ux-toolbar-inline">

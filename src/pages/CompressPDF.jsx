@@ -120,7 +120,7 @@ export default function CompressPDF() {
     >
       <ToolSeoHead toolKey="compress" />
       {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a PDF to compress" hint="Single PDF · Max 200 MB" />
+        <DropZone onFiles={loadFile} label="Drop a PDF to compress" hint="Single PDF · 200 MB Recommended" />
       ) : (
         <div className="ux-workspace-content">
           <div className="ux-toolbar-inline">

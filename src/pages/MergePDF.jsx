@@ -191,7 +191,7 @@ export default function MergePDF() {
 
       {/* Workspace: Drop zone + sortable file list */}
       {!files.length ? (
-        <DropZone onFiles={handleFiles} multiple label="Drop PDFs to Merge" hint="Multiple PDFs supported · Max 200MB each" />
+        <DropZone onFiles={handleFiles} multiple label="Drop PDFs to Merge" hint="Multiple PDFs supported · 200 MB Recommended each" />
       ) : (
         <div className="ux-workspace-content">
           <div className="ux-toolbar-inline">

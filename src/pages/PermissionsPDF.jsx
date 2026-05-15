@@ -184,7 +184,7 @@ export default function PermissionsPDF() {
       <ToolSeoHead toolKey="permissions" />
 
       {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a PDF to set permissions" hint="Single PDF · Max 200 MB" />
+        <DropZone onFiles={loadFile} label="Drop a PDF to set permissions" hint="Single PDF · 200 MB Recommended" />
       ) : (
         <div className="ux-workspace-content">
           <div className="ux-toolbar-inline">

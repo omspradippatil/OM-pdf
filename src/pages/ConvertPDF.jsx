@@ -175,7 +175,7 @@ export default function ConvertPDF() {
       <ToolSeoHead toolKey="convert" />
 
       {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a PDF to convert" hint="Single PDF · Max 200 MB" />
+        <DropZone onFiles={loadFile} label="Drop a PDF to convert" hint="Single PDF · 200 MB Recommended" />
       ) : (
         <div className="ux-workspace-content">
           <div className="ux-toolbar-inline">

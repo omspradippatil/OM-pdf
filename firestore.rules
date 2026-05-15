@@ -5,16 +5,17 @@ service cloud.firestore {
     // 1. Logs & Activity Tracking
     match /logs/{docId} {
       // Require authentication to create logs, but keep them read-only (Admin only)
-      allow create: if request.auth != null; 
+      // Enforce small document size and valid timestamp
+      allow create: if request.auth != null 
+                    && request.resource.data.size() < 10 
+                    && request.resource.data.createdAt == request.time;
       allow read, update, delete: if false; 
     }
 
     // 2. User Profiles & Sub-collections
     match /users/{uid} {
-      // Allow user to read/write their main profile document
       allow read, write: if request.auth != null && request.auth.uid == uid;
 
-      // ALLOW private stats syncing
       match /private/stats {
         allow read, write: if request.auth != null && request.auth.uid == uid;
       }
@@ -23,21 +24,29 @@ service cloud.firestore {
     // 3. User Files (Storage Metadata)
     match /user_files/{docId} {
       allow read, delete: if request.auth != null && request.auth.uid == resource.data.uid;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+      allow create: if request.auth != null 
+                    && request.auth.uid == request.resource.data.uid
+                    && request.resource.data.name.size() < 255;
       allow update: if false;
     }
 
     // 4. Detailed Actions
     match /user_actions/{docId} {
       allow read: if request.auth != null && request.auth.uid == resource.data.uid;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+      allow create: if request.auth != null 
+                    && request.auth.uid == request.resource.data.uid
+                    && request.resource.data.size() < 15;
       allow update, delete: if false;
     }
 
     // 5. Feedback Collection
     match /feedback/{docId} {
-      // Allow anyone to submit feedback, but only admin can read via console
-      allow create: if request.resource.data.message != null && request.resource.data.message.size() > 0;
+      // Allow anyone to submit feedback, but with strict validation
+      allow create: if request.resource.data.message is string 
+                    && request.resource.data.message.size() > 0 
+                    && request.resource.data.message.size() < 3000
+                    && request.resource.data.type in ['suggestion', 'bug', 'other']
+                    && request.resource.data.createdAt == request.time;
       allow read, update, delete: if false;
     }
 
