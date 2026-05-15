@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import SEO from '../components/SEO';
 import { PDFDocument, degrees } from 'pdf-lib';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
@@ -12,6 +11,8 @@ import { generatePageThumbnails } from '../thumbnailGenerator';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import ToolSeoHead from '../components/ToolSeoHead';
+import ToolSeoContent from '../components/ToolSeoContent';
 import '../styles/RotatePDF.css';
 import PdfCanvas from '../components/PdfCanvas';
 
@@ -95,7 +96,6 @@ export default function RotatePDF() {
       setSuccess(`"${name}" rotated and saved`);
       addRecentFile({ tool: 'rotate', name, size: bytes.byteLength || 0, pages: rotations.length });
       bumpLocalJob();
-      await logUserAction(user, 'rotate', { tool: 'rotate', status: 'success', meta: { outputName: name } });
     } catch (err) {
       setError('Rotation failed: ' + (err.message || 'Unexpected error.'));
       await logUserAction(user, 'rotate', { tool: 'rotate', status: 'error', meta: { error: err?.message } });
@@ -202,7 +202,7 @@ export default function RotatePDF() {
       sidebarContent={sidebarContent}
       actionButton={actionButton}
     >
-      <SEO title="Rotate PDF Online Free — 90 180 270° | OM PDF" description="Rotate all pages of a PDF by 90, 180 or 270 degrees. Fast, free and private." url="https://om-pdf.netlify.app/rotate-pdf" keywords="rotate pdf, flip pdf, turn pdf, pdf page rotation" />
+      <ToolSeoHead toolKey="rotate" />
 
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to rotate" hint="Single PDF · Max 200 MB" />
@@ -255,6 +255,7 @@ export default function RotatePDF() {
         </div>
       )}
 
+      <ToolSeoContent toolKey="rotate" />
       <RecentFilesPanel tool="rotate" title="Recent rotations" />
     </ToolPageLayout>
   );

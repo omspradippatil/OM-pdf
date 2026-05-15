@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useRef } from 'react';
-import SEO from '../components/SEO';
 import {
   addFiles, getFiles, clearFiles, removeFile,
   subscribe, setPageCount, setThumbnail, setFileStatus, setFileProgress, formatBytes
@@ -16,6 +15,8 @@ import FileList from '../components/FileList';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import ToolSeoHead from '../components/ToolSeoHead';
+import ToolSeoContent from '../components/ToolSeoContent';
 import '../styles/MergePDF.css';
 
 export default function MergePDF() {
@@ -184,9 +185,7 @@ export default function MergePDF() {
       }
       onAddMore={() => fileInputRef.current?.click()}
     >
-      <SEO title="Merge PDF Online Free — OM PDF | No Upload Required"
-        description="Combine multiple PDF files into one. Drag to reorder pages, then merge instantly in your browser. 100% free, private, no upload."
-        url="https://om-pdf.netlify.app/merge-pdf" />
+      <ToolSeoHead toolKey="merge" />
 
       <input type="file" ref={fileInputRef} style={{ display:'none' }} accept=".pdf" multiple onChange={e => handleFiles(e.target.files)} />
 
@@ -200,20 +199,26 @@ export default function MergePDF() {
               <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Workspace</h2>
               <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>Drag to reorder files. Click × to remove.</p>
             </div>
-            <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { clearFiles(); setSuccess(''); setError(''); }}>
-              Clear All
-            </button>
+            <div style={{ display:'flex', gap:8 }}>
+              <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px', display:'flex', alignItems:'center', gap:6 }} onClick={() => fileInputRef.current?.click()}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>
+                Add More
+              </button>
+              <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { clearFiles(); setSuccess(''); setError(''); }}>
+                Clear All
+              </button>
+            </div>
           </div>
 
           <FileList
             files={files}
             onRemove={id => removeFile(id)}
             onClear={clearFiles}
-            onAddMore={null} /* We use floating add button now */
             onReorder={() => setFiles([...getFiles()])}
           />
         </div>
       )}
+      <ToolSeoContent toolKey="merge" />
       <RecentFilesPanel tool="merge" title="Recent merges" />
     </ToolPageLayout>
   );

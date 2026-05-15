@@ -89,6 +89,16 @@ export default function Footer() {
             </div>
           </div>
 
+          <div className="footer-v2-links">
+            <h4 className="footer-v2-title">Company</h4>
+            <div className="footer-tools-grid">
+              <Link to="/about" className="footer-tool-link">About</Link>
+              <Link to="/privacy" className="footer-tool-link">Privacy</Link>
+              <Link to="/how-it-works" className="footer-tool-link">How It Works</Link>
+              <Link to="/blog" className="footer-tool-link">Blog</Link>
+            </div>
+          </div>
+
           <div className="footer-v2-connect">
             <h4 className="footer-v2-title">Connect</h4>
             <div className="social-grid-v2">

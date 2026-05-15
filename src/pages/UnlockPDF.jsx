@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import SEO from '../components/SEO';
+import ToolSeoHead from '../components/ToolSeoHead';
+import ToolSeoContent from '../components/ToolSeoContent';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
@@ -148,7 +149,7 @@ export default function UnlockPDF() {
       sidebarContent={sidebarContent}
       actionButton={actionButton}
     >
-      <SEO title="Unlock PDF Online Free — Remove PDF Password | OM PDF" description="Remove password protection from your PDF files locally in your browser. Fast and private." url="https://om-pdf.netlify.app/unlock-pdf" keywords="unlock pdf, remove pdf password, decrypt pdf" />
+      <ToolSeoHead toolKey="unlock" />
 
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a locked PDF to unlock" hint="Single PDF · Max 200 MB" />
@@ -176,6 +177,7 @@ export default function UnlockPDF() {
         </div>
       )}
 
+      <ToolSeoContent toolKey="unlock" />
       <RecentFilesPanel tool="unlock" title="Recent security edits" />
     </ToolPageLayout>
   );

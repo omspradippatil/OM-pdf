@@ -14,7 +14,9 @@ import { generatePageThumbnails } from '../thumbnailGenerator';
 import { PDFDocument } from 'pdf-lib';
 import { DndContext, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core';
 import { SortableContext, useSortable, rectSortingStrategy } from '@dnd-kit/sortable';
-import '../styles/OrganizePDF.css';
+
+import ToolSeoHead from '../components/ToolSeoHead';
+import ToolSeoContent from '../components/ToolSeoContent';
 
 async function getPageCount(file) {
   try {
@@ -191,7 +193,6 @@ export default function OrganizePDF() {
           <div className="ux-result-success-bar">
             <div className="ux-result-check">✓</div>
             <p className="ux-result-success-title">Success!</p>
-            <p className="ux-result-success-sub">{success}</p>
           </div>
           <div className="ux-result-body">
             <div className="ux-result-actions">
@@ -214,7 +215,7 @@ export default function OrganizePDF() {
       actionDisabled={working || !files.length || !pageOrder.length}
       onAddMore={() => fileInputRef.current?.click()}
     >
-      <SEO title="Organize PDF Online — Reorder & Delete Pages | OM PDF" description="Rearrange or delete PDF pages instantly. 100% private and local." url="https://om-pdf.netlify.app/organize-pdf" />
+      <ToolSeoHead toolKey="organize" />
       
       <input type="file" ref={fileInputRef} style={{ display:'none' }} accept=".pdf" multiple onChange={e => loadFiles(e.target.files)} />
 
@@ -227,9 +228,15 @@ export default function OrganizePDF() {
               <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Workspace</h2>
               <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>Drag to reorder. Click × to delete. Use + to add more files.</p>
             </div>
-            <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFiles([]); setPageOrder([]); setPageThumbs([]); setSuccess(''); }}>
-              Clear All
-            </button>
+            <div style={{ display:'flex', gap:8 }}>
+              <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px', display:'flex', alignItems:'center', gap:6 }} onClick={() => fileInputRef.current?.click()}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>
+                Add More
+              </button>
+              <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFiles([]); setPageOrder([]); setPageThumbs([]); setSuccess(''); }}>
+                Clear All
+              </button>
+            </div>
           </div>
 
           <DndContext sensors={sensors} collisionDetection={closestCenter}
@@ -272,6 +279,7 @@ export default function OrganizePDF() {
         </div>
       )}
 
+      <ToolSeoContent toolKey="organize" />
       <RecentFilesPanel tool="organize" title="Recent Organizes" />
     </ToolPageLayout>
   );

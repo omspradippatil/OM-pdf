@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import ToolSeoHead from '../components/ToolSeoHead';
+import ToolSeoContent from '../components/ToolSeoContent';
 import { formatBytes } from '../fileManager';
 import { useAuth } from '../context/AuthContext';
 import { addRecentFile } from '../services/recentFiles';
@@ -117,10 +118,7 @@ export default function CompressPDF() {
       onAction={handleCompress}
       actionDisabled={compressing || !file}
     >
-      <SEO title="Compress PDF Online Free — Reduce PDF Size | OM PDF"
-        description="Compress PDF files to reduce their size. Private, fast, local processing — no uploads."
-        url="https://om-pdf.netlify.app/compress-pdf"
-        keywords="compress pdf, reduce pdf size, pdf compressor" />
+      <ToolSeoHead toolKey="compress" />
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to compress" hint="Single PDF · Max 200 MB" />
       ) : (
@@ -146,6 +144,7 @@ export default function CompressPDF() {
           </div>
         </div>
       )}
+      <ToolSeoContent toolKey="compress" />
       <RecentFilesPanel tool="compress" title="Recent compressions" />
     </ToolPageLayout>
   );

@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
@@ -12,6 +11,8 @@ import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { generateThumbnail } from '../thumbnailGenerator';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import ToolSeoHead from '../components/ToolSeoHead';
+import ToolSeoContent from '../components/ToolSeoContent';
 import '../styles/PermissionsPDF.css';
 
 export default function PermissionsPDF() {
@@ -180,7 +181,7 @@ export default function PermissionsPDF() {
       sidebarContent={sidebarContent}
       actionButton={actionButton}
     >
-      <SEO title="PDF Permissions Editor — Restrict Printing & Copying | OM PDF" description="Set granular permissions for your PDF files. Disable printing, text extraction, and editing locally." url="https://om-pdf.netlify.app/pdf-permissions" keywords="pdf permissions, restrict pdf printing, prevent pdf editing, pdf security settings" />
+      <ToolSeoHead toolKey="permissions" />
 
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to set permissions" hint="Single PDF · Max 200 MB" />
@@ -208,6 +209,7 @@ export default function PermissionsPDF() {
         </div>
       )}
 
+      <ToolSeoContent toolKey="permissions" />
       <RecentFilesPanel tool="permissions" title="Recent security edits" />
     </ToolPageLayout>
   );

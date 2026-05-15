@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import InstallPWA from './components/InstallPWA';
+import { getVariantRoutes } from './constants/seoVariants';
 
 const Home = lazy(() => import('./pages/Home'));
 const MergePDF = lazy(() => import('./pages/MergePDF'));
@@ -23,8 +24,23 @@ const ProtectPDF = lazy(() => import('./pages/ProtectPDF'));
 const UnlockPDF = lazy(() => import('./pages/UnlockPDF'));
 const PermissionsPDF = lazy(() => import('./pages/PermissionsPDF'));
 const MyFiles = lazy(() => import('./pages/MyFiles'));
+const About = lazy(() => import('./pages/About'));
+const Privacy = lazy(() => import('./pages/Privacy'));
+const HowItWorks = lazy(() => import('./pages/HowItWorks'));
+const Blog = lazy(() => import('./pages/Blog'));
+const BlogPost = lazy(() => import('./pages/BlogPost'));
 
 export default function App() {
+  const variantRoutes = getVariantRoutes();
+  const toolComponents = {
+    merge: <MergePDF />,
+    split: <SplitPDF />,
+    compress: <CompressPDF />,
+    rotate: <RotatePDF />,
+    convert: <ConvertPDF />,
+    pageNumbers: <PageNumbers />,
+  };
+
   return (
     <AuthProvider>
       <BrowserRouter>
@@ -51,6 +67,18 @@ export default function App() {
               <Route path="/unlock-pdf" element={<UnlockPDF />} />
               <Route path="/pdf-permissions" element={<PermissionsPDF />} />
               <Route path="/my-files"     element={<MyFiles />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/how-it-works" element={<HowItWorks />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
+              {variantRoutes.map((route) => (
+                <Route
+                  key={route.path}
+                  path={route.path}
+                  element={toolComponents[route.toolKey]}
+                />
+              ))}
             </Routes>
           </Suspense>
         </main>

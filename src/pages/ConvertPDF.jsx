@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
@@ -12,6 +11,8 @@ import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { generateThumbnail } from '../thumbnailGenerator';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import ToolSeoHead from '../components/ToolSeoHead';
+import ToolSeoContent from '../components/ToolSeoContent';
 import '../styles/ConvertPDF.css';
 
 async function pdfToImages(file, onProgress) {
@@ -171,7 +172,7 @@ export default function ConvertPDF() {
       sidebarContent={sidebarContent}
       actionButton={actionButton}
     >
-      <SEO title="PDF to JPG Online Free — Convert PDF to Images | OM PDF" description="Convert PDF pages to high-quality JPG images instantly. Free, private, no upload." url="https://om-pdf.netlify.app/convert-pdf" keywords="pdf to jpg, convert pdf to image, extract images from pdf, pdf to jpeg" />
+      <ToolSeoHead toolKey="convert" />
 
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to convert" hint="Single PDF · Max 200 MB" />
@@ -199,6 +200,7 @@ export default function ConvertPDF() {
         </div>
       )}
 
+      <ToolSeoContent toolKey="convert" />
       <RecentFilesPanel tool="convert" title="Recent conversions" />
     </ToolPageLayout>
   );

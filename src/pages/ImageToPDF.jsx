@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import SEO from '../components/SEO';
+import { runPdfWorkerTask } from '../workers/workerClient';
 import { PDFDocument } from 'pdf-lib';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import ToolSeoHead from '../components/ToolSeoHead';
+import ToolSeoContent from '../components/ToolSeoContent';
 import '../styles/ImageToPDF.css';
 import { useAuth } from '../context/AuthContext';
 import { addRecentFile } from '../services/recentFiles';
@@ -44,8 +46,6 @@ async function readImageBytes(file) {
   if (!blob) throw new Error('Failed to process image data.');
   return { bytes: await blob.arrayBuffer(), type: 'png' };
 }
-
-import { runPdfWorkerTask } from '../workers/workerClient';
 
 async function imagesToPdf(images, onProgress) {
   const imagesPayload = [];
@@ -189,6 +189,7 @@ export default function ImageToPDF() {
 
   const fileInputRef = React.useRef(null);
 
+  return (
     <ToolPageLayout
       title="Image to PDF"
       subtitle="Convert JPG, PNG, or WebP images into a single PDF. 100% local."
@@ -197,7 +198,7 @@ export default function ImageToPDF() {
       actionButton={actionButton}
       onAddMore={() => fileInputRef.current?.click()}
     >
-      <SEO title="JPG to PDF Online Free — OM PDF | Convert Images to PDF" description="Convert JPG, PNG, or WebP images into a single PDF. Fast, private, and fully offline." url="https://om-pdf.netlify.app/image-to-pdf" keywords="jpg to pdf, png to pdf, convert images to pdf" />
+      <ToolSeoHead toolKey="imageToPdf" />
 
       <input type="file" ref={fileInputRef} style={{ display:'none' }} accept="image/*" multiple onChange={e => addImages(e.target.files)} />
 
@@ -210,9 +211,15 @@ export default function ImageToPDF() {
               <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Workspace</h2>
               <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>Drag to reorder images. Click × to remove.</p>
             </div>
-            <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => setImages([])}>
-              Clear All
-            </button>
+            <div style={{ display:'flex', gap:8 }}>
+              <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px', display:'flex', alignItems:'center', gap:6 }} onClick={() => fileInputRef.current?.click()}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>
+                Add More
+              </button>
+              <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => setImages([])}>
+                Clear All
+              </button>
+            </div>
           </div>
 
           <DndContext sensors={sensors} collisionDetection={closestCenter}
@@ -238,7 +245,8 @@ export default function ImageToPDF() {
         </div>
       )}
 
+      <ToolSeoContent toolKey="imageToPdf" />
       <RecentFilesPanel tool="image_to_pdf" title="Recent conversions" />
     </ToolPageLayout>
-  ;
+  );
 }

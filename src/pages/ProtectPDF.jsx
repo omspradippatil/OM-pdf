@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
@@ -12,6 +11,8 @@ import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { generateThumbnail } from '../thumbnailGenerator';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import ToolSeoHead from '../components/ToolSeoHead';
+import ToolSeoContent from '../components/ToolSeoContent';
 import '../styles/ProtectPDF.css';
 
 export default function ProtectPDF() {
@@ -148,7 +149,8 @@ export default function ProtectPDF() {
       sidebarContent={sidebarContent}
       actionButton={actionButton}
     >
-      <SEO title="Password Protect PDF Online Free — Encrypt PDF | OM PDF" description="Encrypt your PDF files with a password locally in your browser. No files are uploaded to any server." url="https://om-pdf.netlify.app/protect-pdf" keywords="protect pdf, encrypt pdf, pdf password, aes-256 pdf" />
+      <ToolSeoHead toolKey="protect" />
+      <ToolSeoContent toolKey="protect" />
 
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to protect" hint="Single PDF · Max 200 MB" />

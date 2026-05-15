@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
@@ -13,6 +12,8 @@ import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import ToolSeoHead from '../components/ToolSeoHead';
+import ToolSeoContent from '../components/ToolSeoContent';
 import '../styles/PageNumbers.css';
 
 const POSITIONS = [
@@ -174,7 +175,7 @@ export default function PageNumbers() {
       sidebarContent={sidebarContent}
       actionButton={actionButton}
     >
-      <SEO title="Add Page Numbers to PDF Free — Custom Style | OM PDF" description="Stamp page numbers onto any PDF. Choose position, prefix, font size and starting number. Free, private, no upload." url="https://om-pdf.netlify.app/page-numbers" keywords="add page numbers to pdf, stamp pdf, number pdf pages" />
+      <ToolSeoHead toolKey="pageNumbers" />
 
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to add page numbers" hint="Single PDF · Max 200 MB" />
@@ -209,7 +210,8 @@ export default function PageNumbers() {
         </div>
       )}
 
-      <RecentFilesPanel tool="page_numbers" title="Recent edits" />
+      <ToolSeoContent toolKey="pageNumbers" />
+      <RecentFilesPanel tool="page_numbers" title="Recent numbering" />
     </ToolPageLayout>
   );
 }

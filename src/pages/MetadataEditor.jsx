@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
@@ -12,6 +11,8 @@ import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { generateThumbnail } from '../thumbnailGenerator';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import ToolSeoHead from '../components/ToolSeoHead';
+import ToolSeoContent from '../components/ToolSeoContent';
 import '../styles/MetadataEditor.css';
 
 const META_FIELDS = [
@@ -169,12 +170,7 @@ export default function MetadataEditor() {
       sidebarContent={sidebarContent}
       actionButton={actionButton}
     >
-      <SEO
-        title="PDF Metadata Editor Online Free — Edit Author and Title | OM PDF"
-        description="View and modify the metadata of your PDF files locally. Change title, author, subject, and keywords without uploading your files."
-        url="https://om-pdf.netlify.app/metadata-editor"
-        keywords="edit pdf metadata, change pdf author, update pdf title, pdf properties editor"
-      />
+      <ToolSeoHead toolKey="metadata" />
 
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to edit metadata" hint="Single PDF · Max 200 MB" />
@@ -202,6 +198,7 @@ export default function MetadataEditor() {
         </div>
       )}
 
+      <ToolSeoContent toolKey="metadata" />
       <RecentFilesPanel tool="metadata" title="Recent edits" />
     </ToolPageLayout>
   );

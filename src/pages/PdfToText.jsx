@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
@@ -12,6 +11,8 @@ import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { generateThumbnail } from '../thumbnailGenerator';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import ToolSeoHead from '../components/ToolSeoHead';
+import ToolSeoContent from '../components/ToolSeoContent';
 import '../styles/PdfToText.css';
 
 async function extractText(file, onProgress) {
@@ -135,7 +136,7 @@ export default function PdfToText() {
       sidebarContent={sidebarContent}
       actionButton={actionButton}
     >
-      <SEO title="PDF to Text Online Free — Extract PDF Text | OM PDF" description="Convert PDF to plain text locally in your browser. Fast, free, and private." url="https://om-pdf.netlify.app/pdf-to-text" keywords="pdf to text, extract text from pdf, pdf to txt" />
+      <ToolSeoHead toolKey="pdfToText" />
 
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to extract text" hint="Single PDF · Max 200 MB" />
@@ -177,6 +178,7 @@ export default function PdfToText() {
         </div>
       )}
 
+      <ToolSeoContent toolKey="pdfToText" />
       <RecentFilesPanel tool="pdf_to_text" title="Recent extractions" />
     </ToolPageLayout>
   );

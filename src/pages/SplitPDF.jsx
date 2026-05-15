@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import ToolSeoHead from '../components/ToolSeoHead';
+import ToolSeoContent from '../components/ToolSeoContent';
 import { formatBytes } from '../fileManager';
 import { parsePageRanges, extractPages, splitEveryPage, splitEveryNPages, downloadBytes } from '../splitPdf';
 import { generatePageThumbnails } from '../thumbnailGenerator';
@@ -185,10 +186,7 @@ export default function SplitPDF() {
       onAction={handleSplit}
       actionDisabled={splitting || !file}
     >
-      <SEO title="Split PDF Online Free — Extract Pages | OM PDF"
-        description="Split PDF by page range, chunks or every page. Fast, private, local processing."
-        url="https://om-pdf.netlify.app/split-pdf"
-        keywords="split pdf, extract pages from pdf, pdf splitter" />
+      <ToolSeoHead toolKey="split" />
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to split" hint="Single PDF · Max 200 MB" />
       ) : (
@@ -229,6 +227,7 @@ export default function SplitPDF() {
           </div>
         </div>
       )}
+      <ToolSeoContent toolKey="split" />
       <RecentFilesPanel tool="split" title="Recent splits" />
     </ToolPageLayout>
   );

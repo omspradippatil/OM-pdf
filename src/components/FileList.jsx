@@ -42,8 +42,7 @@ function SortablePageItem({ id, thumb, pageNumber, onRemove }) {
   );
 }
 
-export default function FileList({ files, onRemove, onClear, onAddMore, onReorder }) {
-  const addRef  = useRef(null);
+export default function FileList({ files, onRemove, onClear, onReorder }) {
   const dragIdx = useRef(null);
   const [expandedIds, setExpandedIds] = useState(() => new Set());
   const [loadingIds, setLoadingIds] = useState(() => new Set());
@@ -86,21 +85,6 @@ export default function FileList({ files, onRemove, onClear, onAddMore, onReorde
 
   return (
     <div className="file-panel">
-      <div className="file-panel-header">
-        <div className="file-count-badge">{files.length} file{files.length !== 1 ? 's' : ''}</div>
-        <div className="file-panel-actions">
-          <button className="btn-text" onClick={() => addRef.current?.click()}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-            Add More
-          </button>
-          <input ref={addRef} type="file" accept=".pdf,application/pdf" multiple hidden
-            onChange={e => { if (e.target.files?.length) onAddMore(e.target.files); e.target.value=''; }} />
-          <button className="btn-text btn-danger" onClick={onClear}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M19 6l-.9 13.1A2 2 0 0 1 16.1 21H7.9a2 2 0 0 1-2-1.9L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            Clear All
-          </button>
-        </div>
-      </div>
       <p className="reorder-hint">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="5" r="1" fill="currentColor"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="9" cy="19" r="1" fill="currentColor"/><circle cx="15" cy="5" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="19" r="1" fill="currentColor"/></svg>
         Drag to reorder files

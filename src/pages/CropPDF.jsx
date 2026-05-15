@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import ToolSeoHead from '../components/ToolSeoHead';
+import ToolSeoContent from '../components/ToolSeoContent';
 import '../styles/CropPDF.css';
 import { useAuth } from '../context/AuthContext';
 import { addRecentFile } from '../services/recentFiles';
@@ -236,7 +237,7 @@ export default function CropPDF() {
       sidebarContent={sidebarContent}
       actionButton={actionButton}
     >
-      <SEO title="Crop PDF Online Free — Trim Margins | OM PDF" description="Trim PDF margins locally in your browser. No upload required." url="https://om-pdf.netlify.app/crop-pdf" keywords="crop pdf, trim pdf margins" />
+      <ToolSeoHead toolKey="crop" />
 
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to crop" hint="Single PDF · Max 200 MB" />
@@ -283,6 +284,7 @@ export default function CropPDF() {
         </div>
       )}
 
+      <ToolSeoContent toolKey="crop" />
       <RecentFilesPanel tool="crop" title="Recent crops" />
     </ToolPageLayout>
   );

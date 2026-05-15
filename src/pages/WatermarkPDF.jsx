@@ -1,10 +1,11 @@
 import React, { useMemo, useState } from 'react';
-import SEO from '../components/SEO';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import ToolSeoHead from '../components/ToolSeoHead';
+import ToolSeoContent from '../components/ToolSeoContent';
 import '../styles/WatermarkPDF.css';
 import { useAuth } from '../context/AuthContext';
 import { addRecentFile } from '../services/recentFiles';
@@ -282,7 +283,7 @@ export default function WatermarkPDF() {
       sidebarContent={sidebarContent}
       actionButton={actionButton}
     >
-      <SEO title="Watermark PDF Online Free — Text or Image | OM PDF" description="Add a text or image watermark to any PDF. 100% private, processed locally." url="https://om-pdf.netlify.app/watermark-pdf" keywords="watermark pdf, stamp pdf, add watermark" />
+      <ToolSeoHead toolKey="watermark" />
 
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to watermark" hint="Single PDF · Max 200 MB" />
@@ -310,6 +311,7 @@ export default function WatermarkPDF() {
         </div>
       )}
 
+      <ToolSeoContent toolKey="watermark" />
       <RecentFilesPanel tool="watermark" title="Recent watermarks" />
     </ToolPageLayout>
   );
