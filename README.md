@@ -127,16 +127,20 @@ OM-pdf/
 
 ## 🛠️ Tech Stack
 
-| Technology | Purpose |
+| Category | Technology |
 |---|---|
-| HTML5 | Semantic markup & accessibility (ARIA) |
-| CSS3 | Styling, dark mode, animations, responsive |
-| JavaScript (ESM) | Modular app logic |
-| [pdf-lib](https://pdf-lib.js.org/) | Client-side PDF merging & splitting |
-| [pdfjs-dist](https://mozilla.github.io/pdf.js/) | PDF page rendering for thumbnails |
-| [JSZip](https://stuk.github.io/jszip/) | ZIP archive generation for split PDFs |
-| [Vite](https://vitejs.dev/) | Build tool & dev server |
-| Netlify | Hosting, CDN & deployment |
+| **Framework** | [React 19](https://react.dev/) + [Vite](https://vitejs.dev/) |
+| **Routing** | [React Router 7](https://reactrouter.com/) |
+| **PDF Core** | [pdf-lib](https://pdf-lib.js.org/) (Merging/Splitting) |
+| **PDF Rendering** | [pdfjs-dist](https://mozilla.github.io/pdf.js/) (Thumbnails) |
+| **Security Engine** | QPDF (WASM) — [pdfGuard](src/utils/pdfGuard.js) |
+| **Backend / Auth** | [Firebase](https://firebase.google.com/) (Auth, Firestore) |
+| **Cloud Storage** | [Google Drive API](https://developers.google.com/drive) (Persistence) |
+| **Drag & Drop** | [@dnd-kit/core](https://dndkit.com/) |
+| **Compression** | [JSZip](https://stuk.github.io/jszip/) |
+| **Styling** | Vanilla CSS (Premium SaaS Shell) |
+| **SEO** | [react-helmet-async](https://github.com/staylor/react-helmet-async) |
+| **Deployment** | [Netlify](https://www.netlify.com/) |
 
 ---
 

@@ -91,11 +91,35 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 
 ---
 
+---
+
+## ✅ Completed (Session 6) — Security & UI Polish
+
+### Security Hardening
+- [x] **Exposed Secrets Audit**: Verified all Firebase config uses `import.meta.env` and `.env` is git-ignored.
+- [x] **Firestore Flood Protection**:
+    - [x] Added `request.resource.data.createdAt == request.time` validation to all writable collections.
+    - [x] Enforced document size limits and string length checks in `firestore.rules`.
+    - [x] Restricted `feedback` type to allowed enum values (`suggestion`, `bug`, `other`).
+- [x] **Client-side Rate Limiting**: Added a **60-second cooldown** to the Feedback form to prevent spam.
+- [x] **Input Validation**: Added `maxLength` (3000 chars for feedback, 500 chars for metadata) to all user-facing text inputs.
+
+### Premium UI Polish
+- [x] **Sidebar Header Redesign**:
+    - [x] Added soft-indigo gradient backgrounds to tool sidebars.
+    - [x] Refined title typography (Weight 800) and spacing.
+    - [x] Enhanced tool icons with white cards, borders, and hover-lift micro-animations.
+- [x] **Section Labels**: Added letter-spacing and horizontal separator lines to `.ux-section-label` for better visual hierarchy.
+- [x] **Flexible File Limits**:
+    - [x] Removed "Max 200 MB" hard-limit messaging.
+    - [x] Updated all tools to "200 MB Recommended" to reflect that processing is limited only by device memory, not server constraints.
+
+---
+
 ## 🔲 Remaining Work
 - [ ] Mobile/responsive audit across all pages (verify sidebar behavior on small screens).
-- [ ] Optimize `thumbnailGenerator` for very large PDFs (>100MB).
+- [ ] Optimize `thumbnailGenerator` for very large PDFs (>500MB).
 - [ ] Add "Recent Files" clearing functionality.
-- [ ] Verify PWA offline capabilities for all refactored tools.
 - [ ] Final visual polish on "My Files" empty states.
 
 ---
