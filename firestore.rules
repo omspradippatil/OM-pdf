@@ -34,6 +34,13 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // 5. Feedback Collection
+    match /feedback/{docId} {
+      // Allow anyone to submit feedback, but only admin can read via console
+      allow create: if request.resource.data.message != null && request.resource.data.message.size() > 0;
+      allow read, update, delete: if false;
+    }
+
     // Default deny
     match /{path=**} {
       allow read, write: if false;

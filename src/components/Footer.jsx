@@ -55,6 +55,12 @@ const FileIcon = ({ size }) => (
   </svg>
 );
 
+const MessageIcon = ({ size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
@@ -72,9 +78,16 @@ export default function Footer() {
             <p className="brand-tagline">
               Premium, client-side PDF tools designed for ultimate privacy and speed. Your data never leaves your browser.
             </p>
-            <div className="creator-badge">
+            <div className="creator-badge" style={{ marginBottom: 24 }}>
               <span className="creator-label">Designed & Developed by</span>
               <a href="https://ompradippatil.netlify.app/" target="_blank" rel="noopener noreferrer" className="creator-name">OM Patil</a>
+            </div>
+            
+            <div className="footer-os-section">
+              <a href="https://github.com/omspradippatil/OM-pdf" target="_blank" rel="noopener noreferrer" className="os-badge-v2">
+                <GitHubIcon size={16} />
+                <span>Contribute on GitHub</span>
+              </a>
             </div>
           </div>
 
@@ -90,16 +103,17 @@ export default function Footer() {
           </div>
 
           <div className="footer-v2-links">
-            <h4 className="footer-v2-title">Company</h4>
-            <div className="footer-tools-grid">
-              <Link to="/about" className="footer-tool-link">About</Link>
-              <Link to="/privacy" className="footer-tool-link">Privacy</Link>
-              <Link to="/how-it-works" className="footer-tool-link">How It Works</Link>
-              <Link to="/blog" className="footer-tool-link">Blog</Link>
+            <div style={{ marginBottom: 40 }}>
+              <h4 className="footer-v2-title">Company</h4>
+              <div className="footer-tools-grid">
+                <Link to="/about" className="footer-tool-link">About</Link>
+                <Link to="/privacy" className="footer-tool-link">Privacy</Link>
+                <Link to="/how-it-works" className="footer-tool-link">How It Works</Link>
+                <Link to="/blog" className="footer-tool-link">Blog</Link>
+                <Link to="/feedback" className="footer-tool-link" style={{ fontWeight: 700, color: 'var(--primary)' }}>Feedback</Link>
+              </div>
             </div>
-          </div>
 
-          <div className="footer-v2-connect">
             <h4 className="footer-v2-title">Connect</h4>
             <div className="social-grid-v2">
               <a href="https://github.com/omspradippatil" target="_blank" rel="noopener noreferrer" className="social-card">
@@ -108,18 +122,18 @@ export default function Footer() {
                 </div>
                 <span className="social-label">GitHub</span>
               </a>
-              <a href="https://ompradippatil.netlify.app/" target="_blank" rel="noopener noreferrer" className="social-card">
-                <div className="social-icon-box">
-                  <GlobeIcon size={20} />
-                </div>
-                <span className="social-label">Portfolio</span>
-              </a>
               <a href="https://in.linkedin.com/in/om-pradip-patil" target="_blank" rel="noopener noreferrer" className="social-card">
                 <div className="social-icon-box">
                   <LinkedInIcon size={20} />
                 </div>
                 <span className="social-label">LinkedIn</span>
               </a>
+              <Link to="/feedback" className="social-card">
+                <div className="social-icon-box" style={{ background: 'var(--primary)', color: 'white' }}>
+                  <MessageIcon size={20} />
+                </div>
+                <span className="social-label">Feedback</span>
+              </Link>
               <a href="mailto:omspradippatil@gmail.com" className="social-card">
                 <div className="social-icon-box">
                   <MailIcon size={20} />
@@ -132,7 +146,7 @@ export default function Footer() {
 
         <div className="footer-v2-bottom">
           <div className="bottom-left">
-            <p>© {currentYear} OM PDF. Built by <strong>OM Patil</strong>.</p>
+            <p>© {currentYear} OM PDF. Built with <span style={{ color: '#ef4444' }}>❤</span> by <strong>OM Patil</strong>.</p>
           </div>
           <div className="bottom-right">
             <div className="trust-badges">

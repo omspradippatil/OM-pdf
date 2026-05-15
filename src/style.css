@@ -3091,3 +3091,49 @@ body {
   .footer-v2-bottom { flex-direction: column; gap: 24px; text-align: center; }
   .trust-badges { flex-direction: column; gap: 12px; }
 }
+
+/* ─── Feedback Page Styles ─── */
+.ux-chip {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ux-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--primary-light) !important;
+}
+.ux-chip.active {
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.feedback-success-card {
+  animation: slideUp 0.5s ease-out;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Open Source Section --- */
+.footer-os-section {
+  margin-top: 16px;
+}
+.os-badge-v2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary);
+  padding: 6px 12px;
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.os-badge-v2:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-2px);
+}
+
+

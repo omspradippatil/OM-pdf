@@ -29,6 +29,7 @@ const Privacy = lazy(() => import('./pages/Privacy'));
 const HowItWorks = lazy(() => import('./pages/HowItWorks'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
+const Feedback = lazy(() => import('./pages/Feedback'));
 
 export default function App() {
   const variantRoutes = getVariantRoutes();
@@ -72,6 +73,7 @@ export default function App() {
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
+              <Route path="/feedback" element={<Feedback />} />
               {variantRoutes.map((route) => (
                 <Route
                   key={route.path}
