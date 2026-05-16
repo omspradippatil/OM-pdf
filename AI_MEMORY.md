@@ -315,3 +315,42 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 - `src/constants/seoSchemas.js`
 - `src/pages/Feedback.jsx`
 - `src/pages/MyFiles.jsx`
+
+---
+
+## Completed (Session 9) - Mobile Tool Page Scroll Regression Fix
+
+### Goal
+- Fix mobile tool pages not scrolling after the mobile UI optimization pass.
+- Preserve the desktop SaaS shell behavior while restoring native document scrolling on screens under 900px.
+
+### Root Cause
+- `src/styles/common.css` still contained a mobile media rule with `body { overflow: hidden !important; }`.
+- The same mobile rule kept `.ux-shell` as `position: fixed` and kept `.ux-workspace-shell`, `.ux-workspace`, `.ux-workspace-scroll`, `.ux-sidebar`, and `.ux-sidebar-body` as nested clipped/scrolling containers.
+- The CSS `!important` body lock overrode the JavaScript cleanup in `ToolPageLayout.jsx`, so mobile browsers were trapped inside fixed-height containers.
+
+### Architecture Change
+- [x] `@media (max-width: 900px)` in `src/styles/common.css` now restores native page scrolling:
+  - `html, body` use `overflow-y: auto !important`
+  - horizontal overflow remains hidden to prevent sideways page drift
+  - `-webkit-overflow-scrolling: touch` is enabled for iOS momentum scrolling
+- [x] Mobile `.ux-shell` is now `position: static` with `min-height: calc(100dvh - 64px)` and `overflow: visible`.
+- [x] Mobile `.ux-workspace-shell`, `.ux-workspace`, `.ux-workspace-scroll`, `.ux-sidebar`, and `.ux-sidebar-body` now allow visible overflow so the browser scrolls the whole page.
+- [x] Mobile `.ux-sidebar` no longer has `max-height: 55vh`, which previously clipped controls and results.
+- [x] Mobile `.ux-sidebar-footer` is now `position: sticky; bottom: 0` so the primary action remains reachable without locking the whole layout.
+- [x] Mobile `.ux-floating-add` is now `position: fixed` above the sticky action area.
+
+### Desktop Behavior
+- Desktop rules remain unchanged:
+  - `.ux-shell` stays fixed below the navbar.
+  - Workspace and sidebar keep independent internal scrolling.
+  - `ToolPageLayout.jsx` still applies body scroll lock only when `window.innerWidth > 900`.
+
+### Validation Performed
+- [x] `npm run build` passes after the CSS change.
+- [x] Local preview started successfully at `http://127.0.0.1:4175/`.
+- [x] Playwright/browser automation was not available in the workspace, so runtime verification was limited to build success and targeted CSS inspection.
+
+### Files Modified
+- `src/styles/common.css`
+- `AI_MEMORY.md`
