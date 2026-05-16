@@ -1,46 +1,67 @@
 // src/services/googleDrive.js
-// Google Drive API helpers using the Firebase auth access token.
+// Client-side Google Drive helpers. 
+// Uses Firebase Auth popup to silently refresh tokens when they expire.
 
 const ROOT_FOLDER = 'OM PDF';
-const TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days (Local "perceived" validity)
+// We artificially set this TTL longer, but Google tokens naturally expire in 1 hr.
+// We handle expiration gracefully by throwing a specific error which AuthContext catches to pop a new token.
+const TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000; 
 const STORAGE_TOKEN = 'om_pdf_drive_token';
 const STORAGE_EXP = 'om_pdf_drive_token_exp';
 const STORAGE_UID = 'om_pdf_drive_uid';
 
 let accessToken = null;
 let tokenExpiry = 0;
+let activeUid = null;
 let rootFolderId = null;
-const subFolderCache = {}; // { 'Merged': id, 'Split': id, ... }
+const subFolderCache = {};
 
-function isTokenValid() {
-  return !!(accessToken && Date.now() < tokenExpiry);
+function tokenStorage() {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
 }
 
 function resetFolderCache() {
   rootFolderId = null;
-  Object.keys(subFolderCache).forEach(k => delete subFolderCache[k]);
+  Object.keys(subFolderCache).forEach((key) => delete subFolderCache[key]);
+}
+
+export function isTokenValid() {
+  return !!(accessToken && Date.now() < tokenExpiry);
 }
 
 export function setDriveAccessToken(token, expiresInMs = TOKEN_TTL_MS, uid = null) {
   accessToken = token || null;
+  activeUid = uid || activeUid;
   const ttl = Math.max(60 * 1000, expiresInMs || TOKEN_TTL_MS);
   tokenExpiry = accessToken ? Date.now() + (ttl - 60 * 1000) : 0;
   resetFolderCache();
-  if (!uid || !accessToken) return;
+  if (!activeUid || !accessToken) return;
   try {
-    localStorage.setItem(STORAGE_TOKEN, accessToken);
-    localStorage.setItem(STORAGE_EXP, String(tokenExpiry));
-    localStorage.setItem(STORAGE_UID, uid);
+    const storage = tokenStorage();
+    if (!storage) return;
+    storage.setItem(STORAGE_TOKEN, accessToken);
+    storage.setItem(STORAGE_EXP, String(tokenExpiry));
+    storage.setItem(STORAGE_UID, activeUid);
   } catch {}
 }
 
 export function loadStoredDriveToken(uid) {
   try {
-    const storedUid = localStorage.getItem(STORAGE_UID);
-    const token = localStorage.getItem(STORAGE_TOKEN);
-    const exp = parseInt(localStorage.getItem(STORAGE_EXP) || '0', 10);
+    const storage = tokenStorage();
+    if (!storage) return false;
+    const storedUid = storage.getItem(STORAGE_UID);
+    const token = storage.getItem(STORAGE_TOKEN);
+    const exp = parseInt(storage.getItem(STORAGE_EXP) || '0', 10);
     if (!uid || storedUid !== uid || !token || !exp) return false;
-    if (Date.now() >= exp) return false;
+    if (Date.now() >= exp) {
+      clearDriveAccessToken();
+      return false;
+    }
+    activeUid = uid;
     accessToken = token;
     tokenExpiry = exp;
     return true;
@@ -51,12 +72,19 @@ export function loadStoredDriveToken(uid) {
 
 export function clearDriveAccessToken() {
   accessToken = null;
+  activeUid = null;
   tokenExpiry = 0;
   resetFolderCache();
   try {
-    localStorage.removeItem(STORAGE_TOKEN);
-    localStorage.removeItem(STORAGE_EXP);
-    localStorage.removeItem(STORAGE_UID);
+    const storage = tokenStorage();
+    if (storage) {
+      storage.removeItem(STORAGE_TOKEN);
+      storage.removeItem(STORAGE_EXP);
+      storage.removeItem(STORAGE_UID);
+    }
+    window.sessionStorage?.removeItem(STORAGE_TOKEN);
+    window.sessionStorage?.removeItem(STORAGE_EXP);
+    window.sessionStorage?.removeItem(STORAGE_UID);
   } catch {}
 }
 
@@ -64,32 +92,29 @@ export function hasDriveAccess() {
   return isTokenValid();
 }
 
-export async function authorize() {
-  if (!isTokenValid()) {
-    throw new Error('Drive access expired. Please sign in again.');
-  }
-  return accessToken;
+export async function authorize(uid = null) {
+  if (isTokenValid()) return accessToken;
+  throw new Error('DRIVE_TOKEN_EXPIRED');
 }
 
-/* Drive request helper */
 async function driveRequest(path, _loginHint = null, options = {}) {
   const token = await authorize();
-  const r = await fetch(`https://www.googleapis.com/drive/v3${path}`, {
+  const response = await fetch(`https://www.googleapis.com/drive/v3${path}`, {
     ...options,
     headers: { Authorization: `Bearer ${token}`, ...(options.headers || {}) },
   });
-  if (!r.ok) {
-    if (r.status === 401) {
-      clearDriveAccessToken(); // Token is dead, clear it so we re-auth next time
+  if (!response.ok) {
+    if (response.status === 401) {
+      clearDriveAccessToken();
+      throw new Error('DRIVE_TOKEN_EXPIRED');
     }
-    const body = await r.json().catch(() => ({}));
-    throw new Error(body?.error?.message || `Drive API error ${r.status}: ${r.statusText}`);
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body?.error?.message || `Drive API error ${response.status}: ${response.statusText}`);
   }
-  if (r.status === 204) return null;
-  return r.json();
+  if (response.status === 204) return null;
+  return response.json();
 }
 
-/* Folder helpers */
 async function ensureRootFolder(loginHint) {
   if (rootFolderId) return rootFolderId;
   const q = encodeURIComponent(
@@ -100,12 +125,12 @@ async function ensureRootFolder(loginHint) {
     rootFolderId = data.files[0].id;
     return rootFolderId;
   }
-  const f = await driveRequest('/files', loginHint, {
+  const folder = await driveRequest('/files', loginHint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name: ROOT_FOLDER, mimeType: 'application/vnd.google-apps.folder' }),
   });
-  rootFolderId = f.id;
+  rootFolderId = folder.id;
   return rootFolderId;
 }
 
@@ -120,7 +145,7 @@ async function ensureSubFolder(loginHint, toolFolder) {
     subFolderCache[toolFolder] = data.files[0].id;
     return subFolderCache[toolFolder];
   }
-  const f = await driveRequest('/files', loginHint, {
+  const folder = await driveRequest('/files', loginHint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -129,11 +154,10 @@ async function ensureSubFolder(loginHint, toolFolder) {
       parents: [parentId],
     }),
   });
-  subFolderCache[toolFolder] = f.id;
-  return subFolderCache[toolFolder];
+  subFolderCache[toolFolder] = folder.id;
+  return folder.id;
 }
 
-/* Public API */
 export async function uploadToDrive(bytes, filename, loginHint = null, toolFolder = null, mimeType = 'application/pdf') {
   const parentId = toolFolder
     ? await ensureSubFolder(loginHint, toolFolder)
@@ -147,15 +171,19 @@ export async function uploadToDrive(bytes, filename, loginHint = null, toolFolde
   form.append('metadata', new Blob([metadata], { type: 'application/json' }));
   form.append('file', blob);
 
-  const r = await fetch(
+  const response = await fetch(
     'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,size',
     { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: form }
   );
-  if (!r.ok) {
-    const err = await r.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `Upload failed: ${r.statusText}`);
+  if (!response.ok) {
+    if (response.status === 401) {
+      clearDriveAccessToken();
+      throw new Error('DRIVE_TOKEN_EXPIRED');
+    }
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error?.error?.message || `Upload failed: ${response.statusText}`);
   }
-  return r.json();
+  return response.json();
 }
 
 export async function listDriveFiles(loginHint = null, toolFolder = null) {

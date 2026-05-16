@@ -1,14 +1,19 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { reauthenticateWithPopup } from 'firebase/auth';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import {
-  auth, provider, GoogleAuthProvider, firebaseReady,
-  signInWithPopup, signInWithRedirect, getRedirectResult,
-  reauthenticateWithRedirect,
-  signOut, onAuthStateChanged
+  auth,
+  firebaseReady,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  signOut,
+  onAuthStateChanged,
 } from '../firebase';
 import {
-  setDriveAccessToken, clearDriveAccessToken,
-  hasDriveAccess, loadStoredDriveToken
+  clearDriveAccessToken,
+  hasDriveAccess,
+  loadStoredDriveToken,
+  setDriveAccessToken,
 } from '../services/googleDrive';
 import { ensureUserProfile } from '../services/userProfile';
 import { syncStatsWithCloud } from '../services/privacyStats';
@@ -17,9 +22,15 @@ import { logUserAction } from '../services/activityLog';
 const AuthContext = createContext(null);
 
 const AUTH_INTENT_KEY = 'om_pdf_auth_intent';
+const SUCCESS_TIMEOUT_MS = 5000;
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 
 function setAuthIntent(intent) {
-  try { sessionStorage.setItem(AUTH_INTENT_KEY, intent); } catch { /* ignore */ }
+  try {
+    sessionStorage.setItem(AUTH_INTENT_KEY, intent);
+  } catch {
+    /* storage can be blocked in private mode */
+  }
 }
 
 function consumeAuthIntent() {
@@ -32,232 +43,293 @@ function consumeAuthIntent() {
   }
 }
 
-function shouldPreferRedirectAuth() {
-  // Popup flow breaks when the app is cross-origin isolated (COOP/COEP)
-  // OR when the Firebase `authDomain` differs from the app origin (common on Netlify).
-  const host = window.location.hostname;
-  
-  // Always use Redirect on mobile/tablets where popups are unreliable.
-  if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) return true;
+function isMobileBrowser() {
+  if (typeof navigator === 'undefined') return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
 
-  // On localhost/dev, we usually try popup first, but redirect is safer for strict browsers.
-  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
-    // If the browser is modern Chrome, Brave, or Safari, redirects are often more stable
-    // due to strict third-party cookie/iframe policies.
-    const isBrave = !!(navigator.brave && navigator.brave.isBrave);
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    if (isBrave || isSafari) return true;
-    return false;
+function isPopupRecoverable(error) {
+  const code = String(error?.code || '');
+  const message = String(error?.message || '');
+  return [
+    'auth/popup-blocked',
+    'auth/popup-closed-by-user',
+    'auth/cancelled-popup-request',
+    'auth/internal-error',
+    'auth/operation-not-supported-in-this-environment',
+  ].some((item) => code.includes(item))
+    || message.includes('Cross-Origin-Opener-Policy')
+    || message.includes('window.closed')
+    || message.includes('popup')
+    || message.includes('cancelled-by-user')
+    || message.includes('Domains, protocols and ports must match');
+}
+
+function getAuthErrorMessage(error) {
+  const code = String(error?.code || '');
+  if (code.includes('auth/popup-closed-by-user') || code.includes('auth/cancelled-popup-request')) {
+    return 'Google sign-in was cancelled.';
   }
-  
-  if (import.meta.env.DEV) return false;
-  
-  try {
-    if (window?.crossOriginIsolated) return true;
-  } catch { /* ignore */ }
+  if (code.includes('auth/popup-blocked')) {
+    return 'The browser blocked the Google sign-in popup. Redirect sign-in will be used instead.';
+  }
+  if (code.includes('auth/unauthorized-domain')) {
+    return 'This domain is not authorized in Firebase Authentication settings.';
+  }
+  if (code.includes('auth/network-request-failed')) {
+    return 'Network error during Google sign-in. Check your connection and try again.';
+  }
+  if (code.includes('auth/account-exists-with-different-credential')) {
+    return 'An account already exists with a different sign-in method.';
+  }
+  if (code.includes('auth/invalid-api-key') || code.includes('auth/invalid-credential')) {
+    return 'Firebase authentication is misconfigured. Check the Firebase API key and Google provider settings.';
+  }
+  return error?.message || 'Google sign-in failed. Please try again.';
+}
 
-  const configuredAuthDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN;
-  if (!configuredAuthDomain) return false;
-  const authHost = String(configuredAuthDomain).replace(/^https?:\/\//, '').replace(/\/$/, '');
-  
-  // If we are on a custom domain (like netlify) but auth is on firebaseapp.com, 
-  // popups often fail due to cross-site cookie restrictions.
-  return authHost && authHost !== window.location.hostname;
+function shouldUseRedirect() {
+  if (typeof window === 'undefined') return false;
+  if (isMobileBrowser()) return true;
+  try {
+    if (window.crossOriginIsolated) return true;
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+function createGoogleProvider({ prompt, loginHint, drive } = {}) {
+  const googleProvider = new GoogleAuthProvider();
+  googleProvider.addScope('profile');
+  googleProvider.addScope('email');
+  if (drive) {
+    googleProvider.addScope(DRIVE_SCOPE);
+  }
+
+  const params = {};
+  if (prompt) params.prompt = prompt;
+  if (loginHint) params.login_hint = loginHint;
+  if (Object.keys(params).length) googleProvider.setCustomParameters(params);
+  return googleProvider;
+}
+
+async function finishSignedInUser(user) {
+  if (!user) return;
+  try {
+    await ensureUserProfile(user);
+    await syncStatsWithCloud(user);
+  } catch (err) {
+    console.warn('[Auth] Ignored user profile/stats sync error (possibly blocked by client):', err);
+  }
+}
+
+function saveTokenFromResult(result, drive) {
+  const credential = GoogleAuthProvider.credentialFromResult(result);
+  if (credential?.accessToken && drive) {
+    setDriveAccessToken(credential.accessToken, 14 * 24 * 60 * 60 * 1000, result.user.uid);
+    return true;
+  }
+  return false;
 }
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [authError, setAuthError]     = useState('');
+  const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
-  const redirectHandledRef = useRef(false);
+  const [authBusy, setAuthBusy] = useState(false);
+  const authActionRef = useRef(false);
+  const successTimerRef = useRef(null);
+
+  const showSuccess = useCallback((message) => {
+    setAuthSuccess(message);
+    if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    successTimerRef.current = setTimeout(() => setAuthSuccess(''), SUCCESS_TIMEOUT_MS);
+  }, []);
+
+  useEffect(() => () => {
+    if (successTimerRef.current) clearTimeout(successTimerRef.current);
+  }, []);
 
   useEffect(() => {
     if (!firebaseReady || !auth) {
       setLoading(false);
-      return;
+      return undefined;
     }
 
-    let unsub = null;
+    let unsubscribe = null;
+    let cancelled = false;
 
-    // We use a self-invoking async function to handle the initialization sequence
-    (async () => {
+    async function bootAuth() {
       try {
-        // 1. Check if we just returned from a redirect login
         const result = await getRedirectResult(auth);
-        
         if (result?.user) {
-          console.log('[OM PDF] Redirect login successful:', result.user.email);
           const intent = consumeAuthIntent() || 'login';
-          const cred = GoogleAuthProvider.credentialFromResult(result);
-          
-          if (cred?.accessToken) {
-            setDriveAccessToken(cred.accessToken, undefined, result.user.uid);
-          }
-          
-          await ensureUserProfile(result.user);
-          await syncStatsWithCloud(result.user);
-          
-          if (intent === 'login' || intent === 'drive') {
-            setAuthSuccess('Sign-in successful!');
-            setTimeout(() => setAuthSuccess(''), 5000);
-            await logUserAction(result.user, 'sign_in', {
-              status: 'success',
-              meta: { provider: 'google', flow: 'redirect', intent }
-            });
-          }
+          const drive = intent === 'drive';
+
+          await finishSignedInUser(result.user);
+          saveTokenFromResult(result, drive);
+
+          showSuccess(drive ? 'Signed in with Google and Drive connected.' : 'Signed in with Google.');
+          await logUserAction(result.user, 'sign_in', {
+            status: 'success',
+            meta: { provider: 'google', flow: 'redirect', intent },
+          }).catch(() => {});
         }
-      } catch (e) {
-        console.warn('[OM PDF] Redirect handling error:', e.message);
-        setAuthError('Redirect sign-in failed. Please try again.');
+      } catch (error) {
+        console.warn('[Auth] Redirect result failed:', error);
+        setAuthError(getAuthErrorMessage(error));
       } finally {
-        // 2. Start the main auth listener once redirect check is done
-        unsub = onAuthStateChanged(auth, (u) => {
-          setUser(u);
+        if (cancelled) return;
+        unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+          setUser(nextUser);
           setLoading(false);
-          if (u) {
-            loadStoredDriveToken(u.uid);
-            void ensureUserProfile(u);
-            void syncStatsWithCloud(u);
+          if (nextUser) {
+            loadStoredDriveToken(nextUser.uid);
+            void finishSignedInUser(nextUser);
           } else {
             clearDriveAccessToken();
           }
         });
       }
-    })();
+    }
+
+    void bootAuth();
 
     return () => {
-      if (unsub) unsub();
+      cancelled = true;
+      if (unsubscribe) unsubscribe();
     };
-  }, []);
+  }, [showSuccess]);
 
-  const login = async () => {
+  const login = useCallback(async ({ drive = true, silent = false } = {}) => {
     if (!firebaseReady || !auth) {
-      const configErr = window.__FIREBASE_ERROR__ || 'Firebase environment variables are missing in Netlify settings.';
-      setAuthError(`Configuration Error: ${configErr}`);
-      return;
+      const configErr = window.__FIREBASE_ERROR__ || 'Firebase environment variables are missing.';
+      if (!silent) setAuthError(`Configuration error: ${configErr}`);
+      return false;
     }
-    setAuthError('');
+    if (authActionRef.current) return false;
+
+    authActionRef.current = true;
+    if (!silent) setAuthBusy(true);
+    if (!silent) setAuthError('');
+
+    const intent = drive ? 'drive' : 'login';
+    const provider = createGoogleProvider({
+      prompt: silent ? 'none' : 'select_account',
+      loginHint: auth.currentUser?.email || undefined,
+      drive,
+    });
+
     try {
-      if (shouldPreferRedirectAuth()) {
-        setAuthIntent('login');
-        provider.setCustomParameters({ prompt: 'select_account' });
+      if (shouldUseRedirect() && !silent) {
+        setAuthIntent(intent);
         await signInWithRedirect(auth, provider);
-        return; // navigation
+        return false;
       }
 
-      provider.setCustomParameters({ prompt: 'select_account' });
       const result = await signInWithPopup(auth, provider);
-      const cred = GoogleAuthProvider.credentialFromResult(result);
-      if (cred?.accessToken) setDriveAccessToken(cred.accessToken, undefined, result.user.uid);
-      await ensureUserProfile(result.user);
-      setAuthSuccess('Successfully signed in!');
-      setTimeout(() => setAuthSuccess(''), 5000);
+      await finishSignedInUser(result.user);
+      saveTokenFromResult(result, drive);
+
+      if (!silent) showSuccess(drive ? 'Signed in with Google and Drive connected.' : 'Signed in with Google.');
       await logUserAction(result.user, 'sign_in', {
         status: 'success',
-        meta: { provider: 'google', flow: 'popup', driveScope: true }
-      });
-    } catch (e) {
-      // Popup can hang or throw under COOP/COEP or strict cross-site settings.
-      const msg = String(e?.message || '');
-      const code = String(e?.code || '');
-      
-      const isPopupBlocked = 
-        msg.includes('Cross-Origin-Opener-Policy') || 
-        msg.includes('window.closed') ||
-        msg.includes('popup_closed_by_user') ||
-        msg.includes('cancelled-by-user') ||
-        msg.includes('Domains, protocols and ports must match') ||
-        code.includes('auth/popup-closed-by-user') ||
-        code.includes('auth/cancelled-by-user') ||
-        code.includes('auth/internal-error');
-
-      if (isPopupBlocked) {
-        console.warn('[OM PDF] Popup blocked or failed. Falling back to Redirect flow...');
-        try {
-          setAuthIntent('login');
-          await signInWithRedirect(auth, provider);
-          return;
-        } catch (e2) {
-          console.error('Redirect fallback error:', e2);
-          setAuthError('Sign-in redirect failed. Please check your browser settings.');
-        }
-      } else if (code === 'auth/invalid-credential' || msg.includes('invalid_client')) {
-        setAuthError('Configuration Error: The Google Client Secret in your Firebase Console or .env is incorrect. Please check the setup instructions.');
-      } else {
-        console.error('Login error:', e);
-        setAuthError(e?.message || 'Login failed');
-      }
-      
-      await logUserAction(auth?.currentUser, 'sign_in', {
-        status: 'error',
-        meta: { error: e?.message || 'Login failed', code: e?.code }
-      });
-    }
-  };
-
-  const logout = async () => {
-    if (!firebaseReady || !auth) return;
-    const u = auth.currentUser;
-    try {
-      await signOut(auth);
-      clearDriveAccessToken();
-      await logUserAction(u, 'sign_out', { status: 'success' });
-    } catch (e) {
-      console.error(e);
-      await logUserAction(u, 'sign_out', { status: 'error', meta: { error: e?.message || 'Logout failed' } });
-    }
-  };
-
-  const ensureDriveToken = async (force = false) => {
-    if (!firebaseReady || !auth) throw new Error('Firebase not configured.');
-    if (user && !hasDriveAccess()) {
-      loadStoredDriveToken(user.uid);
-    }
-    if (!force && hasDriveAccess()) return true;
-    if (!auth.currentUser) throw new Error('Not signed in.');
-
-    if (shouldPreferRedirectAuth()) {
-      setAuthIntent('drive');
-      provider.setCustomParameters({ 
-        login_hint: auth.currentUser.email || undefined
-      });
-      await reauthenticateWithRedirect(auth.currentUser, provider);
-      return false; // navigation
-    }
-
-    try {
-      // Use login_hint to make the re-auth as silent as possible
-      provider.setCustomParameters({ login_hint: auth.currentUser.email || undefined });
-      const result = await reauthenticateWithPopup(auth.currentUser, provider);
-      const cred = GoogleAuthProvider.credentialFromResult(result);
-      if (!cred?.accessToken) throw new Error('Drive access not granted.');
-      setDriveAccessToken(cred.accessToken, undefined, auth.currentUser.uid);
+        meta: { provider: 'google', flow: silent ? 'silent_popup' : 'popup', intent },
+      }).catch(() => {});
       return true;
-    } catch (e) {
-      const msg = String(e?.message || '');
-      const isPopupBlockedByCoop = msg.includes('Cross-Origin-Opener-Policy') || msg.includes('window.closed');
-      if (isPopupBlockedByCoop) {
-        setAuthIntent('drive');
-        await reauthenticateWithRedirect(auth.currentUser, provider);
-        return false; // navigation
+    } catch (error) {
+      // If silent failed, we don't redirect.
+      if (silent) {
+        console.warn('[Auth] Silent Drive refresh failed:', error);
+        return false;
       }
-      console.error('Reauth error:', {
-        code: e?.code,
-        message: e?.message,
-        customData: e?.customData,
-        name: e?.name,
-      });
-      throw e;
+
+      if (isPopupRecoverable(error) && !shouldUseRedirect()) {
+        try {
+          setAuthIntent(intent);
+          await signInWithRedirect(auth, provider);
+          return false;
+        } catch (redirectError) {
+          console.error('[Auth] Redirect fallback failed:', redirectError);
+          setAuthError(getAuthErrorMessage(redirectError));
+        }
+      } else {
+        console.error('[Auth] Login failed:', error);
+        setAuthError(getAuthErrorMessage(error));
+      }
+
+      await logUserAction(auth.currentUser, 'sign_in', {
+        status: 'error',
+        meta: { code: error?.code || null, error: error?.message || 'Login failed', intent },
+      }).catch(() => {});
+      return false;
+    } finally {
+      authActionRef.current = false;
+      if (!silent) setAuthBusy(false);
     }
-  };
+  }, [showSuccess]);
+
+  const logout = useCallback(async () => {
+    if (!firebaseReady || !auth || authActionRef.current) return;
+    const currentUser = auth.currentUser;
+    authActionRef.current = true;
+    setAuthBusy(true);
+    setAuthError('');
+
+    try {
+      clearDriveAccessToken();
+      await logUserAction(currentUser, 'sign_out', { status: 'success' }).catch(() => {});
+      await signOut(auth);
+      showSuccess('Signed out.');
+    } catch (error) {
+      console.error('[Auth] Logout failed:', error);
+      setAuthError(getAuthErrorMessage(error));
+      await logUserAction(currentUser, 'sign_out', {
+        status: 'error',
+        meta: { error: error?.message || 'Logout failed' },
+      }).catch(() => {});
+    } finally {
+      authActionRef.current = false;
+      setAuthBusy(false);
+    }
+  }, [showSuccess]);
+
+  const ensureDriveToken = useCallback(async (force = false) => {
+    if (!firebaseReady || !auth) throw new Error('Firebase is not configured.');
+    const currentUser = auth.currentUser || user;
+    if (!currentUser) throw new Error('Sign in with Google first.');
+
+    if (!force) {
+      loadStoredDriveToken(currentUser.uid);
+      if (hasDriveAccess()) return true;
+    }
+
+    // Attempt to silently refresh token via popup if it expired.
+    // If not using redirect, a quick popup to get the new token is the only free way.
+    try {
+      const success = await login({ drive: true, silent: false }); // silent: false so the popup is allowed
+      if (!success) throw new Error('Could not refresh Google Drive token.');
+      return true;
+    } catch (error) {
+      console.error('[Auth] Drive re-auth failed:', error);
+      throw new Error(getAuthErrorMessage(error));
+    }
+  }, [user, login]);
 
   return (
-    <AuthContext.Provider value={{ 
-      user, loading, 
-      authError, setAuthError, 
-      authSuccess, setAuthSuccess,
-      login, logout, ensureDriveToken 
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      authBusy,
+      authError,
+      setAuthError,
+      authSuccess,
+      setAuthSuccess,
+      login,
+      logout,
+      ensureDriveToken,
     }}>
       {children}
     </AuthContext.Provider>

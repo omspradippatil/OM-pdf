@@ -1,7 +1,7 @@
 import SEO from '../components/SEO';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { listDriveFiles, deleteFromDrive } from '../services/googleDrive';
+import { listDriveFiles, deleteFromDrive, hasDriveAccess, loadStoredDriveToken } from '../services/googleDrive';
 import { logUserAction } from '../services/activityLog';
 import ToolPageLayout from '../components/ToolPageLayout';
 import '../styles/MyFiles.css';
@@ -80,10 +80,16 @@ export default function MyFiles() {
   const [driveError, setDriveError]       = useState('');
   const [driveReady, setDriveReady]       = useState(false);
 
-  const loadDrive = useCallback(async () => {
+  const loadDrive = useCallback(async ({ interactive = true } = {}) => {
     if (!user) return;
     setDriveLoading(true); setDriveError('');
     try {
+      loadStoredDriveToken(user.uid);
+      if (!interactive && !hasDriveAccess()) {
+        setDriveError('Connect Google Drive to list your saved files.');
+        setDriveReady(false);
+        return;
+      }
       const ok = await ensureDriveToken();
       if (ok === false) {
         setDriveError('Complete Google authorization, then click Refresh.');
@@ -116,7 +122,7 @@ export default function MyFiles() {
   }, [user, ensureDriveToken]);
 
   useEffect(() => {
-    if (user) loadDrive();
+    if (user) loadDrive({ interactive: false });
   }, [user, loadDrive]);
 
   const deleteDriveFile = async (fileId) => {
@@ -149,7 +155,7 @@ export default function MyFiles() {
         <div className="mf-empty">
           <div className="mf-empty-icon">🔐</div>
           <p>Sign in with Google to view your files.</p>
-          <button className="btn-auth" style={{ margin: '16px auto 0', display: 'flex' }} onClick={login}>
+          <button className="btn-auth" style={{ margin: '16px auto 0', display: 'flex' }} onClick={() => login()}>
             <GoogleIcon /> Sign In with Google
           </button>
         </div>
@@ -171,7 +177,7 @@ export default function MyFiles() {
         <SectionHeader
           title="🗂️ Google Drive Files"
           count={driveFiles.length}
-          onRefresh={loadDrive}
+          onRefresh={() => loadDrive({ interactive: true })}
           loading={driveLoading}
         />
         {driveError && <div className="alert alert-warning"><span>⚠️ {driveError}</span></div>}

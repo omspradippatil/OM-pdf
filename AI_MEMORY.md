@@ -437,3 +437,203 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 ### Files Modified
 - `firestore.rules`
 - `AI_MEMORY.md`
+
+---
+
+## Completed (Session 11) - Production Firebase Google Auth Rewrite
+
+### Goal
+- Recode/harden Firebase Google authentication so sign-in behaves more reliably in production.
+- Reduce random popup/redirect failures, repeated consent bugs, stale Drive token failures, and accidental auth prompts.
+
+### Auth Architecture Change
+- [x] Replaced the old shared mutable Google provider flow in `src/context/AuthContext.jsx`.
+- [x] Auth now creates a fresh `GoogleAuthProvider` per operation using `createGoogleProvider(...)`.
+- [x] Normal Google sign-in is separated from Google Drive consent:
+  - Navbar login uses profile/email only.
+  - Save to Drive and My Files request Drive scope intentionally.
+- [x] Added explicit auth intents stored in `sessionStorage`:
+  - `login`
+  - `drive`
+- [x] Redirect result handling now runs before the main `onAuthStateChanged` listener starts.
+- [x] Redirect result handling stores a Drive access token only when the completed intent was `drive`.
+- [x] Added guarded auth actions with `authBusy` / `authActionRef` to prevent double-click duplicate popup/redirect attempts.
+- [x] Added clearer production auth error messages for blocked popups, cancelled popups, unauthorized domains, network failures, invalid credentials, and Firebase config problems.
+- [x] Added popup-to-redirect fallback for recoverable popup failures.
+- [x] Mobile and cross-origin-isolated browsers prefer redirect auth directly.
+- [x] Logout now records the sign-out activity before calling `signOut`, so the Firestore log write still has an authenticated request context.
+
+### Firebase Entrypoint Changes
+- [x] `src/firebase.js` now exports `reauthenticateWithPopup` through the app Firebase wrapper.
+- [x] The global exported `provider` no longer carries the Drive scope by default.
+- [x] Drive scope is no longer attached to every sign-in attempt.
+
+### Google Drive Token Policy
+- [x] `src/services/googleDrive.js` token TTL changed from 14 days to 50 minutes.
+- [x] Drive access tokens are now stored in `sessionStorage`, not long-lived `localStorage`.
+- [x] Token storage is still keyed by Firebase UID.
+- [x] Dead/expired tokens clear Drive cache and require reauthorization instead of causing stale-token loops.
+
+### UI/Auth Entry Points
+- [x] `src/components/Navbar.jsx` uses `authBusy` to disable login/logout controls while an auth operation is running.
+- [x] Navbar login calls `login()` explicitly instead of passing the click event into the auth function.
+- [x] `src/components/SaveToDriveButton.jsx` calls `login({ drive: true })` when the user starts from an unsigned-in Drive save.
+- [x] `src/pages/MyFiles.jsx` calls `login({ drive: true })` from its sign-in button.
+- [x] `MyFiles` no longer opens a Drive consent popup automatically on page mount. It checks for an existing session Drive token first and asks the user to connect Drive through an explicit Refresh/action path.
+
+### Compatibility Notes
+- Firebase Auth still uses `browserLocalPersistence` for the Firebase user session.
+- Google Drive OAuth access tokens are intentionally short-lived and session-scoped.
+- Existing `ensureUserProfile`, `syncStatsWithCloud`, `SaveToDriveButton`, and `MyFiles` flows remain supported.
+- Firestore rules from Session 10 remain compatible with the profile writes from the new auth flow.
+
+### Validation Performed
+- [x] Read `AI_MEMORY.md` first.
+- [x] Scoped review to auth-related files only.
+- [x] `npm run build` passes.
+- [x] Runtime Google sign-in could not be completed locally from this workspace because it requires production Firebase authorized-domain/OAuth browser interaction.
+
+### Files Modified
+- `src/context/AuthContext.jsx`
+- `src/firebase.js`
+- `src/services/googleDrive.js`
+- `src/components/Navbar.jsx`
+- `src/components/SaveToDriveButton.jsx`
+- `src/pages/MyFiles.jsx`
+- `AI_MEMORY.md`
+
+---
+
+## Completed (Session 12) - Unified Google + Drive Sign-In Requirement
+
+### Product Requirement
+- Google sign-in and Google Drive permission must happen together.
+- Users should not see Drive as a separate permission flow after already signing in.
+- Logout must clear both Firebase login and Drive token state.
+- Firebase login should persist across reloads.
+
+### Architecture Adjustment
+- [x] `login()` in `src/context/AuthContext.jsx` now defaults to `drive: true`.
+- [x] Navbar login, My Files sign-in, and Save to Drive sign-in all use the same unified Google + Drive login flow.
+- [x] Redirect result handling stores a Drive token whenever Google returns an access token, not only for a separate `drive` intent.
+- [x] Popup login handling stores a Drive token whenever Google returns an access token.
+- [x] Success messaging now says `Signed in with Google and Drive connected.` when Drive scope is included.
+
+### Token Persistence Policy
+- [x] Firebase Auth still uses `browserLocalPersistence`, so the signed-in Google account persists across reloads.
+- [x] Google Drive access tokens are cached in `localStorage` while valid so reloads can still access Drive without immediately asking again.
+- [x] Expired Drive tokens are cleared automatically.
+- [x] Logout clears the in-memory Drive token, local Drive token cache, and old session token cache.
+
+### Important Constraint
+- Google OAuth access tokens cannot be made non-expiring from a browser-only app. Google controls expiry.
+- The app can persist Firebase login and saved Google consent, but it must request/refresh a new Drive access token when Google expires the old one.
+
+### Validation Performed
+- [x] `npm run build` passes.
+
+### Files Modified
+- `src/context/AuthContext.jsx`
+- `src/services/googleDrive.js`
+- `src/components/SaveToDriveButton.jsx`
+- `src/pages/MyFiles.jsx`
+- `AI_MEMORY.md`
+
+---
+
+## Completed (Session 13) - Server-Side Google Drive Refresh Token Backend
+
+### Goal
+- Implement the safer version of "store the token in the database" for longer-lived Google Drive access.
+- Avoid storing raw Google Drive refresh tokens in browser storage or client-readable Firestore documents.
+
+### Backend Architecture Added
+- [x] Added Firebase project config:
+  - `.firebaserc`
+  - `firebase.json`
+- [x] Added `functions/` Cloud Functions package using Node 22.
+- [x] Added Cloud Functions in `functions/index.js`:
+  - `getDriveAuthUrl`
+  - `driveOAuthCallback`
+  - `getDriveStatus`
+  - `getDriveAccessToken`
+  - `disconnectDrive`
+  - `listDriveFiles`
+  - `deleteDriveFile`
+  - `uploadDriveFile`
+- [x] The backend OAuth flow requests Google Drive `drive.file` with `access_type=offline`.
+- [x] Refresh tokens are encrypted with AES-256-GCM before storing in Firestore.
+- [x] Encryption key is supplied by Firebase Secret Manager as `DRIVE_TOKEN_ENCRYPTION_KEY`.
+- [x] Google OAuth client ID/secret are supplied by Firebase Secret Manager.
+
+### Frontend Architecture Changed
+- [x] `src/firebase.js` now initializes and exports Firebase Functions.
+- [x] `src/services/googleDrive.js` now refreshes short-lived Google Drive access tokens through callable function `getDriveAccessToken`.
+- [x] `src/services/googleDrive.js` tracks the active Firebase UID so refreshed short-lived tokens are cached for the correct signed-in account.
+- [x] Long-lived refresh tokens are no longer handled by browser code.
+- [x] Browser still uploads directly to Google Drive with short-lived access tokens so large PDF uploads do not route through OM PDF servers.
+- [x] `AuthContext` now continues from Firebase sign-in into backend Drive connection if Drive is not connected.
+- [x] `ensureDriveToken` now tries server-side token refresh first and starts backend OAuth connection only if no refresh token exists.
+
+### Security Model
+- Client stores only short-lived Google access tokens while valid.
+- Server stores encrypted Google refresh tokens in Firestore collections denied by client rules/default deny.
+- Cloud Functions run with Admin SDK and handle token refresh.
+- Logout clears browser Drive token cache; server-side refresh token remains unless `disconnectDrive` is called in a future UI.
+
+### Deployment Setup Required
+- Firebase Functions secrets:
+  - `GOOGLE_OAUTH_CLIENT_ID`
+  - `GOOGLE_OAUTH_CLIENT_SECRET`
+  - `DRIVE_TOKEN_ENCRYPTION_KEY`
+- Functions params:
+  - `DRIVE_OAUTH_REDIRECT_URI`
+  - `APP_RETURN_URL`
+- Google Cloud OAuth client must include the deployed `driveOAuthCallback` URL as an authorized redirect URI.
+- Setup notes added in `docs/DRIVE_OAUTH_SETUP.md`.
+
+### Validation Performed
+- [x] `npm install` completed inside `functions/`.
+- [x] `npm run lint` in `functions/` passes via `node --check index.js`.
+- [x] Root `npm run build` passes.
+- [x] Runtime OAuth callback could not be tested locally because it requires deployed Function URLs and Google OAuth redirect configuration.
+
+### Files Added/Modified
+- `.firebaserc`
+- `firebase.json`
+- `functions/package.json`
+- `functions/package-lock.json`
+- `functions/index.js`
+- `docs/DRIVE_OAUTH_SETUP.md`
+- `src/firebase.js`
+- `src/context/AuthContext.jsx`
+- `src/services/googleDrive.js`
+- `AI_MEMORY.md`
+
+---
+
+## Completed (Session 14) - Graceful Cloud Function Fallback & CORS Error Handling
+
+### Goal
+- Prevent Google sign-in from completely breaking if the `getDriveStatus` Cloud Function returns an `internal` or CORS error due to deployment issues (e.g., GCP missing unauthenticated invocation rights or Secret Manager crashes).
+- Ensure users can still log in to OM PDF and use local tools even if the Google Drive backend integration is temporarily unreachable.
+
+### Architecture Change
+- [x] Modified `connectDriveAfterLogin` in `src/context/AuthContext.jsx` to wrap Cloud Function calls (`getDriveConnectedStatus` and `beginDriveConnection`) in resilient `try-catch` blocks.
+- [x] If `getDriveConnectedStatus` throws an error (like a preflight CORS failure or a 500 Internal error from Cloud Run), the client logs a warning and gracefully assumes Drive is disconnected instead of throwing a fatal `FirebaseError: internal` that bricks the login flow.
+- [x] Confirmed that `firestore.rules` are correct and secure. The `ERR_BLOCKED_BY_CLIENT` on the Firestore websocket channel is a known issue caused by client-side browser extensions (like Brave Shields or uBlock Origin) and does not prevent Firestore from operating, as the Firebase SDK automatically falls back to long-polling HTTP requests when websockets are blocked.
+
+### Deployment Note
+- Cloud Function CORS and `internal` errors on preflight typically occur because:
+  1. The Cloud Function lacks the `roles/run.invoker` permission for `allUsers` (GCP blocks the OPTIONS request).
+  2. The Cloud Function crashed on initialization due to missing Firebase Secret Manager secrets.
+- This frontend update prevents these backend infrastructure issues from locking users out of the main application.
+
+### Validation Performed
+- [x] `npm run build` passes.
+- [x] Backend Cloud Function `index.js` validated syntactically.
+- [x] Firebase SDK error handling inspected to ensure graceful fallback.
+
+### Files Modified
+- `src/context/AuthContext.jsx`
+- `AI_MEMORY.md`

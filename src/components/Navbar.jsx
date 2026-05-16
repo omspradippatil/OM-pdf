@@ -13,7 +13,7 @@ const GoogleIcon = () => (
 );
 
 export default function Navbar() {
-  const { user, login, logout, authError, setAuthError, authSuccess, setAuthSuccess } = useAuth();
+  const { user, login, logout, authBusy, authError, setAuthError, authSuccess, setAuthSuccess } = useAuth();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [toolsOpen, setToolsOpen]       = useState(false);
@@ -128,7 +128,7 @@ export default function Navbar() {
 
           {user ? (
             <div className="user-profile" ref={dropRef}>
-              <button className="user-profile-btn" onClick={() => setDropdownOpen(o => !o)}>
+              <button className="user-profile-btn" onClick={() => setDropdownOpen(o => !o)} disabled={authBusy}>
                 <img src={user.photoURL || ''} alt="avatar" className="user-avatar" referrerPolicy="no-referrer" />
                 <span className="user-name-desktop">{user.displayName?.split(' ')[0]}</span>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
@@ -139,7 +139,7 @@ export default function Navbar() {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     My Files
                   </Link>
-                  <button className="dropdown-item logout" onClick={logout}>
+                  <button className="dropdown-item logout" onClick={logout} disabled={authBusy}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
                     Logout
                   </button>
@@ -148,8 +148,8 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="nav-auth-wrap">
-              <button className="btn-nav-login" onClick={login}>
-                Log In
+              <button className="btn-nav-login" onClick={() => login()} disabled={authBusy}>
+                {authBusy ? 'Working...' : 'Log In'}
               </button>
             </div>
           )}
@@ -196,8 +196,8 @@ export default function Navbar() {
             ))}
             <div className="mobile-auth-section">
               {user 
-                ? <button className="mobile-link-btn logout" onClick={logout}>Logout</button>
-                : <button className="mobile-link-btn login" onClick={login}><GoogleIcon /> Sign In with Google</button>
+                ? <button className="mobile-link-btn logout" onClick={logout} disabled={authBusy}>Logout</button>
+                : <button className="mobile-link-btn login" onClick={() => login()} disabled={authBusy}><GoogleIcon /> Sign In with Google</button>
               }
             </div>
           </div>

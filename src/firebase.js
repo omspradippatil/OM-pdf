@@ -7,6 +7,7 @@ import {
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
+  reauthenticateWithPopup,
   reauthenticateWithRedirect,
   setPersistence,
   browserLocalPersistence,
@@ -47,9 +48,6 @@ try {
   storage  = getStorage(app);
   db       = getFirestore(app);
   provider = new GoogleAuthProvider();
-  provider.addScope('https://www.googleapis.com/auth/drive.file');
-  // Removed forced 'select_account' to allow smoother background re-auth for Drive.
-  // provider.setCustomParameters({ prompt: 'select_account' });
   firebaseReady = true;
 } catch (err) {
   const missingVar = err.message.includes('VITE_FIREBASE_') ? err.message : '';
@@ -62,7 +60,7 @@ try {
 export {
   firebaseReady,
   auth, provider, GoogleAuthProvider,
-  signInWithPopup, signInWithRedirect, getRedirectResult, reauthenticateWithRedirect,
+  signInWithPopup, signInWithRedirect, getRedirectResult, reauthenticateWithPopup, reauthenticateWithRedirect,
   signOut, onAuthStateChanged,
   storage, ref, uploadBytes, getDownloadURL, deleteObject,
   db, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, deleteDoc, doc, setDoc, getDoc,
