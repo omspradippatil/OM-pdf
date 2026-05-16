@@ -66,6 +66,7 @@ export default function Feedback() {
         title="Send Feedback — OM PDF"
         description="Share your thoughts, report bugs, or suggest features for OM PDF."
         url="https://om-pdf.netlify.app/feedback"
+        noindex
       />
 
       <div className="content-page-inner" style={{ maxWidth: '600px' }}>

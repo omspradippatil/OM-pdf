@@ -1,29 +1,26 @@
 const BASE_URL = "https://om-pdf.netlify.app";
 
 export function buildToolSchemas({ toolName, url, description, faqs }) {
-  const webApp = {
+  const webPage = {
     "@context": "https://schema.org",
-    "@type": "WebApplication",
+    "@type": "WebPage",
     "name": toolName,
-    "applicationCategory": "UtilitiesApplication",
-    "operatingSystem": "Any",
     "url": url || BASE_URL,
     "description": description,
-    "isAccessibleForFree": true,
     "inLanguage": "en",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD",
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "OM PDF",
+      "url": BASE_URL,
     },
-    "provider": {
+    "publisher": {
       "@type": "Organization",
       "name": "OM PDF",
       "url": BASE_URL,
     },
   };
 
-  if (!faqs || !faqs.length) return [webApp];
+  if (!faqs || !faqs.length) return [webPage];
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -38,5 +35,5 @@ export function buildToolSchemas({ toolName, url, description, faqs }) {
     })),
   };
 
-  return [webApp, faqSchema];
+  return [webPage, faqSchema];
 }

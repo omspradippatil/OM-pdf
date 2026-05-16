@@ -138,6 +138,13 @@ export default function MyFiles() {
 
   if (!user) {
     return (
+      <>
+      <SEO
+        title="My Files"
+        description="View and manage your saved Drive files in OM PDF."
+        url="https://om-pdf.netlify.app/my-files"
+        noindex
+      />
       <ToolPageLayout title="My Files" subtitle="View and manage your saved Drive files." icon="📁">
         <div className="mf-empty">
           <div className="mf-empty-icon">🔐</div>
@@ -147,10 +154,18 @@ export default function MyFiles() {
           </button>
         </div>
       </ToolPageLayout>
+      </>
     );
   }
 
   return (
+    <>
+    <SEO
+      title="My Files"
+      description="View and manage your saved Drive files in OM PDF."
+      url="https://om-pdf.netlify.app/my-files"
+      noindex
+    />
     <ToolPageLayout title="My Files" subtitle="Files saved to your Google Drive 'OM PDF' folder." icon="📁">
       <div className="mf-tab-content">
         <SectionHeader
@@ -191,5 +206,6 @@ export default function MyFiles() {
         )}
       </div>
     </ToolPageLayout>
+    </>
   );
 }

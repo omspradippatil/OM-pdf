@@ -1,7 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
-export default function SEO({ title, description, keywords, url, canonicalUrl, schema }) {
+export default function SEO({ title, description, keywords, url, canonicalUrl, schema, noindex = false }) {
   const siteName = "OM PDF";
   const defaultDesc = "OM PDF is a free, private PDF toolkit. Merge, split, compress, and convert PDF files instantly in your browser. Your files never leave your device.";
   const defaultUrl = "https://om-pdf.netlify.app";
@@ -17,7 +17,14 @@ export default function SEO({ title, description, keywords, url, canonicalUrl, s
       <meta name="description" content={description || defaultDesc} />
       {keywords && <meta name="keywords" content={keywords} />}
       <meta name="author" content="OM PDF" />
-      <meta name="robots" content="index, follow, max-image-preview:large" />
+      <meta
+        name="robots"
+        content={
+          noindex
+            ? "noindex, nofollow, noarchive"
+            : "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
+        }
+      />
 
       {/* Canonical URL */}
       <link rel="canonical" href={resolvedCanonical} />

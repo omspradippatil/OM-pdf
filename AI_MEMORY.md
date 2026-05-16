@@ -235,3 +235,68 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 - Firebase auth, Firestore, Drive integrations — untouched
 - All routing — untouched
 - uxpilot folder is read-only reference only
+
+---
+
+## Completed (Session 7) - Search Console Enhancement Fixes
+
+### Goal
+- Resolve Google Search Console message: "URL is available to Google, but has issues."
+- Make SEO architecture more conservative and valid so pages remain indexable while avoiding unsupported enhancement eligibility warnings.
+
+### SEO Head Architecture
+- [x] `src/components/SEO.jsx` now supports a `noindex` prop.
+- [x] Default indexable pages now emit a fuller robots directive:
+  - `index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1`
+- [x] Private/submission pages can now emit:
+  - `noindex, nofollow, noarchive`
+- [x] `/my-files` and `/feedback` use `noindex` through the shared SEO component.
+
+### Structured Data Architecture
+- [x] `src/constants/seoSchemas.js` changed tool schema from `WebApplication` to `WebPage`.
+- [x] Tool pages still emit valid `FAQPage` schema when visible FAQ content exists.
+- [x] Tool page schema now uses:
+  - `WebPage`
+  - `isPartOf: WebSite`
+  - `publisher: Organization`
+- [x] Removed app-style `offers`, `operatingSystem`, and `applicationCategory` from tool page schemas to avoid Google enhancement warnings for unsupported Software/App rich result expectations.
+- [x] `index.html` no longer includes static `SoftwareApplication` schema.
+- [x] `index.html` no longer includes `SearchAction`/`potentialAction` because the site does not currently have a real search results route. This avoids Sitelinks Searchbox structured data warnings.
+- [x] Static `index.html` keeps fallback title, description, canonical, robots, Google verification, Open Graph, Twitter Card, sitemap discovery, `WebSite` JSON-LD, and `FAQPage` JSON-LD.
+
+### Robots and Sitemap Architecture
+- [x] `public/robots.txt` was cleaned up so comments are on separate lines, not inline with `Disallow`.
+- [x] `robots.txt` now disallows:
+  - `/my-files`
+  - `/my-files/`
+  - `/feedback`
+- [x] `public/sitemap.xml` no longer includes `/my-files`, because that page is private/account-related and now noindexed/disallowed.
+- [x] Sitemap continues to include public tool, content, legal/info, and blog URLs only.
+
+### Private Page Indexing Policy
+- `/my-files`: private/account Drive file area; must stay out of sitemap and search index.
+- `/feedback`: submission-only page; should stay out of sitemap and search index unless there is a future public-facing reason to index it.
+- Public PDF tool pages should remain indexable and canonicalized to their primary tool URLs.
+
+### Validation Performed
+- [x] `npm run build` passes after SEO changes.
+- [x] Static JSON-LD in `index.html` parses successfully:
+  - `WebSite`
+  - `FAQPage`
+- [x] Repository search confirmed no remaining `SoftwareApplication`, `WebApplication`, `SearchAction`, or `potentialAction` schema usage in `index.html`, `src`, `public`, or `dist`.
+
+### Search Console Follow-up
+- After deployment, run Google Search Console:
+  - URL Inspection -> Test Live URL
+  - Validate Fix for the enhancement warning
+  - Resubmit sitemap if needed
+- Expect warnings to clear only after Google recrawls the deployed pages.
+
+### Files Modified
+- `index.html`
+- `public/robots.txt`
+- `public/sitemap.xml`
+- `src/components/SEO.jsx`
+- `src/constants/seoSchemas.js`
+- `src/pages/Feedback.jsx`
+- `src/pages/MyFiles.jsx`
