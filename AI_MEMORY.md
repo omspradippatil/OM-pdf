@@ -354,3 +354,86 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 ### Files Modified
 - `src/styles/common.css`
 - `AI_MEMORY.md`
+
+---
+
+## Completed (Session 10) - Critical Firestore Mass Assignment Fix
+
+### Trigger
+- External scan reported critical issue: "Firestore Users Collection Mass Assignment Enables Privilege Escalation to Admin" (`A01:2021`, `CWE-269`, severity 9.8).
+- The visible finding indicated that authenticated clients could write arbitrary fields into their own `/users/{uid}` document.
+
+### Root Cause
+- `firestore.rules` previously had:
+  - `allow read, write: if request.auth != null && request.auth.uid == uid;`
+- That rule let any signed-in user overwrite their user profile document with arbitrary fields such as `role`, `admin`, `isAdmin`, `permissions`, or future privileged flags.
+- Because profile documents are a natural place for later authorization checks, this is a privilege-escalation risk even if the current UI does not expose admin features.
+
+### Security Architecture Change
+- [x] Added reusable Firestore rules helpers:
+  - `signedInAs(uid)`
+  - `nullableString(value, maxLength)`
+  - `validUserProfileBase(uid)`
+  - `validNewUserProfile(uid)`
+  - `validExistingUserProfile(uid)`
+  - `validOptionalCounter(field)`
+  - `validStats()`
+- [x] Replaced broad `/users/{uid}` owner write with explicit operations:
+  - `read`: owner only
+  - `create`: owner only, strict profile schema
+  - `update`: owner only, strict profile schema, only safe profile fields can change
+  - `delete`: denied
+- [x] User profile documents now allow only:
+  - `uid`
+  - `email`
+  - `displayName`
+  - `photoURL`
+  - `provider`
+  - `createdAt`
+  - `lastLoginAt`
+- [x] User profile updates can only affect:
+  - `email`
+  - `displayName`
+  - `photoURL`
+  - `provider`
+  - `lastLoginAt`
+- [x] `uid` is immutable after create.
+- [x] `createdAt` must equal `request.time` on create and cannot be changed later.
+- [x] `lastLoginAt` must equal `request.time` on profile writes.
+- [x] Arbitrary admin/role/security fields are denied by `keys().hasOnly(...)`.
+
+### Private Stats Rule Hardening
+- [x] `/users/{uid}/private/stats` is still owner-only.
+- [x] Stats documents now allow only known numeric counters:
+  - `localJobs`
+  - `driveUploads`
+  - `cloudUploads`
+- [x] Counters must be integers between `0` and `1000000`.
+- [x] Stats deletion is denied.
+- [x] Stats rules allow safe subsets so existing `setDoc(..., { merge: true })` and `increment(1)` writes continue to work.
+
+### Compatibility Notes
+- `src/services/userProfile.js` writes exactly the allowlisted profile fields, so the profile flow remains compatible.
+- `src/services/privacyStats.js` writes only the allowlisted counter fields, so local stats sync and counter increments remain compatible.
+- No PDF processing, Firebase Auth, Drive export, or routing logic was changed.
+
+### Validation Performed
+- [x] Read `AI_MEMORY.md` first, per project workflow.
+- [x] Reviewed only scoped files related to the critical finding:
+  - `firestore.rules`
+  - `src/services/userProfile.js`
+  - `src/services/privacyStats.js`
+  - `src/services/activityLog.js`
+  - `src/context/AuthContext.jsx` references via targeted search
+- [x] `npm run build` passes.
+- [x] Firebase CLI was not available locally, so rules were not deployed or emulator-tested in this workspace.
+
+### Deployment Required
+- Firestore rules changes are not active until deployed.
+- Deploy with:
+  - `firebase deploy --only firestore:rules`
+- After deploy, rerun the scanner and verify that mass assignment to `/users/{uid}` with fields like `role`, `admin`, or `isAdmin` is rejected.
+
+### Files Modified
+- `firestore.rules`
+- `AI_MEMORY.md`

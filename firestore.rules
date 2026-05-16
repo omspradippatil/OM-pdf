@@ -1,6 +1,79 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedInAs(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function nullableString(value, maxLength) {
+      return value == null || (value is string && value.size() <= maxLength);
+    }
+
+    function validUserProfileBase(uid) {
+      return request.resource.data.keys().hasOnly([
+               'uid',
+               'email',
+               'displayName',
+               'photoURL',
+               'provider',
+               'createdAt',
+               'lastLoginAt'
+             ])
+             && request.resource.data.uid == uid
+             && nullableString(request.resource.data.email, 320)
+             && nullableString(request.resource.data.displayName, 120)
+             && nullableString(request.resource.data.photoURL, 2048)
+             && request.resource.data.provider is string
+             && request.resource.data.provider.size() <= 80
+             && request.resource.data.lastLoginAt == request.time;
+    }
+
+    function validNewUserProfile(uid) {
+      return validUserProfileBase(uid)
+             && request.resource.data.keys().hasAll([
+                  'uid',
+                  'provider',
+                  'createdAt',
+                  'lastLoginAt'
+                ])
+             && request.resource.data.createdAt == request.time;
+    }
+
+    function validExistingUserProfile(uid) {
+      return validUserProfileBase(uid)
+             && request.resource.data.uid == resource.data.uid
+             && (
+               !('createdAt' in resource.data)
+               || request.resource.data.createdAt == resource.data.createdAt
+             )
+             && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                  'email',
+                  'displayName',
+                  'photoURL',
+                  'provider',
+                  'lastLoginAt'
+                ]);
+    }
+
+    function validOptionalCounter(field) {
+      return !(field in request.resource.data)
+             || (
+               request.resource.data[field] is int
+               && request.resource.data[field] >= 0
+               && request.resource.data[field] <= 1000000
+             );
+    }
+
+    function validStats() {
+      return request.resource.data.keys().hasOnly([
+               'localJobs',
+               'driveUploads',
+               'cloudUploads'
+             ])
+             && validOptionalCounter('localJobs')
+             && validOptionalCounter('driveUploads')
+             && validOptionalCounter('cloudUploads');
+    }
 
     // 1. Logs & Activity Tracking
     match /logs/{docId} {
@@ -14,10 +87,17 @@ service cloud.firestore {
 
     // 2. User Profiles & Sub-collections
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read: if signedInAs(uid);
+      allow create: if signedInAs(uid)
+                    && validNewUserProfile(uid);
+      allow update: if signedInAs(uid)
+                    && validExistingUserProfile(uid);
+      allow delete: if false;
 
       match /private/stats {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read: if signedInAs(uid);
+        allow create, update: if signedInAs(uid) && validStats();
+        allow delete: if false;
       }
     }
 
