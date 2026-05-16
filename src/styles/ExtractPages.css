@@ -1,0 +1,11 @@
+.extract-pages-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.extract-pages-hint {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}

@@ -398,6 +398,27 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
   - `provider`
   - `lastLoginAt`
 - [x] `uid` is immutable after create.
+
+---
+
+## ✅ Completed (Session 11) - Local Tool Expansion
+
+### New Tools Added (All 100% Local)
+- [x] **Extract Images** — pulls embedded raster images directly from PDFs (no page rendering).
+- [x] **Extract Pages** — interactive page selection + range input → new PDF export.
+- [x] **Insert Blank Pages** — add blank pages before/after any page with size matching.
+- [x] **PDF to JPG (Advanced)** — separate tool with format, scale, quality, and range control.
+
+### UI/UX Improvements
+- [x] Consistent SaaS shell integration for all new tools.
+- [x] Interactive selection grids for Extract Pages and Insert Blank Pages.
+- [x] Dedicated previews + output summaries for PDF to JPG (Advanced) and Extract Images.
+
+### SEO + Discovery
+- [x] Added tool metadata to `tools.js`, `toolContent.js`, and `seoMetadata.js`.
+- [x] Added new tool routes in `App.jsx`.
+- [x] Updated `public/sitemap.xml` with new tool URLs.
+- [x] Updated `README.md` with new feature list.
 - [x] `createdAt` must equal `request.time` on create and cannot be changed later.
 - [x] `lastLoginAt` must equal `request.time` on profile writes.
 - [x] Arbitrary admin/role/security fields are denied by `keys().hasOnly(...)`.

@@ -30,7 +30,6 @@ export const TOOL_VARIANTS = {
     "rotate-pdf-pages",
   ],
   convert: [
-    "pdf-to-jpg",
     "pdf-to-png",
     "pdf-to-image",
     "convert-pdf-online",
@@ -150,11 +149,6 @@ export const VARIANT_METADATA = {
     keywords: "rotate pdf pages, rotate all pdf pages, pdf page rotation, rotate pdf file",
   },
 
-  "/pdf-to-jpg": {
-    title: "PDF to JPG - Convert Pages to Images",
-    description: "Convert PDF pages to JPG images instantly. Local conversion, no upload.",
-    keywords: "pdf to jpg, convert pdf to jpg, pdf to jpg online, pdf image converter",
-  },
   "/pdf-to-png": {
     title: "PDF to PNG - High Quality Images",
     description: "Convert PDF pages to PNG images locally in your browser. Fast and private.",

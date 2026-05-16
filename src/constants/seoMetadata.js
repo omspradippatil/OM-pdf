@@ -52,6 +52,20 @@ export const SEO_METADATA = {
     url: "https://om-pdf.netlify.app/convert-pdf",
   },
 
+  pdfToJpg: {
+    title: "PDF to JPG Online Free (Advanced) | OM PDF",
+    description: "Convert PDF to JPG or PNG with custom scale, quality, and page range settings. Fast, private, and no upload.",
+    keywords: "pdf to jpg, pdf to jpg online, pdf to png, pdf image export, pdf to jpg high quality, convert pdf pages",
+    url: "https://om-pdf.netlify.app/pdf-to-jpg",
+  },
+
+  extractImages: {
+    title: "Extract Images from PDF Online Free | OM PDF",
+    description: "Extract embedded images from PDF files instantly. Original quality, no upload, 100% private.",
+    keywords: "extract images from pdf, pdf image extractor, export images from pdf, pdf embedded images, pdf to images",
+    url: "https://om-pdf.netlify.app/extract-images",
+  },
+
   imageToPdf: {
     title: "Image to PDF Converter Online Free | OM PDF | No Upload",
     description: "Convert images (JPG, PNG) to PDF. Arrange multiple images, instant conversion, 100% free and private.",
@@ -64,6 +78,20 @@ export const SEO_METADATA = {
     description: "Rearrange, delete, or reorder PDF pages. Add new pages, save instantly, no upload required, completely free.",
     keywords: "organize pdf pages, rearrange pdf pages, reorder pdf, edit pdf pages, delete pdf pages, pdf page editor online",
     url: "https://om-pdf.netlify.app/organize-pdf",
+  },
+
+  extractPages: {
+    title: "Extract PDF Pages Online Free | OM PDF",
+    description: "Select specific pages and export a new PDF instantly. Private, fast, and no upload needed.",
+    keywords: "extract pdf pages, pdf page extractor, select pdf pages, split pdf pages, export pdf pages",
+    url: "https://om-pdf.netlify.app/extract-pages",
+  },
+
+  insertBlank: {
+    title: "Insert Blank Pages into PDF Online Free | OM PDF",
+    description: "Insert blank pages before or after any page. Match size automatically and export instantly.",
+    keywords: "insert blank pages pdf, add blank page to pdf, pdf blank page tool, add page to pdf",
+    url: "https://om-pdf.netlify.app/insert-blank-pages",
   },
 
   watermark: {
@@ -145,6 +173,11 @@ export function getSeoMetadata(toolKey) {
     'compress': 'compress',
     'rotate': 'rotate',
     'convert': 'convert',
+    'pdftojpg': 'pdfToJpg',
+    'extractimages': 'extractImages',
+    'extractpages': 'extractPages',
+    'insertblank': 'insertBlank',
+    'insertblankpages': 'insertBlank',
     'imagetopdf': 'imageToPdf',
     'imagetodf': 'imageToPdf',
     'organize': 'organize',

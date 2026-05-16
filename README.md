@@ -24,6 +24,7 @@ Merge or split PDF files instantly — right in your browser. No uploads, no sig
 - 📂 **File preview list** — name, size, page count, and **live PDF thumbnail** of page 1
 - 🔀 **Drag to reorder** — rearrange merge order before combining
 - ✂️ **Split PDF** — extract page ranges or split every page individually
+- 📄 **Extract Pages** — select pages and export a new PDF instantly
 - 🛡️ **Security Suite** — AES-256 encryption, password removal, and permission control
 - ☁️ **Google Drive** — persistent cloud storage integration for all tools
 - 📊 **Progress bar** — real-time step-by-step feedback per file
@@ -33,6 +34,9 @@ Merge or split PDF files instantly — right in your browser. No uploads, no sig
 - ⚡ **Lightning fast** — no upload wait, instant processing using QPDF WASM
 - 🏷️ **Custom output filename** — rename before downloading
 - 📈 **SEO optimized** — sitemap, structured data, Open Graph
+- 📸 **Extract Images** — pull embedded images from PDFs (local only)
+- ➕ **Insert Blank Pages** — add blank pages anywhere in a PDF
+- 🖼️ **PDF to JPG (Advanced)** — control quality, scale, and page ranges
 
 ---
 

@@ -347,6 +347,122 @@ export const TOOL_CONTENT = {
     ],
   },
 
+  pdfToJpg: {
+    name: "PDF to JPG (Advanced)",
+    sections: [
+      {
+        title: "High-Quality PDF to JPG Conversion",
+        body: "Export PDF pages to JPG or PNG with custom scale and quality settings for crisp output.",
+      },
+      {
+        title: "Choose Exact Pages",
+        body: "Convert only the pages you need using ranges or specific page numbers to save time and space.",
+      },
+      {
+        title: "Fast, Local Processing",
+        body: "All conversion runs in your browser, so your files stay private and never upload.",
+      },
+      {
+        title: "Perfect for Sharing",
+        body: "Turn PDFs into images for slides, previews, or messaging apps with zero friction.",
+      },
+    ],
+    faqs: [
+      { q: "Can I export PNG instead of JPG?", a: "Yes. Switch to PNG for lossless output when needed." },
+      { q: "Does it upload my PDF?", a: "No. Conversion happens locally in your browser." },
+      { q: "Can I control output quality?", a: "Yes. Adjust scale and JPG quality before exporting." },
+      { q: "Will I get a ZIP file?", a: "Multiple pages download as a ZIP for convenience." },
+      { q: "Is it free?", a: "Yes. No signup required." },
+    ],
+  },
+
+  extractImages: {
+    name: "Extract Images from PDF",
+    sections: [
+      {
+        title: "Pull Embedded Images Instantly",
+        body: "Extract original embedded images without rendering pages, keeping quality intact.",
+      },
+      {
+        title: "Fast and Private",
+        body: "Everything runs locally, so files never leave your device.",
+      },
+      {
+        title: "Perfect for Reuse",
+        body: "Recover charts, photos, and graphics from reports or scans for reuse.",
+      },
+      {
+        title: "Automatic ZIP Export",
+        body: "Multiple images are bundled into a ZIP for quick download.",
+      },
+    ],
+    faqs: [
+      { q: "Does it extract images without quality loss?", a: "Yes. Embedded images are extracted in original quality when possible." },
+      { q: "Are my files uploaded?", a: "No. Extraction happens locally in your browser." },
+      { q: "What if the PDF has no embedded images?", a: "The tool will notify you if none are found." },
+      { q: "Will it output PNG?", a: "Yes. Images are saved as PNG by default." },
+      { q: "Is it free to use?", a: "Yes. No signup required." },
+    ],
+  },
+
+  extractPages: {
+    name: "Extract PDF Pages",
+    sections: [
+      {
+        title: "Select and Export Pages",
+        body: "Choose specific pages to create a new PDF instantly.",
+      },
+      {
+        title: "Interactive Selection",
+        body: "Click page thumbnails or enter ranges for fast, accurate selection.",
+      },
+      {
+        title: "Private Local Processing",
+        body: "Your PDF never leaves your device, keeping sensitive files secure.",
+      },
+      {
+        title: "Great for Sharing",
+        body: "Send only the pages you need without editing the original file.",
+      },
+    ],
+    faqs: [
+      { q: "Can I extract multiple ranges?", a: "Yes. Use comma-separated ranges like 1-3, 7, 10-12." },
+      { q: "Does it change the original file?", a: "No. It creates a new PDF with selected pages." },
+      { q: "Is the tool private?", a: "Yes. Everything runs locally in your browser." },
+      { q: "Will quality stay the same?", a: "Yes. Pages are copied without degradation." },
+      { q: "Is it free?", a: "Yes. No signup required." },
+    ],
+  },
+
+  insertBlank: {
+    name: "Insert Blank Pages",
+    sections: [
+      {
+        title: "Add Blank Pages Anywhere",
+        body: "Insert blank pages before or after any page in your PDF.",
+      },
+      {
+        title: "Match Page Size Automatically",
+        body: "Blank pages can inherit the size of nearby pages for a seamless layout.",
+      },
+      {
+        title: "Great for Notes and Signatures",
+        body: "Add space for handwritten notes, inserts, or signature pages.",
+      },
+      {
+        title: "Local and Secure",
+        body: "Processing stays entirely in your browser for privacy.",
+      },
+    ],
+    faqs: [
+      { q: "Can I insert multiple blank pages at once?", a: "Yes. Add multiple pages with a single rule." },
+      { q: "Does it keep page size consistent?", a: "Yes. You can match the nearest page size or choose A4/Letter." },
+      { q: "Is my PDF uploaded?", a: "No. Everything runs locally." },
+      { q: "Will it change the original file?", a: "No. It creates a new PDF with blanks inserted." },
+      { q: "Is it free?", a: "Yes. No signup required." },
+    ],
+  },
+
   protect: {
     name: "Protect PDF",
     sections: [

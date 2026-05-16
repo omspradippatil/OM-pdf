@@ -13,8 +13,12 @@ const SplitPDF = lazy(() => import('./pages/SplitPDF'));
 const RotatePDF = lazy(() => import('./pages/RotatePDF'));
 const CompressPDF = lazy(() => import('./pages/CompressPDF'));
 const ConvertPDF = lazy(() => import('./pages/ConvertPDF'));
+const PdfToJpg = lazy(() => import('./pages/PdfToJpg'));
+const ExtractImages = lazy(() => import('./pages/ExtractImages'));
 const ImageToPDF = lazy(() => import('./pages/ImageToPDF'));
 const OrganizePDF = lazy(() => import('./pages/OrganizePDF'));
+const ExtractPages = lazy(() => import('./pages/ExtractPages'));
+const InsertBlankPages = lazy(() => import('./pages/InsertBlankPages'));
 const WatermarkPDF = lazy(() => import('./pages/WatermarkPDF'));
 const CropPDF = lazy(() => import('./pages/CropPDF'));
 const PageNumbers = lazy(() => import('./pages/PageNumbers'));
@@ -57,8 +61,12 @@ export default function App() {
               <Route path="/rotate-pdf"   element={<RotatePDF />} />
               <Route path="/compress-pdf" element={<CompressPDF />} />
               <Route path="/convert-pdf"  element={<ConvertPDF />} />
+              <Route path="/pdf-to-jpg" element={<PdfToJpg />} />
+              <Route path="/extract-images" element={<ExtractImages />} />
               <Route path="/image-to-pdf" element={<ImageToPDF />} />
               <Route path="/organize-pdf" element={<OrganizePDF />} />
+              <Route path="/extract-pages" element={<ExtractPages />} />
+              <Route path="/insert-blank-pages" element={<InsertBlankPages />} />
               <Route path="/watermark-pdf" element={<WatermarkPDF />} />
               <Route path="/crop-pdf" element={<CropPDF />} />
               <Route path="/page-numbers" element={<PageNumbers />} />
