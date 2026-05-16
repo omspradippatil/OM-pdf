@@ -32,11 +32,22 @@ export default function ToolPageLayout({
   
   // Lock global scrolling and hide footer when tool layout is active
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
+    const lockScroll = () => {
+      if (window.innerWidth > 900) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+    };
+    
+    lockScroll();
+    window.addEventListener('resize', lockScroll);
+    
     const footer = document.querySelector('footer');
     if (footer) footer.style.display = 'none';
     
     return () => {
+      window.removeEventListener('resize', lockScroll);
       document.body.style.overflow = '';
       if (footer) footer.style.display = '';
     };

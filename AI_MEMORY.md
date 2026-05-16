@@ -117,10 +117,25 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 ---
 
 ## 🔲 Remaining Work
-- [ ] Mobile/responsive audit across all pages (verify sidebar behavior on small screens).
 - [ ] Optimize `thumbnailGenerator` for very large PDFs (>500MB).
 - [ ] Add "Recent Files" clearing functionality.
 - [ ] Final visual polish on "My Files" empty states.
+
+---
+
+## ✅ Completed (Session 8) — Mobile Optimization & Responsive Shell
+- [x] **Mobile Page Layout (`ToolPageLayout`)**:
+    - Overrode the Javascript `document.body.style.overflow = 'hidden'` lock on mobile devices dynamically using `window.innerWidth` and CSS `!important` tags, restoring native browser scrolling.
+    - Converted `.ux-shell` from `position: fixed` to `position: static` on mobile (`< 900px`). This completely resolves Safari/Chrome viewport clipping and URL bar glitching.
+    - Removed all nested internal scrollbars (`overflow: visible`) inside `.ux-workspace-shell` elements on mobile, allowing the entire page to flow and scroll naturally as one document.
+    - Designed sticky mobile footer for the core action button (`.ux-sidebar-footer`) to ensure the primary CTA is always accessible on screen.
+    - Re-anchored the floating Add (`+`) button to viewport relative on mobile (`fixed`) above the sticky footer.
+    - Updated `index.html` with explicit viewport `maximum-scale=5.0` for accessibility scaling but correctly defined initial scale.
+- [x] **Mobile Navigation & Navbar**:
+    - Added the missing `.hamburger` CSS styles to `common.css` to ensure the mobile menu toggle button is visible and properly formatted.
+    - Hid desktop navigation links and mega menu toggles on mobile screens (`< 900px`) to prevent horizontal overflow and clutter.
+- [x] **Mobile Meta Tags**:
+    - Added Apple mobile web app capable tags for PWA-like appearance on iOS (`apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`).
 
 ---
 

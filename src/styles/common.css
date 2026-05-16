@@ -544,6 +544,33 @@ body {
 .dropdown-item svg { opacity: 0.7; }
 .dropdown-item:hover svg { opacity: 1; }
 
+/* ─── Hamburger Menu ─── */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 24px;
+  height: 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.hamburger span {
+  width: 100%;
+  height: 2px;
+  background: var(--text-primary);
+  border-radius: 2px;
+  transition: all var(--transition);
+}
+
+@media (max-width: 900px) {
+  .hamburger { display: flex; }
+  .nav-desktop-links, .nav-mega-wrapper { display: none; }
+  .user-profile-btn .user-name-desktop { display: none; }
+  .nav-auth-wrap .btn-nav-login { padding: 8px 16px; font-size: 0.85rem; }
+}
+
 /* ─── Mobile Menu Panel ─── */
 .mobile-menu-panel {
   position: fixed;
@@ -636,15 +663,16 @@ body {
 .dropzone {
   background: var(--bg-hover);
   border: 2px dashed var(--border);
-  border-radius: 12px;
-  padding: 48px 32px;
+  border-radius: 16px;
+  padding: 64px 32px;
   text-align: center;
   cursor: pointer;
   transition: all var(--transition);
-  min-height: 200px;
+  min-height: 360px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 16px 0;
 }
 .dropzone:hover,
 .dropzone:focus-visible,
@@ -675,18 +703,18 @@ body {
   animation: pulse-dot 1.5s ease infinite;
 }
 .dropzone-icon {
-  width: 64px; height: 64px;
+  width: 72px; height: 72px;
   background: #ffffff;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   color: var(--primary);
-  margin-bottom: 12px;
+  margin-bottom: 20px;
   box-shadow: var(--shadow-sm);
-  font-size: 1.5rem;
+  font-size: 1.8rem;
 }
 [data-theme="dark"] .dropzone-icon { background: var(--bg-hover); }
 .dropzone:hover .dropzone-icon { transform: translateY(-2px); }
-.dropzone-primary { font-size: 1rem; font-weight: 600; color: var(--text-primary); }
+.dropzone-primary { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); }
 .dropzone-secondary { font-size: 0.85rem; color: var(--text-secondary); max-width: 320px; }
 .dropzone-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
 
@@ -2256,17 +2284,83 @@ input[type='range'].ux-range::-moz-range-thumb { width: 15px; height: 15px; bord
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
-  .ux-workspace-shell { flex-direction: column; overflow: visible; }
-  .ux-workspace { padding: 20px 16px; }
-  .ux-sidebar { width: 100%; border-left: none; border-top: 1.5px solid var(--border); }
-  .ux-shell { height: auto; overflow: visible; }
+  body {
+    overflow: hidden !important; /* Lock body */
+  }
+  .ux-shell {
+    position: fixed;
+    top: 64px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: auto;
+    overflow: hidden;
+  }
+  .ux-workspace-shell {
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+  .ux-workspace {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+  }
+  .ux-workspace-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 16px 80px;
+  }
+  .ux-sidebar {
+    width: 100%;
+    flex: none;
+    max-height: 55vh;
+    display: flex;
+    flex-direction: column;
+    border-top: 2px solid var(--border);
+    border-left: none;
+    background: var(--bg-card);
+    overflow: hidden;
+  }
+  .ux-sidebar-header {
+    flex: none;
+    padding: 12px 16px;
+  }
+  .ux-sidebar-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+  }
+  .ux-sidebar-footer {
+    flex: none;
+    position: static;
+    padding: 12px 16px 16px;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    box-shadow: none;
+  }
+  [data-theme='dark'] .ux-sidebar-footer {
+    box-shadow: none;
+  }
+  .ux-floating-add {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 50px;
+    height: 50px;
+    z-index: 100;
+  }
 }
 @media (max-width: 600px) {
-  .ux-workspace { padding: 14px 12px; }
-  .ux-sidebar-header { padding: 14px 16px; }
-  .ux-sidebar-body   { padding: 12px 16px; }
-  .ux-sidebar-footer { padding: 12px 16px 16px; }
-  .ux-page-grid { grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); gap: 10px; }
+  .ux-workspace-scroll { padding: 16px 12px 40px; }
+  .ux-sidebar-header { padding: 16px; }
+  .ux-sidebar-body   { padding: 16px; }
+  .ux-sidebar-footer { padding: 16px; }
+  .ux-page-grid { grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); gap: 12px; }
+  .ux-sidebar-title { font-size: 1.15rem; }
 }
 
 /* ── Legacy compat for old .ux-tool-page / .ux-two-col used elsewhere ── */

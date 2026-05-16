@@ -150,7 +150,6 @@ export default function ProtectPDF() {
       actionButton={actionButton}
     >
       <ToolSeoHead toolKey="protect" />
-      <ToolSeoContent toolKey="protect" />
 
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to protect" hint="Single PDF · 200 MB Recommended" />
@@ -178,6 +177,7 @@ export default function ProtectPDF() {
         </div>
       )}
 
+      <ToolSeoContent toolKey="protect" />
       <RecentFilesPanel tool="protect" title="Recent security edits" />
     </ToolPageLayout>
   );
