@@ -14,7 +14,9 @@ let accessToken = null;
 let tokenExpiry = 0;
 let activeUid = null;
 let rootFolderId = null;
+let rootFolderPromise = null;
 const subFolderCache = {};
+const subFolderPromises = {};
 
 function tokenStorage() {
   try {
@@ -26,7 +28,9 @@ function tokenStorage() {
 
 function resetFolderCache() {
   rootFolderId = null;
+  rootFolderPromise = null;
   Object.keys(subFolderCache).forEach((key) => delete subFolderCache[key]);
+  Object.keys(subFolderPromises).forEach((key) => delete subFolderPromises[key]);
 }
 
 export function isTokenValid() {
@@ -117,45 +121,63 @@ async function driveRequest(path, _loginHint = null, options = {}) {
 
 async function ensureRootFolder(loginHint) {
   if (rootFolderId) return rootFolderId;
-  const q = encodeURIComponent(
-    `name='${ROOT_FOLDER}' and mimeType='application/vnd.google-apps.folder' and trashed=false`
-  );
-  const data = await driveRequest(`/files?q=${q}&fields=files(id,name)&spaces=drive`, loginHint);
-  if (data?.files?.length > 0) {
-    rootFolderId = data.files[0].id;
-    return rootFolderId;
-  }
-  const folder = await driveRequest('/files', loginHint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: ROOT_FOLDER, mimeType: 'application/vnd.google-apps.folder' }),
-  });
-  rootFolderId = folder.id;
-  return rootFolderId;
+  if (rootFolderPromise) return rootFolderPromise;
+
+  rootFolderPromise = (async () => {
+    try {
+      const q = encodeURIComponent(
+        `name='${ROOT_FOLDER}' and mimeType='application/vnd.google-apps.folder' and trashed=false`
+      );
+      const data = await driveRequest(`/files?q=${q}&fields=files(id,name)&spaces=drive`, loginHint);
+      if (data?.files?.length > 0) {
+        rootFolderId = data.files[0].id;
+        return rootFolderId;
+      }
+      const folder = await driveRequest('/files', loginHint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: ROOT_FOLDER, mimeType: 'application/vnd.google-apps.folder' }),
+      });
+      rootFolderId = folder.id;
+      return rootFolderId;
+    } finally {
+      rootFolderPromise = null;
+    }
+  })();
+  return rootFolderPromise;
 }
 
 async function ensureSubFolder(loginHint, toolFolder) {
   if (subFolderCache[toolFolder]) return subFolderCache[toolFolder];
-  const parentId = await ensureRootFolder(loginHint);
-  const q = encodeURIComponent(
-    `name='${toolFolder}' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`
-  );
-  const data = await driveRequest(`/files?q=${q}&fields=files(id,name)&spaces=drive`, loginHint);
-  if (data?.files?.length > 0) {
-    subFolderCache[toolFolder] = data.files[0].id;
-    return subFolderCache[toolFolder];
-  }
-  const folder = await driveRequest('/files', loginHint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: toolFolder,
-      mimeType: 'application/vnd.google-apps.folder',
-      parents: [parentId],
-    }),
-  });
-  subFolderCache[toolFolder] = folder.id;
-  return folder.id;
+  if (subFolderPromises[toolFolder]) return subFolderPromises[toolFolder];
+
+  subFolderPromises[toolFolder] = (async () => {
+    try {
+      const parentId = await ensureRootFolder(loginHint);
+      const q = encodeURIComponent(
+        `name='${toolFolder}' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`
+      );
+      const data = await driveRequest(`/files?q=${q}&fields=files(id,name)&spaces=drive`, loginHint);
+      if (data?.files?.length > 0) {
+        subFolderCache[toolFolder] = data.files[0].id;
+        return subFolderCache[toolFolder];
+      }
+      const folder = await driveRequest('/files', loginHint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: toolFolder,
+          mimeType: 'application/vnd.google-apps.folder',
+          parents: [parentId],
+        }),
+      });
+      subFolderCache[toolFolder] = folder.id;
+      return folder.id;
+    } finally {
+      subFolderPromises[toolFolder] = null;
+    }
+  })();
+  return subFolderPromises[toolFolder];
 }
 
 export async function uploadToDrive(bytes, filename, loginHint = null, toolFolder = null, mimeType = 'application/pdf') {
