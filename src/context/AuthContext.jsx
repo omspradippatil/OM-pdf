@@ -173,7 +173,7 @@ export function AuthProvider({ children }) {
           await finishSignedInUser(result.user);
           saveTokenFromResult(result, drive);
 
-          showSuccess(drive ? 'Signed in with Google and Drive connected.' : 'Signed in with Google.');
+          if (!drive) showSuccess('Signed in with Google.');
           await logUserAction(result.user, 'sign_in', {
             status: 'success',
             meta: { provider: 'google', flow: 'redirect', intent },
@@ -241,7 +241,7 @@ export function AuthProvider({ children }) {
       await finishSignedInUser(result.user);
       saveTokenFromResult(result, drive);
 
-      if (!silent) showSuccess(drive ? 'Signed in with Google and Drive connected.' : 'Signed in with Google.');
+      if (!silent && !drive) showSuccess('Signed in with Google.');
       await logUserAction(result.user, 'sign_in', {
         status: 'success',
         meta: { provider: 'google', flow: silent ? 'silent_popup' : 'popup', intent },
