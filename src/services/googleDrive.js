@@ -3,9 +3,10 @@
 // Uses Firebase Auth popup to silently refresh tokens when they expire.
 
 const ROOT_FOLDER = 'OM PDF';
-// We artificially set this TTL longer, but Google tokens naturally expire in 1 hr.
-// We handle expiration gracefully by throwing a specific error which AuthContext catches to pop a new token.
-const TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000; 
+// Google OAuth access tokens typically expire in about 1 hour.
+// Use a conservative TTL and refresh shortly before expiry.
+const TOKEN_TTL_MS = 55 * 60 * 1000;
+const TOKEN_BUFFER_MS = 5 * 60 * 1000;
 const STORAGE_TOKEN = 'om_pdf_drive_token';
 const STORAGE_EXP = 'om_pdf_drive_token_exp';
 const STORAGE_UID = 'om_pdf_drive_uid';
@@ -35,6 +36,11 @@ function resetFolderCache() {
 
 export function isTokenValid() {
   return !!(accessToken && Date.now() < tokenExpiry);
+}
+
+export function isTokenExpiringSoon(bufferMs = TOKEN_BUFFER_MS) {
+  if (!accessToken || !tokenExpiry) return true;
+  return Date.now() >= (tokenExpiry - bufferMs);
 }
 
 export function setDriveAccessToken(token, expiresInMs = TOKEN_TTL_MS, uid = null) {

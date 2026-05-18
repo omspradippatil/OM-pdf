@@ -12,6 +12,7 @@ import {
 import {
   clearDriveAccessToken,
   hasDriveAccess,
+  isTokenExpiringSoon,
   loadStoredDriveToken,
   setDriveAccessToken,
 } from '../services/googleDrive';
@@ -127,7 +128,7 @@ async function finishSignedInUser(user) {
 function saveTokenFromResult(result, drive) {
   const credential = GoogleAuthProvider.credentialFromResult(result);
   if (credential?.accessToken && drive) {
-    setDriveAccessToken(credential.accessToken, 14 * 24 * 60 * 60 * 1000, result.user.uid);
+    setDriveAccessToken(credential.accessToken, undefined, result.user.uid);
     return true;
   }
   return false;
@@ -141,6 +142,7 @@ export function AuthProvider({ children }) {
   const [authBusy, setAuthBusy] = useState(false);
   const authActionRef = useRef(false);
   const successTimerRef = useRef(null);
+  const driveRefreshRef = useRef(false);
 
   const showSuccess = useCallback((message) => {
     setAuthSuccess(message);
@@ -187,6 +189,12 @@ export function AuthProvider({ children }) {
           setLoading(false);
           if (nextUser) {
             loadStoredDriveToken(nextUser.uid);
+            if (!driveRefreshRef.current && isTokenExpiringSoon()) {
+              driveRefreshRef.current = true;
+              login({ drive: true, silent: true }).finally(() => {
+                driveRefreshRef.current = false;
+              });
+            }
             void finishSignedInUser(nextUser);
           } else {
             clearDriveAccessToken();
@@ -306,16 +314,28 @@ export function AuthProvider({ children }) {
       if (hasDriveAccess()) return true;
     }
 
-    // Attempt to silently refresh token via popup if it expired.
-    // If not using redirect, a quick popup to get the new token is the only free way.
     try {
-      const success = await login({ drive: true, silent: false }); // silent: false so the popup is allowed
+      const silentOk = await login({ drive: true, silent: true });
+      if (silentOk) return true;
+      const success = await login({ drive: true, silent: false });
       if (!success) throw new Error('Could not refresh Google Drive token.');
       return true;
     } catch (error) {
       console.error('[Auth] Drive re-auth failed:', error);
       throw new Error(getAuthErrorMessage(error));
     }
+  }, [user, login]);
+
+  useEffect(() => {
+    if (!user || !firebaseReady || !auth) return undefined;
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (isTokenExpiringSoon()) {
+        login({ drive: true, silent: true }).catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
   }, [user, login]);
 
   return (
