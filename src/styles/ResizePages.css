@@ -1,0 +1,28 @@
+.resize-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.resize-workspace {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.resize-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.resize-card-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.resize-card-value {
+  font-size: 1rem;
+  font-weight: 700;
+}

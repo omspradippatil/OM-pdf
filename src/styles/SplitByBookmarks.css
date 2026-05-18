@@ -1,0 +1,51 @@
+.split-bookmarks-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.split-bookmarks-empty {
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.split-bookmarks-list {
+  display: grid;
+  gap: 10px;
+}
+
+.split-bookmark-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+}
+
+.split-bookmark-row.active {
+  border-color: rgba(57,73,171,0.35);
+  background: rgba(57,73,171,0.06);
+}
+
+.split-bookmark-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.split-bookmark-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.split-bookmark-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}

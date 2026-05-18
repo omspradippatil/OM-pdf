@@ -37,6 +37,16 @@ Merge or split PDF files instantly — right in your browser. No uploads, no sig
 - 📸 **Extract Images** — pull embedded images from PDFs (local only)
 - ➕ **Insert Blank Pages** — add blank pages anywhere in a PDF
 - 🖼️ **PDF to JPG (Advanced)** — control quality, scale, and page ranges
+- 🧹 **Remove Empty Pages** — detect and remove blank pages fast
+- 🔖 **Split by Bookmarks** — split PDFs using outline sections
+- 🧩 **Merge with Ranges** — merge PDFs with per-file page ranges
+- 🧭 **Auto Rotate & Deskew** — auto-fix orientation for scans
+- ⚫ **Grayscale PDF** — convert PDFs to grayscale
+- 📏 **Resize Pages** — normalize page sizes to common presets
+- ⬚ **Add Margins** — add or trim margins on all pages
+- 🧼 **Sanitize Metadata** — remove hidden metadata fields
+- 📌 **Flatten Forms** — lock fillable fields into static content
+- 🧵 **PDF to Long Image** — export a single tall image
 
 ---
 

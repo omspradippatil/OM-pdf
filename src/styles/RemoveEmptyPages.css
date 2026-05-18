@@ -1,0 +1,41 @@
+.remove-empty-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.remove-empty-note {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--border);
+  background: var(--bg-card);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.remove-empty-card {
+  position: relative;
+  opacity: 0.7;
+}
+
+.remove-empty-card.selected {
+  opacity: 1;
+}
+
+.remove-empty-card.empty .ux-page-thumb-wrap {
+  border-color: rgba(239,68,68,0.35);
+  background: rgba(239,68,68,0.05);
+}
+
+.remove-empty-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(239,68,68,0.12);
+  color: #ef4444;
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}

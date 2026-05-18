@@ -289,6 +289,93 @@ export const TOOL_CONTENT = {
     ],
   },
 
+  grayscale: {
+    name: "Grayscale PDF",
+    sections: [
+      {
+        title: "Convert PDFs to Grayscale",
+        body: "Turn color PDFs into grayscale for cleaner printing and smaller files.",
+      },
+      {
+        title: "Control Output Quality",
+        body: "Adjust scale and JPEG quality for the right balance.",
+      },
+      {
+        title: "Great for Printing",
+        body: "Reduce ink usage while keeping text and charts readable.",
+      },
+      {
+        title: "Local Processing",
+        body: "Everything runs in your browser with no uploads.",
+      },
+    ],
+    faqs: [
+      { q: "Will my PDF be uploaded?", a: "No. Grayscale conversion is local." },
+      { q: "Can I control quality?", a: "Yes. Adjust scale and quality before exporting." },
+      { q: "Does it keep page size?", a: "Pages are re-rendered to grayscale for consistency." },
+      { q: "Is it free to use?", a: "Yes. No signup required." },
+      { q: "Does it work offline?", a: "Yes. The tool runs locally once loaded." },
+    ],
+  },
+
+  resizePages: {
+    name: "Resize Pages",
+    sections: [
+      {
+        title: "Normalize Page Sizes",
+        body: "Resize PDFs to A4, Letter, Legal, and more with one click.",
+      },
+      {
+        title: "Fit or Fill",
+        body: "Choose fit to avoid cropping or fill to cover the page.",
+      },
+      {
+        title: "Great for Printing",
+        body: "Ensure consistent sizes before print or upload.",
+      },
+      {
+        title: "Private Local Processing",
+        body: "No uploads. Everything stays on your device.",
+      },
+    ],
+    faqs: [
+      { q: "Can I resize to A4 or Letter?", a: "Yes. Pick a preset size from the list." },
+      { q: "Will it crop my content?", a: "Fit avoids cropping; fill may crop edges." },
+      { q: "Does it upload my PDF?", a: "No. Processing happens locally." },
+      { q: "Will quality stay the same?", a: "Pages are scaled to fit the new size." },
+      { q: "Is it free?", a: "Yes. No signup required." },
+    ],
+  },
+
+  addMargins: {
+    name: "Add Margins",
+    sections: [
+      {
+        title: "Add or Trim Margins",
+        body: "Adjust margins on every page with custom values.",
+      },
+      {
+        title: "Great for Binding",
+        body: "Add space for binding or trim extra whitespace.",
+      },
+      {
+        title: "Precise Control",
+        body: "Set top, right, bottom, and left values individually.",
+      },
+      {
+        title: "Local and Private",
+        body: "No uploads or cloud processing.",
+      },
+    ],
+    faqs: [
+      { q: "Can I trim margins too?", a: "Yes. Switch to trim mode." },
+      { q: "Does it keep page content?", a: "Yes. Pages are repositioned with margins." },
+      { q: "Will it upload my file?", a: "No. Processing is local." },
+      { q: "Can I set different sides?", a: "Yes. Each side has its own value." },
+      { q: "Is it free?", a: "Yes. No signup required." },
+    ],
+  },
+
   metadata: {
     name: "Metadata Editor",
     sections: [
@@ -315,6 +402,64 @@ export const TOOL_CONTENT = {
       { q: "Do you upload the PDF?", a: "No. Metadata updates are local." },
       { q: "Will the PDF content change?", a: "No. Only metadata fields are updated." },
       { q: "Can I remove metadata?", a: "Yes. You can clear fields if needed." },
+    ],
+  },
+
+  sanitizeMeta: {
+    name: "Sanitize Metadata",
+    sections: [
+      {
+        title: "Remove Hidden Metadata",
+        body: "Strip title, author, keywords, and other metadata from PDFs.",
+      },
+      {
+        title: "Ideal for Privacy",
+        body: "Remove personal details before sharing or publishing files.",
+      },
+      {
+        title: "Fast Local Processing",
+        body: "Sanitization happens instantly in your browser.",
+      },
+      {
+        title: "No Uploads",
+        body: "Your documents never leave your device.",
+      },
+    ],
+    faqs: [
+      { q: "Does it remove all metadata?", a: "It clears common fields like title, author, and keywords." },
+      { q: "Is the PDF uploaded?", a: "No. Sanitization runs locally." },
+      { q: "Will the PDF content change?", a: "No. Only metadata is updated." },
+      { q: "Is it free?", a: "Yes. No signup required." },
+      { q: "Can I use this for privacy?", a: "Yes. It removes identifying metadata fields." },
+    ],
+  },
+
+  flattenForms: {
+    name: "Flatten Forms",
+    sections: [
+      {
+        title: "Lock Form Fields",
+        body: "Flatten interactive fields into static content to prevent edits.",
+      },
+      {
+        title: "Preserve Filled Values",
+        body: "Keep typed values visible while removing form controls.",
+      },
+      {
+        title: "Great for Sharing",
+        body: "Send finalized forms without the risk of changes.",
+      },
+      {
+        title: "Private Local Processing",
+        body: "Your PDF stays on your device the entire time.",
+      },
+    ],
+    faqs: [
+      { q: "Will it remove form fields?", a: "Yes. Fields are flattened into static content." },
+      { q: "Does it keep filled values?", a: "Yes. Values stay visible." },
+      { q: "Is my file uploaded?", a: "No. Processing is local." },
+      { q: "Will quality change?", a: "No. The content remains the same." },
+      { q: "Is it free?", a: "Yes. No signup required." },
     ],
   },
 
@@ -372,6 +517,35 @@ export const TOOL_CONTENT = {
       { q: "Does it upload my PDF?", a: "No. Conversion happens locally in your browser." },
       { q: "Can I control output quality?", a: "Yes. Adjust scale and JPG quality before exporting." },
       { q: "Will I get a ZIP file?", a: "Multiple pages download as a ZIP for convenience." },
+      { q: "Is it free?", a: "Yes. No signup required." },
+    ],
+  },
+
+  longImage: {
+    name: "PDF to Long Image",
+    sections: [
+      {
+        title: "Create a Single Scrollable Image",
+        body: "Export multiple pages into one long image for easy sharing and scrolling.",
+      },
+      {
+        title: "Control Scale and Format",
+        body: "Choose PNG or JPG and tune scale and quality for the output you need.",
+      },
+      {
+        title: "Great for Sharing",
+        body: "Perfect for chat apps, previews, and quick screenshots without PDFs.",
+      },
+      {
+        title: "Private Local Rendering",
+        body: "Everything runs in your browser with no uploads or cloud processing.",
+      },
+    ],
+    faqs: [
+      { q: "Can I choose PNG or JPG?", a: "Yes. Select PNG for lossless or JPG for smaller files." },
+      { q: "Does it upload my PDF?", a: "No. The long image is rendered locally." },
+      { q: "Can I control quality?", a: "Yes. Adjust scale and quality before exporting." },
+      { q: "Will this work for multi-page PDFs?", a: "Yes. Pages are stitched into one image." },
       { q: "Is it free?", a: "Yes. No signup required." },
     ],
   },
@@ -459,6 +633,122 @@ export const TOOL_CONTENT = {
       { q: "Does it keep page size consistent?", a: "Yes. You can match the nearest page size or choose A4/Letter." },
       { q: "Is my PDF uploaded?", a: "No. Everything runs locally." },
       { q: "Will it change the original file?", a: "No. It creates a new PDF with blanks inserted." },
+      { q: "Is it free?", a: "Yes. No signup required." },
+    ],
+  },
+
+  removeEmpty: {
+    name: "Remove Empty Pages",
+    sections: [
+      {
+        title: "Detect Blank Pages Quickly",
+        body: "Scan your PDF for empty pages and remove them in seconds.",
+      },
+      {
+        title: "Preview Before Removing",
+        body: "Review page thumbnails and keep only what you want.",
+      },
+      {
+        title: "Great for Scans",
+        body: "Remove blank scan separators and clean up batch documents.",
+      },
+      {
+        title: "Local and Private",
+        body: "Your PDF never leaves your device during processing.",
+      },
+    ],
+    faqs: [
+      { q: "Does it delete pages automatically?", a: "You can review and uncheck pages before exporting." },
+      { q: "Is my PDF uploaded?", a: "No. Everything runs locally." },
+      { q: "Will it keep quality?", a: "Yes. Pages are copied without degradation." },
+      { q: "Can I keep empty pages if needed?", a: "Yes. Simply leave them selected." },
+      { q: "Is it free?", a: "Yes. No signup required." },
+    ],
+  },
+
+  splitBookmarks: {
+    name: "Split by Bookmarks",
+    sections: [
+      {
+        title: "Split Using Existing Bookmarks",
+        body: "Turn bookmark sections into separate PDFs automatically.",
+      },
+      {
+        title: "Select Sections Easily",
+        body: "Choose which bookmark sections to export with one click.",
+      },
+      {
+        title: "Great for Manuals",
+        body: "Break long guides into shareable sections for teams.",
+      },
+      {
+        title: "Private Local Processing",
+        body: "Your files stay on your device with no uploads.",
+      },
+    ],
+    faqs: [
+      { q: "Do I need bookmarks in my PDF?", a: "Yes. The tool uses existing bookmarks to split sections." },
+      { q: "Will it upload my file?", a: "No. Splitting happens locally." },
+      { q: "Can I choose which sections to export?", a: "Yes. Select sections before exporting." },
+      { q: "Will it keep original quality?", a: "Yes. Pages are copied without loss." },
+      { q: "Is it free?", a: "Yes. No signup required." },
+    ],
+  },
+
+  mergeRanges: {
+    name: "Merge with Ranges",
+    sections: [
+      {
+        title: "Merge Only the Pages You Need",
+        body: "Use page ranges per file to build a clean merged PDF.",
+      },
+      {
+        title: "Reorder and Fine-Tune",
+        body: "Arrange files and specify ranges like 1-3, 6, 8-10.",
+      },
+      {
+        title: "Perfect for Reports",
+        body: "Combine only key sections from multiple PDFs.",
+      },
+      {
+        title: "Local and Private",
+        body: "No uploads. Everything runs in your browser.",
+      },
+    ],
+    faqs: [
+      { q: "Can I select ranges per file?", a: "Yes. Each file can have its own range." },
+      { q: "Is the merge private?", a: "Yes. Files stay on your device." },
+      { q: "Will it keep quality?", a: "Yes. Pages are copied with no loss." },
+      { q: "Can I reorder files?", a: "Yes. Move files up or down before merging." },
+      { q: "Is it free?", a: "Yes. No signup required." },
+    ],
+  },
+
+  autoRotate: {
+    name: "Auto Rotate & Deskew",
+    sections: [
+      {
+        title: "Auto-Fix Orientation",
+        body: "Rotate landscape pages and straighten skewed documents.",
+      },
+      {
+        title: "Deskew Control",
+        body: "Apply a subtle deskew angle for improved readability.",
+      },
+      {
+        title: "Great for Scans",
+        body: "Clean up scanned pages before sharing or printing.",
+      },
+      {
+        title: "Private Local Processing",
+        body: "Your PDFs never leave your device.",
+      },
+    ],
+    faqs: [
+      { q: "Does it upload my file?", a: "No. Processing happens locally." },
+      { q: "Can I turn off landscape rotation?", a: "Yes. Disable auto-rotate if needed." },
+      { q: "Is deskew required?", a: "No. You can keep it at zero." },
+      { q: "Will quality change?", a: "Rotation does not reduce quality." },
       { q: "Is it free?", a: "Yes. No signup required." },
     ],
   },

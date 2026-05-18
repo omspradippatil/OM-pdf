@@ -84,20 +84,22 @@ export default function Navbar() {
 
             {toolsOpen && (
               <div className="mega-menu-panel">
-                <div className="mega-menu-container">
-                  {categorizedTools.map((cat, idx) => (
-                    <div key={idx} className="mega-menu-column">
-                      <h3 className="mega-menu-title">{cat.label}</h3>
-                      <div className="mega-menu-links">
-                        {cat.tools.map(t => (
-                          <Link key={t.key} to={t.path} className="mega-menu-item">
-                            <span className="mega-item-icon" style={{ background: `${t.color}15`, color: t.color }}>{t.icon}</span>
-                            <span className="mega-item-text">{t.title}</span>
-                          </Link>
-                        ))}
+                <div className="mega-menu-inner">
+                  <div className="mega-menu-grid">
+                    {categorizedTools.map((cat, idx) => (
+                      <div key={idx} className="mega-menu-column">
+                        <h3 className="mega-menu-title">{cat.label}</h3>
+                        <div className="mega-menu-links">
+                          {cat.tools.map(t => (
+                            <Link key={t.key} to={t.path} className="mega-menu-item">
+                              <span className="mega-item-icon" style={{ background: `${t.color}15`, color: t.color }}>{t.icon}</span>
+                              <span className="mega-item-text">{t.title}</span>
+                            </Link>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

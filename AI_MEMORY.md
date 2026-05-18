@@ -139,6 +139,27 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 
 ---
 
+## ✅ Completed (Session 9) — Offline Tool Expansion
+
+### New Offline Tools (Local-Only)
+- [x] **Remove Empty Pages** (detect blank pages, preview selection)
+- [x] **Split by Bookmarks** (split into outline-defined sections)
+- [x] **Merge with Ranges** (per-file range selection)
+- [x] **Auto Rotate & Deskew** (auto-fix orientation)
+- [x] **Grayscale PDF** (convert pages to grayscale)
+- [x] **Resize Pages** (A4/Letter/etc, fit or fill)
+- [x] **Add Margins** (add or trim custom margins)
+- [x] **Sanitize Metadata** (strip metadata fields)
+- [x] **Flatten Forms** (flatten fillable fields)
+- [x] **PDF to Long Image** (single tall image export)
+
+### Architecture Updates
+- [x] Added new tool pages + CSS in `src/pages` and `src/styles`
+- [x] Wired routes in `App.jsx` and tool registry in `src/constants/tools.js`
+- [x] Added SEO metadata + tool content entries and updated sitemap
+
+---
+
 ## ✅ Completed (Session 5) — SEO Architecture
 
 ### Foundation Already In Place

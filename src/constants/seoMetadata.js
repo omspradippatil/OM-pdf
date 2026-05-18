@@ -59,6 +59,13 @@ export const SEO_METADATA = {
     url: "https://om-pdf.netlify.app/pdf-to-jpg",
   },
 
+  longImage: {
+    title: "PDF to Long Image Online Free | OM PDF",
+    description: "Export a single tall image from PDF pages with custom scale and format. Private, no upload required.",
+    keywords: "pdf to long image, pdf to png long image, pdf to jpg long image, convert pdf to long image, pdf scroll image",
+    url: "https://om-pdf.netlify.app/pdf-to-long-image",
+  },
+
   extractImages: {
     title: "Extract Images from PDF Online Free | OM PDF",
     description: "Extract embedded images from PDF files instantly. Original quality, no upload, 100% private.",
@@ -94,6 +101,34 @@ export const SEO_METADATA = {
     url: "https://om-pdf.netlify.app/insert-blank-pages",
   },
 
+  removeEmpty: {
+    title: "Remove Empty Pages from PDF Online Free | OM PDF",
+    description: "Detect and remove blank pages in seconds. Works locally in your browser, no upload required.",
+    keywords: "remove empty pages pdf, delete blank pages pdf, remove blank pages, pdf cleanup, remove whitespace pages",
+    url: "https://om-pdf.netlify.app/remove-empty-pages",
+  },
+
+  splitBookmarks: {
+    title: "Split PDF by Bookmarks Online Free | OM PDF",
+    description: "Split a PDF into sections using existing bookmarks. Fast, private, and no upload.",
+    keywords: "split pdf by bookmarks, pdf bookmarks splitter, split pdf sections, extract bookmark sections, pdf outline split",
+    url: "https://om-pdf.netlify.app/split-by-bookmarks",
+  },
+
+  mergeRanges: {
+    title: "Merge PDF with Ranges Online Free | OM PDF",
+    description: "Merge PDFs while selecting page ranges per file. Private, no upload required.",
+    keywords: "merge pdf ranges, merge pdf pages range, combine pdf specific pages, merge selected pages",
+    url: "https://om-pdf.netlify.app/merge-with-ranges",
+  },
+
+  autoRotate: {
+    title: "Auto Rotate PDF Online Free | OM PDF",
+    description: "Auto-rotate pages and deskew PDFs for clean orientation. Private, no upload.",
+    keywords: "auto rotate pdf, deskew pdf, fix pdf orientation, rotate landscape pdf, straighten pdf",
+    url: "https://om-pdf.netlify.app/auto-rotate-deskew",
+  },
+
   watermark: {
     title: "Add Watermark to PDF Online Free — OM PDF | Text & Images",
     description: "Add text or image watermarks to PDF. Protect documents, customize positioning, instant processing, 100% free.",
@@ -115,11 +150,46 @@ export const SEO_METADATA = {
     url: "https://om-pdf.netlify.app/page-numbers",
   },
 
+  grayscale: {
+    title: "Grayscale PDF Online Free | OM PDF",
+    description: "Convert PDFs to grayscale for better printing and smaller files. Private, no upload needed.",
+    keywords: "grayscale pdf, convert pdf to grayscale, black and white pdf, pdf grayscale converter, print pdf grayscale",
+    url: "https://om-pdf.netlify.app/grayscale-pdf",
+  },
+
+  resizePages: {
+    title: "Resize PDF Pages Online Free | OM PDF",
+    description: "Resize PDF pages to A4, Letter, and more. Fit or fill with no uploads required.",
+    keywords: "resize pdf pages, change pdf page size, scale pdf to A4, pdf page size converter, resize pdf online",
+    url: "https://om-pdf.netlify.app/resize-pages",
+  },
+
+  addMargins: {
+    title: "Add Margins to PDF Online Free | OM PDF",
+    description: "Add or trim margins on PDF pages with custom sizes. Private and instant.",
+    keywords: "add margins to pdf, trim pdf margins, pdf margin tool, increase pdf margins, edit pdf margins",
+    url: "https://om-pdf.netlify.app/add-margins",
+  },
+
   metadata: {
     title: "PDF Metadata Editor Online Free — View & Edit Properties | OM PDF",
     description: "View and edit PDF metadata (title, author, subject, keywords). No upload, instant editing, 100% private.",
     keywords: "pdf metadata editor, edit pdf metadata, view pdf properties, pdf title editor, change pdf metadata, pdf metadata tool",
     url: "https://om-pdf.netlify.app/metadata-editor",
+  },
+
+  sanitizeMeta: {
+    title: "Remove PDF Metadata Online Free | OM PDF",
+    description: "Sanitize PDF metadata by removing title, author, keywords, and hidden fields. Private, no upload.",
+    keywords: "remove pdf metadata, sanitize pdf, clean pdf metadata, strip pdf properties, pdf privacy",
+    url: "https://om-pdf.netlify.app/sanitize-metadata",
+  },
+
+  flattenForms: {
+    title: "Flatten PDF Forms Online Free | OM PDF",
+    description: "Flatten fillable form fields into static content to prevent edits. Private, no upload required.",
+    keywords: "flatten pdf form, flatten fillable pdf, remove form fields, pdf form to static, lock pdf form",
+    url: "https://om-pdf.netlify.app/flatten-forms",
   },
 
   pdfToText: {
@@ -174,6 +244,8 @@ export function getSeoMetadata(toolKey) {
     'rotate': 'rotate',
     'convert': 'convert',
     'pdftojpg': 'pdfToJpg',
+    'pdftolongimage': 'longImage',
+    'longimage': 'longImage',
     'extractimages': 'extractImages',
     'extractpages': 'extractPages',
     'insertblank': 'insertBlank',
@@ -184,12 +256,30 @@ export function getSeoMetadata(toolKey) {
     'watermark': 'watermark',
     'crop': 'crop',
     'pagenumbers': 'pageNumbers',
+    'grayscale': 'grayscale',
+    'grayscalepdf': 'grayscale',
+    'resizepages': 'resizePages',
+    'resize_pages': 'resizePages',
+    'addmargins': 'addMargins',
+    'add_margins': 'addMargins',
     'metadata': 'metadata',
+    'sanitizemeta': 'sanitizeMeta',
+    'sanitize_metadata': 'sanitizeMeta',
+    'flattenforms': 'flattenForms',
+    'flatten_forms': 'flattenForms',
     'pdftotext': 'pdfToText',
     'protect': 'protect',
     'unlock': 'unlock',
     'permissions': 'permissions',
     'myfiles': 'myFiles',
+    'removeempty': 'removeEmpty',
+    'remove_empty': 'removeEmpty',
+    'splitbookmarks': 'splitBookmarks',
+    'split_by_bookmarks': 'splitBookmarks',
+    'mergeranges': 'mergeRanges',
+    'merge_ranges': 'mergeRanges',
+    'autorotate': 'autoRotate',
+    'auto_rotate_deskew': 'autoRotate',
   };
 
   const metadataKey = keyMap[key] || toolKey;
