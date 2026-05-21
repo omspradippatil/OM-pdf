@@ -765,3 +765,26 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 ### Files Modified
 - `README.md` (skills section added)
 - `AI_MEMORY.md`
+
+---
+
+## ✅ Completed (Session 16b) - GSC HTML Verification File Fix
+
+### Problem
+- Google Search Console HTML file verification was failing: "Your verification file has the wrong content."
+- Root cause: `google3abb376b0c48cfa0.html` was placed in the **project root**, not in `public/`.
+- Vite only copies the `public/` directory into `dist/` during build. Files in the project root are **not** served by Netlify.
+- Result: `https://om-pdf.netlify.app/google3abb376b0c48cfa0.html` returned 404 (or the SPA fallback `index.html`), not the verification content.
+
+### Fix
+- [x] Copied `google3abb376b0c48cfa0.html` to `public/google3abb376b0c48cfa0.html`.
+- File content is correct: `google-site-verification: google3abb376b0c48cfa0.html`
+- Vite will now include it in `dist/` on next build, making it available at the correct URL.
+
+### Next Steps
+1. `git push` → Netlify auto-deploys.
+2. GSC → **Verify** → HTML file method → click **Verify** button.
+
+### Files Modified
+- `public/google3abb376b0c48cfa0.html` (created)
+- `AI_MEMORY.md`
