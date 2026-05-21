@@ -158,6 +158,25 @@ OM-pdf/
 
 ---
 
+## 🧰 Core Professional Skills / Tooling Repos for OM Tools
+
+### Fullstack Framework
+
+| Tool | GitHub | Docs |
+|---|---|---|
+| **Next.js** | [vercel/next.js](https://github.com/vercel/next.js) | [nextjs.org](https://nextjs.org) |
+
+### UI / Design System
+
+| Tool | GitHub | Docs / Website |
+|---|---|---|
+| **Tailwind CSS** | [tailwindlabs/tailwindcss](https://github.com/tailwindlabs/tailwindcss) | [tailwindcss.com](https://tailwindcss.com) |
+| **shadcn/ui** | [shadcn-ui/ui](https://github.com/shadcn-ui/ui) | [ui.shadcn.com](https://ui.shadcn.com) |
+| **Framer Motion** | [motiondivision/motion](https://github.com/motiondivision/motion) | [motion.dev](https://motion.dev) |
+| **Lucide Icons** | [lucide-icons/lucide](https://github.com/lucide-icons/lucide) | [lucide.dev](https://lucide.dev) |
+
+---
+
 ## 🤝 Contributing
 
 Contributions are welcome! Bug fixes, features, and improvements are appreciated.

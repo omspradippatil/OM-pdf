@@ -679,3 +679,89 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 ### Files Modified
 - `src/context/AuthContext.jsx`
 - `AI_MEMORY.md`
+
+---
+
+## Completed (Session 15) - Google Search Console Canonical & Indexing Fixes
+
+### Issues Reported (Google Search Console)
+
+**Issue 1: "Alternate page with proper canonical tag" — 6 pages**
+- Affected: `/grayscale-pdf`, `/merge-with-ranges`, `/extract-pages`, `/resize-pages`, `/pdf-to-jpg`, `/split-by-bookmarks`
+- Cause: `index.html` had a **static** `<link rel="canonical" href="https://om-pdf.netlify.app/" />` tag. Google's crawler (which partially executes JS) read this before React hydrated, treating every tool page as an alternate of the homepage.
+
+**Issue 2: "Discovered - currently not indexed" — 30 pages**
+- Affected: `/about`, `/blog`, `/blog/*`, `/compress-pdf`, `/crop-pdf`, etc.
+- Cause: Same conflicting static canonical + Google's Googlebot struggling to fully render a pure SPA.
+
+### Root Cause Analysis
+- `index.html` static canonical → `/` overrode react-helmet-async's per-page canonical for all routes.
+- Google crawled the static HTML before JS execution, saw `canonical = /`, classified tool pages as duplicates/alternates of home.
+
+### Fix Applied
+
+**`index.html`:**
+- [x] Removed `<link rel="canonical" href="https://om-pdf.netlify.app/" />` from the static HTML.
+- [x] Added comment: `<!-- Canonical URL is injected per-page by react-helmet-async (SEO.jsx) -->`
+- [x] Added comment clarifying fallback OG tags are home-only.
+- react-helmet-async's `SEO.jsx` already injects correct per-page canonicals via `ToolSeoHead.jsx` (`canonicalUrl={baseMeta.url}`) and plain `SEO` components on blog/about pages.
+
+**`public/sitemap.xml`:**
+- [x] Updated all `<lastmod>` dates to `2026-05-21` to signal Google to recrawl all 37 pages.
+
+### Validation
+- [x] `npm run build` passes — ✓ built in 9.80s, zero errors.
+
+### Post-Deployment Actions Required (Google Search Console)
+1. Deploy to Netlify (git push).
+2. In Google Search Console → **Sitemaps** → resubmit `https://om-pdf.netlify.app/sitemap.xml`.
+3. For the 6 "Alternate" pages: click **"Validate Fix"** button in GSC after deploy.
+4. Use **URL Inspection → Test Live URL** on a few affected pages to confirm per-page canonical appears correctly.
+5. Expect full clearance in 1–4 weeks as Googlebot recrawls.
+
+### Files Modified
+- `index.html`
+- `public/sitemap.xml`
+- `AI_MEMORY.md`
+
+---
+
+## ✅ Completed (Session 16) - Skills Section Added to README + Indexing Status
+
+### Skills Section Added (README.md)
+- [x] Added **"Core Professional Skills / Tooling Repos for OM Tools"** section to `README.md` after the Tech Stack table.
+- [x] **Fullstack Framework**: Next.js ([GitHub](https://github.com/vercel/next.js) | [Docs](https://nextjs.org))
+- [x] **UI / Design System**:
+  - Tailwind CSS ([GitHub](https://github.com/tailwindlabs/tailwindcss) | [Docs](https://tailwindcss.com))
+  - shadcn/ui ([GitHub](https://github.com/shadcn-ui/ui) | [Docs](https://ui.shadcn.com))
+  - Framer Motion ([GitHub](https://github.com/motiondivision/motion) | [Docs](https://motion.dev))
+  - Lucide Icons ([GitHub](https://github.com/lucide-icons/lucide) | [Website](https://lucide.dev))
+
+### Google Search Console Indexing Status
+
+**Issue 1: "Alternate page with proper canonical tag" (6 pages)**
+- `/grayscale-pdf`, `/merge-with-ranges`, `/extract-pages`, `/resize-pages`, `/pdf-to-jpg`, `/split-by-bookmarks`
+- **Root cause fixed in Session 15**: Removed static `<link rel="canonical" href="/">` from `index.html`.
+- **Status**: Fix deployed. Click **"Validate Fix"** in GSC for these 6 pages after confirming deployment.
+- Per-page canonicals are now injected correctly by `react-helmet-async` via `ToolSeoHead.jsx`.
+
+**Issue 2: "Discovered - currently not indexed" (30 pages)**
+- Affected: `/about`, `/blog`, `/blog/*`, `/compress-pdf`, `/crop-pdf`, etc.
+- **Root cause**: Google Rendering Service (GRS) crawls static HTML first. As a pure SPA (`/* → /index.html`), all routes serve the same HTML before JS hydrates.
+- **Status**: The static canonical removal (Session 15) is the primary fix. Sitemap `lastmod` bumped to `2026-05-21` to force recrawl.
+- **Post-deployment actions**:
+  1. `git push` to Netlify to deploy Session 15 changes.
+  2. GSC → Sitemaps → Resubmit `https://om-pdf.netlify.app/sitemap.xml`.
+  3. GSC → URL Inspection → Test Live URL on affected pages (verify per-page canonical appears).
+  4. GSC → Alternate page issue → Click **"Validate Fix"** for the 6 affected pages.
+  5. Allow 1–4 weeks for Googlebot to recrawl and re-evaluate indexability.
+
+### Architecture Note (SPA Indexing)
+- This is a **React SPA** with Vite — no SSR or prerendering.
+- Googlebot partially executes JS but may not fully render every route on first crawl.
+- The canonical tag fix is the most important signal: Googlebot now sees `SEO.jsx`-injected canonicals on re-render, removing the "alternate of homepage" classification.
+- If indexing issues persist after 4–6 weeks, consider adding `vite-plugin-ssg` or Netlify Edge Functions for prerendering critical tool pages.
+
+### Files Modified
+- `README.md` (skills section added)
+- `AI_MEMORY.md`
