@@ -8,9 +8,9 @@ export default function ToolSeoContent({ toolKey }) {
   return (
     <section className="tool-seo-content" aria-label={`${content.name} details`}>
       <div className="tool-seo-header">
-        <h2>{content.name} Guide and FAQs</h2>
+        <h2>{content.name} Guide</h2>
         <p className="tool-seo-subtitle">
-          Fast, local, and private PDF processing with clear steps and answers.
+          Fast, local, and private PDF processing with clear steps.
         </p>
       </div>
 
@@ -23,17 +23,6 @@ export default function ToolSeoContent({ toolKey }) {
         ))}
       </div>
 
-      <div className="tool-faq">
-        <h3>Frequently Asked Questions</h3>
-        <div className="tool-faq-list">
-          {content.faqs.map((item) => (
-            <div className="tool-faq-item" key={item.q}>
-              <h4>{item.q}</h4>
-              <p>{item.a}</p>
-            </div>
-          ))}
-        </div>
-      </div>
     </section>
   );
 }

@@ -226,6 +226,76 @@ export const SEO_METADATA = {
     keywords: "pdf storage, secure file storage, google drive pdf, cloud pdf storage, recent files, pdf backup",
     url: "https://om-pdf.netlify.app/my-files",
   },
+
+  drawSign: {
+    title: "Draw & Sign PDF Online Free | Electronic Signatures | OM PDF",
+    description: "Sign PDF documents electronically with drawing or typed signatures. 100% private, offline, no upload.",
+    keywords: "sign pdf online, electronic signature pdf, draw signature on pdf, sign pdf free, type signature pdf",
+    url: "https://om-pdf.netlify.app/draw-sign-pdf",
+  },
+
+  redact: {
+    title: "Redact PDF Online Free | Mask Sensitive Data | OM PDF",
+    description: "Permanently mask and redact sensitive data from PDF files. Offline tool, no upload, completely secure.",
+    keywords: "redact pdf, mask pdf data, hide sensitive info pdf, pdf blackout tool, redact pdf free online",
+    url: "https://om-pdf.netlify.app/redact-pdf",
+  },
+
+  compare: {
+    title: "Compare PDF Files Online Free | Visual & Text Diff | OM PDF",
+    description: "Compare two PDFs side-by-side visually or extract text differences. Free, fast, and no upload required.",
+    keywords: "compare pdf, diff pdf, pdf comparison tool, visual diff pdf, text compare pdf, pdf checker",
+    url: "https://om-pdf.netlify.app/compare-pdf",
+  },
+
+  overlay: {
+    title: "Overlay PDF Online Free | Add Letterhead & Backgrounds | OM PDF",
+    description: "Apply letterhead backgrounds and overlay templates onto your PDF. Private, fast, offline.",
+    keywords: "overlay pdf, pdf background, pdf letterhead, merge overlay pdf, apply template to pdf",
+    url: "https://om-pdf.netlify.app/overlay-pdf",
+  },
+
+  headersFooters: {
+    title: "Add Custom Headers & Footers to PDF Online Free | OM PDF",
+    description: "Add dynamic text labels, dates, and page numbers to document headers and footers.",
+    keywords: "pdf headers, pdf footers, custom header pdf, custom footer pdf, add text to pdf margins",
+    url: "https://om-pdf.netlify.app/headers-footers-pdf",
+  },
+
+  batesNumbering: {
+    title: "Bates Numbering for PDF Online Free | Legal Indexing | OM PDF",
+    description: "Assign sequential bates numbers to pages across PDF documents. Ideal for legal and medical fields. No upload.",
+    keywords: "bates numbering pdf, bates stamp pdf, legal indexing pdf, sequential numbers pdf, bates numbering online",
+    url: "https://om-pdf.netlify.app/bates-numbering-pdf",
+  },
+
+  ocr: {
+    title: "Offline OCR PDF | Convert Images to Searchable Text | OM PDF",
+    description: "Convert scanned PDFs into searchable documents locally. Offline OCR runs entirely in your browser.",
+    keywords: "offline ocr pdf, free ocr online, searchable pdf, convert scanned pdf to text, browser ocr",
+    url: "https://om-pdf.netlify.app/ocr-pdf",
+  },
+
+  inspectPdf: {
+    title: "PDF Structure Inspector | Extract Metadata & Tree Nodes | OM PDF",
+    description: "Inspect PDF structural elements, outline bookmarks, fonts, and metadata. Export to JSON offline.",
+    keywords: "inspect pdf structure, pdf tree nodes, pdf outline extractor, pdf fonts used, developer tool pdf",
+    url: "https://om-pdf.netlify.app/inspect-pdf",
+  },
+
+  linearize: {
+    title: "Linearize PDF Online Free | Fast Web View Optimization | OM PDF",
+    description: "Optimize PDFs for Fast Web View to stream and render pages instantly without downloading the full file.",
+    keywords: "linearize pdf, fast web view pdf, optimize pdf for web, pdf streaming, qpdf linearize",
+    url: "https://om-pdf.netlify.app/linearize-pdf",
+  },
+
+  voiceReader: {
+    title: "PDF Voice Reader Online Free | Text-to-Speech Accessibility | OM PDF",
+    description: "Extract text from PDFs and read it aloud using offline text-to-speech engine. Accessible and completely free.",
+    keywords: "pdf voice reader, text to speech pdf, read aloud pdf, pdf accessibility, audio pdf reader",
+    url: "https://om-pdf.netlify.app/voice-reader-pdf",
+  },
 };
 
 /**
@@ -280,6 +350,21 @@ export function getSeoMetadata(toolKey) {
     'merge_ranges': 'mergeRanges',
     'autorotate': 'autoRotate',
     'auto_rotate_deskew': 'autoRotate',
+    'drawsign': 'drawSign',
+    'draw_sign': 'drawSign',
+    'redact': 'redact',
+    'compare': 'compare',
+    'overlay': 'overlay',
+    'headersfooters': 'headersFooters',
+    'headers_footers': 'headersFooters',
+    'batesnumbering': 'batesNumbering',
+    'bates_numbering': 'batesNumbering',
+    'ocr': 'ocr',
+    'inspectpdf': 'inspectPdf',
+    'inspect_pdf': 'inspectPdf',
+    'linearize': 'linearize',
+    'voicereader': 'voiceReader',
+    'voice_reader': 'voiceReader',
   };
 
   const metadataKey = keyMap[key] || toolKey;

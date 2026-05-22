@@ -788,3 +788,84 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 ### Files Modified
 - `public/google3abb376b0c48cfa0.html` (created)
 - `AI_MEMORY.md`
+
+---
+
+## ✅ Completed (Session 17) — Documentation Alignment & Tool Recommendations
+
+### Goal
+- Update `README.md` and `AI_MEMORY.md` with recent architecture changes (proactive auth refreshes, Firestore rules hardening, GSC sitemap/canonical updates, mobile layouts).
+- Align the tools listed in `README.md` with the full 29-tool registry.
+- Recommend additional high-value, offline-first PDF utilities to expand the codebase.
+
+### Architecture Documentation Updates
+- Updated `README.md` to document the core security and architecture features:
+  1. **Zero-Upload Processing** (WASM + JS in the browser).
+  2. **Hardened Firebase Rules** (Mass assignment controls, restricted user profile mutations, stats counters validations, and rate-limiting).
+  3. **Resilient Google Drive OAuth Flow** (Unified credentials, 55-minute access token TTL with proactive silent refreshes, visibility handlers, and fallback CORS logic).
+  4. **Google Search Console Optimization** (Canonical URL injection by `react-helmet-async`, robots/sitemap exclusions).
+- Updated the features and tool directory of `README.md` to list all 29 tools.
+
+### Recommendations for Future Offline Tools
+Suggested 10 high-value, offline-first tools:
+1. **Draw & Sign PDF** (Electronic Signatures via HTML5 Canvas and `pdf-lib`).
+2. **PDF Redactor** (Permanent content/text sanitization and blackout).
+3. **Compare PDFs** (Side-by-side visual/pixel diff or text diff).
+4. **Overlay / Stationery PDF** (Apply letterhead backgrounds/overlays).
+5. **Add Custom Headers & Footers** (Insert text with page variables).
+6. **Bates Numbering** (Sequential indexing for legal documents).
+7. **Offline OCR PDF** (Image text extraction via `tesseract.js` in Web Workers).
+8. **PDF Structure Analyzer & JSON Export** (Inspect structural elements, bookmarks, and font details).
+9. **Linearize PDF** (Rearrange file for Fast Web View using QPDF WASM).
+10. **PDF Voice Reader** (Text-to-speech using browser Web Speech API).
+
+### Files Modified
+- `README.md`
+- `AI_MEMORY.md`
+
+---
+
+## ✅ Completed (Session 18) — Implementation of 10 New Offline PDF Tools
+
+### Goal
+- Expand OM PDF's suite with the 10 high-value offline tools proposed in Session 17.
+- Ensure all new tools run 100% locally in the browser to maintain the privacy and zero-upload guarantees.
+- Seamlessly integrate them into the existing SaaS shell layout (`ToolPageLayout`).
+
+### New Tools Implemented
+1. **Draw & Sign PDF** (`DrawSignPdf.jsx`): Interactive signature canvas with drag-and-drop placing via `pdf-lib` and `pdf.js` canvas rendering.
+2. **PDF Redactor** (`RedactPdf.jsx`): User-drawn selection blackout to mask sensitive data areas permanently.
+3. **Compare PDFs** (`ComparePdf.jsx`): Visual side-by-side comparison and textual diff-match-patch inline highlighting.
+4. **Overlay PDF** (`OverlayPdf.jsx`): Background templates and letterhead embedding via `pdf-lib` `embedPdf`.
+5. **Custom Headers & Footers** (`HeadersFootersPdf.jsx`): Text insertion with dynamic `[page]` and `[date]` variables into document margins.
+6. **Bates Numbering** (`BatesNumberingPdf.jsx`): Sequential legal/medical document numbering with padding and prefixes. Uses `jszip` for batch zipping.
+7. **Offline OCR PDF** (`OcrPdf.jsx`): Browser-based optical character recognition using `tesseract.js` web workers to create text overlays.
+8. **PDF Structure Inspector** (`InspectPdf.jsx`): Developer tool to dump font data, metadata, and structural nodes into JSON format.
+9. **Linearize PDF** (`LinearizePdf.jsx`): Optimized byte layout saving via `pdf-lib` stream compression for Fast Web View optimization.
+10. **PDF Voice Reader** (`VoiceReaderPdf.jsx`): Extracted text-to-speech functionality via the browser Web Speech API.
+
+### SEO & Architecture Integration
+- **`src/constants/tools.js`**: Registered all 10 tools.
+- **`src/constants/seoMetadata.js`**: Configured custom titles, descriptions, and keywords for each new tool.
+- **`src/App.jsx`**: Added new routes with `React.lazy()` imports.
+- **`public/sitemap.xml`**: Appended 10 new endpoints for Google Search Console indexing.
+- **`README.md`**: Updated the Tool Directory section to reflect **39 Offline-First Tools**.
+
+### Files Modified/Created
+- `src/pages/DrawSignPdf.jsx`
+- `src/pages/RedactPdf.jsx`
+- `src/pages/ComparePdf.jsx`
+- `src/pages/OverlayPdf.jsx`
+- `src/pages/HeadersFootersPdf.jsx`
+- `src/pages/BatesNumberingPdf.jsx`
+- `src/pages/OcrPdf.jsx`
+- `src/pages/InspectPdf.jsx`
+- `src/pages/LinearizePdf.jsx`
+- `src/pages/VoiceReaderPdf.jsx`
+- `src/constants/tools.js`
+- `src/constants/seoMetadata.js`
+- `src/App.jsx`
+- `public/sitemap.xml`
+- `README.md`
+- `AI_MEMORY.md`
+

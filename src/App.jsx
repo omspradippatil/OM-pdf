@@ -44,6 +44,16 @@ const HowItWorks = lazy(() => import('./pages/HowItWorks'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
 const Feedback = lazy(() => import('./pages/Feedback'));
+const DrawSignPdf = lazy(() => import('./pages/DrawSignPdf'));
+const RedactPdf = lazy(() => import('./pages/RedactPdf'));
+const ComparePdf = lazy(() => import('./pages/ComparePdf'));
+const OverlayPdf = lazy(() => import('./pages/OverlayPdf'));
+const HeadersFootersPdf = lazy(() => import('./pages/HeadersFootersPdf'));
+const BatesNumberingPdf = lazy(() => import('./pages/BatesNumberingPdf'));
+const OcrPdf = lazy(() => import('./pages/OcrPdf'));
+const InspectPdf = lazy(() => import('./pages/InspectPdf'));
+const LinearizePdf = lazy(() => import('./pages/LinearizePdf'));
+const VoiceReaderPdf = lazy(() => import('./pages/VoiceReaderPdf'));
 
 export default function App() {
   const variantRoutes = getVariantRoutes();
@@ -95,6 +105,16 @@ export default function App() {
               <Route path="/protect-pdf" element={<ProtectPDF />} />
               <Route path="/unlock-pdf" element={<UnlockPDF />} />
               <Route path="/pdf-permissions" element={<PermissionsPDF />} />
+              <Route path="/draw-sign-pdf" element={<DrawSignPdf />} />
+              <Route path="/redact-pdf" element={<RedactPdf />} />
+              <Route path="/compare-pdf" element={<ComparePdf />} />
+              <Route path="/overlay-pdf" element={<OverlayPdf />} />
+              <Route path="/headers-footers-pdf" element={<HeadersFootersPdf />} />
+              <Route path="/bates-numbering-pdf" element={<BatesNumberingPdf />} />
+              <Route path="/ocr-pdf" element={<OcrPdf />} />
+              <Route path="/inspect-pdf" element={<InspectPdf />} />
+              <Route path="/linearize-pdf" element={<LinearizePdf />} />
+              <Route path="/voice-reader-pdf" element={<VoiceReaderPdf />} />
               <Route path="/my-files"     element={<MyFiles />} />
               <Route path="/about" element={<About />} />
               <Route path="/privacy" element={<Privacy />} />

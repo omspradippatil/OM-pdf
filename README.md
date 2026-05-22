@@ -50,6 +50,59 @@ Merge or split PDF files instantly — right in your browser. No uploads, no sig
 
 ---
 
+## 🛠️ Tool Directory (39 Offline-First Tools)
+
+All tools run **100% locally in the browser** using client-side libraries (such as `pdf-lib`, `pdf.js`, and `qpdf` via WebAssembly). Files never leave your device.
+
+### 📂 Organize PDFs
+- 📂 **Merge PDF** — Combine multiple PDFs into a single document with drag-and-drop page/file reordering.
+- ✂️ **Split PDF** — Extract specific page ranges or split every page into separate files.
+- 📄 **Extract Pages** — Select specific pages visually and export them as a new PDF.
+- 🔄 **Rotate PDF** — Rotate individual pages or all pages of a PDF visually.
+- 📑 **Organize PDF** — Interactively rearrange, delete, or add pages to your PDF.
+- ➕ **Insert Blank Pages** — Add blank pages before or after any page in the document.
+- 🧹 **Remove Empty Pages** — Automatically detect and delete blank pages from your PDF.
+- 🔖 **Split by Bookmarks** — Automatically split a PDF into separate files based on outline sections/bookmarks.
+- 🧩 **Merge with Ranges** — Merge multiple files using specific page range criteria per file.
+- 🧭 **Auto Rotate & Deskew** — Automatically fix skewed and misoriented pages.
+- 📐 **Crop PDF** — Crop margins and adjust page dimensions.
+- ⚖️ **Compare PDF** — Visually or textually compare two PDFs side-by-side.
+- 🔍 **Inspect PDF** — Developer tool to extract structural elements, tags, and metadata to JSON.
+
+### 🔄 Convert & Compress
+- 📉 **Compress PDF** — Reduce file size while preserving high rendering quality.
+- 🔄 **PDF Converter** — General converter to switch between PDFs and images.
+- 🖼️ **PDF to JPG (Advanced)** — Export PDF pages as high-quality JPGs with custom scale and quality sliders.
+- 🧵 **PDF to Long Image** — Merge and export selected pages into a single continuous tall image.
+- 📸 **Extract Images** — Extract all embedded raster images from within a PDF file.
+- 🖼️ **Image to PDF** — Convert a batch of images (PNG, JPG, WebP) into a single PDF.
+- 🔍 **PDF to Text** — Extract all selectable text content from a PDF instantly.
+- 🤖 **OCR PDF** — Convert scanned images to searchable text documents locally.
+- ⚡ **Linearize PDF** — Optimize byte layout for Fast Web View in browsers.
+
+### 📝 View & Edit
+- 🏷️ **Watermark PDF** — Add text or image watermarks with position, opacity, and angle controls.
+- 🔢 **Page Numbers** — Add customizable page numbers (position, style, font, size).
+- ⚫ **Grayscale PDF** — Convert colored PDF pages to clean black-and-white grayscale.
+- 📏 **Resize Pages** — Standardize page sizes to common presets (A4, Letter, A3, etc.).
+- ⬚ **Add Margins** — Add or trim custom margins on all pages.
+- ✍️ **Draw & Sign PDF** — Electronically sign documents with a drawn, typed, or uploaded signature.
+- 📄 **Overlay PDF** — Add a background template or letterhead to your document.
+- 📏 **Custom Headers & Footers** — Add dynamic text labels and page numbers to margins.
+- 🔢 **Bates Numbering** — Assign sequential numbering for legal and medical indexing.
+- 🔊 **Voice Reader PDF** — Read document text aloud using a local text-to-speech engine.
+
+### 🛡️ Security & Metadata
+- 📝 **Metadata Editor** — View and edit standard properties (Title, Author, Subject, Keywords).
+- 🛡️ **Protect PDF** — Secure documents with password encryption (AES-256).
+- 🔓 **Unlock PDF** — Decrypt and remove passwords from locked PDFs.
+- 🔐 **PDF Permissions** — Fine-tune restrictions on printing, copying, and modifications.
+- 🧼 **Sanitize Metadata** — Deep clean hidden metadata and structural tags.
+- 📌 **Flatten Forms** — Flatten interactive form fields to prevent further editing.
+- ⬛ **Redact PDF** — Mask and sanitize sensitive data permanently from pages.
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -155,6 +208,26 @@ OM-pdf/
 | **Styling** | Vanilla CSS (Premium SaaS Shell) |
 | **SEO** | [react-helmet-async](https://github.com/staylor/react-helmet-async) |
 | **Deployment** | [Netlify](https://www.netlify.com/) |
+
+---
+
+## 🔒 Security & Architecture
+
+OM PDF is engineered around a **local-first, security-hardened architecture** that guarantees user privacy while maintaining modern SaaS capabilities:
+
+1. **Zero-Upload Processing**: All PDF manipulation, rendering, and conversion are performed directly in the user's browser using WebAssembly and client-side JavaScript. Sensitive documents never touch a third-party server.
+2. **Hardened Firebase Rules**: The backend is protected against mass assignment, privilege escalation, and spam via strict `firestore.rules` rules:
+   - Profile documents (`/users/{uid}`) are restricted to essential OAuth properties (`uid`, `email`, `displayName`, etc.), rejecting administrative field injection.
+   - User stats (`/users/{uid}/private/stats`) allow only known, verified integer counters.
+   - Feedback submissions enforce a 60-second cooldown rate limit per authenticated user.
+3. **Resilient Google Drive OAuth Flow**: Google Drive connection uses a secure client-side integration:
+   - Unified credentials authenticate Firebase user profiles and Google Drive access concurrently.
+   - Access tokens are short-lived (55-minute TTL) and cached in storage for security.
+   - Silent background token refresh runs before expiration, with a visibility listener checking token age on tab-focus, minimizing interactive login popups.
+   - Safe try-catch boundaries prevent preflight CORS or Cloud Functions failures from disrupting offline utility functionality.
+4. **Google Search Console Optimization**: The SEO system implements:
+   - Dynamic page canonical URL injection using `react-helmet-async` to prevent duplicate indexing.
+   - Sitemap exclusions (`sitemap.xml`) and robots directives (`robots.txt`) for private/account URLs (`/my-files` and `/feedback`) utilizing the `noindex, nofollow, noarchive` rules.
 
 ---
 

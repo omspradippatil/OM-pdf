@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
+import PdfCanvas from '../components/PdfCanvas';
 import '../styles/AddMargins.css';
 
 const DEFAULT_MARGINS = { top: 24, right: 24, bottom: 24, left: 24 };
@@ -171,22 +172,22 @@ export default function AddMargins() {
       {!file ? (
         <DropZone onFiles={loadFile} label="Drop a PDF to update margins" hint="Single PDF - 200 MB Recommended" />
       ) : (
-        <div className="margins-preview">
-          <div className="margins-card">
-            <div className="margins-card-title">Top</div>
-            <div className="margins-card-value">{margins.top} pt</div>
+        <div className="ux-workspace-content" style={{ height:'100%', display:'flex', flexDirection:'column' }}>
+          <div className="ux-toolbar-inline" style={{ flexShrink:0 }}>
+            <div>
+              <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Live Preview</h2>
+              <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>{file.name}</p>
+            </div>
+            <button className="ux-btn-secondary" onClick={() => { setFile(null); setSuccess(''); }}>Remove File</button>
           </div>
-          <div className="margins-card">
-            <div className="margins-card-title">Right</div>
-            <div className="margins-card-value">{margins.right} pt</div>
-          </div>
-          <div className="margins-card">
-            <div className="margins-card-title">Bottom</div>
-            <div className="margins-card-value">{margins.bottom} pt</div>
-          </div>
-          <div className="margins-card">
-            <div className="margins-card-title">Left</div>
-            <div className="margins-card-value">{margins.left} pt</div>
+
+          <div style={{ flex:1, display:'flex', justifyContent:'center', alignItems: 'center', padding:20, background:'var(--bg-card)', borderRadius:16, border:'1px solid var(--border)', overflow:'auto' }}>
+            <div style={{ position:'relative', boxShadow:'0 10px 30px rgba(0,0,0,0.1)', background: mode === 'add' ? 'rgba(37, 99, 235, 0.2)' : 'transparent', padding: mode === 'add' ? `${margins.top}px ${margins.right}px ${margins.bottom}px ${margins.left}px` : 0 }}>
+              {mode === 'trim' && (
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderTop: `${margins.top}px solid rgba(255,0,0,0.3)`, borderRight: `${margins.right}px solid rgba(255,0,0,0.3)`, borderBottom: `${margins.bottom}px solid rgba(255,0,0,0.3)`, borderLeft: `${margins.left}px solid rgba(255,0,0,0.3)`, pointerEvents: 'none', zIndex: 10 }} />
+              )}
+              <PdfCanvas file={file} pageNumber={1} width={400} />
+            </div>
           </div>
         </div>
       )}
