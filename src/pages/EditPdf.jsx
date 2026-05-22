@@ -703,7 +703,11 @@ export default function EditPdf() {
                         onPointerDown={(e) => onPointerDownAnn(e, ann.id, ann)}
                       >
                         {/* Delete Badge */}
-                        <div className="edit-pdf-delete-badge" onPointerDown={(e) => { e.stopPropagation(); deleteAnnotation(activePageId, ann.id); }}>✕</div>
+                        <div 
+                          className="edit-pdf-delete-badge" 
+                          onPointerDown={(e) => e.stopPropagation()} 
+                          onClick={(e) => { e.stopPropagation(); deleteAnnotation(activePageId, ann.id); }}
+                        >✕</div>
 
                         {/* Rendering by Type */}
                         {ann.type === 'text' && (
