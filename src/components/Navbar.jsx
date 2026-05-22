@@ -107,10 +107,10 @@ export default function Navbar() {
 
           {/* Quick Links */}
           <div className="nav-desktop-links">
-            <NavLink to="/compress-pdf" className={({isActive}) => `nav-link${isActive ? ' active' : ''}`}>Compress</NavLink>
-            <NavLink to="/convert-pdf"  className={({isActive}) => `nav-link${isActive ? ' active' : ''}`}>Convert</NavLink>
+            <NavLink to="/edit-pdf" className={({isActive}) => `nav-link${isActive ? ' active' : ''}`}>Edit</NavLink>
+            <NavLink to="/draw-sign-pdf" className={({isActive}) => `nav-link${isActive ? ' active' : ''}`}>Sign</NavLink>
             <NavLink to="/merge-pdf"    className={({isActive}) => `nav-link${isActive ? ' active' : ''}`}>Merge</NavLink>
-            <NavLink to="/metadata-editor" className={({isActive}) => `nav-link${isActive ? ' active' : ''}`}>Edit</NavLink>
+            <NavLink to="/compress-pdf" className={({isActive}) => `nav-link${isActive ? ' active' : ''}`}>Compress</NavLink>
           </div>
         </div>
 

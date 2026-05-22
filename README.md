@@ -82,11 +82,13 @@ All tools run **100% locally in the browser** using client-side libraries (such 
 
 ### 📝 View & Edit
 - 🏷️ **Watermark PDF** — Add text or image watermarks with position, opacity, and angle controls.
+- ✍️ **Draw & Sign PDF** — Electronically sign documents with a drawn, typed, or uploaded signature.
+- ✏️ **Edit PDF** — Draw, annotate, delete pages, rotate, and add content directly.
 - 🔢 **Page Numbers** — Add customizable page numbers (position, style, font, size).
 - ⚫ **Grayscale PDF** — Convert colored PDF pages to clean black-and-white grayscale.
 - 📏 **Resize Pages** — Standardize page sizes to common presets (A4, Letter, A3, etc.).
 - ⬚ **Add Margins** — Add or trim custom margins on all pages.
-- ✍️ **Draw & Sign PDF** — Electronically sign documents with a drawn, typed, or uploaded signature.
+- ⚖️ **Compare PDF** — Compare two PDFs side-by-side with visual and text diffs.
 - 📄 **Overlay PDF** — Add a background template or letterhead to your document.
 - 📏 **Custom Headers & Footers** — Add dynamic text labels and page numbers to margins.
 - 🔢 **Bates Numbering** — Assign sequential numbering for legal and medical indexing.

@@ -179,6 +179,16 @@ export const TOOLS = [
     driveFolder: 'Watermarked',
   },
   {
+    key:         'edit_pdf',
+    category:    CATEGORIES.EDIT,
+    icon:        '📝',
+    title:       'Edit PDF',
+    desc:        'Draw, highlight, annotate, and rearrange pages.',
+    path:        '/edit-pdf',
+    color:       '#6366F1',
+    driveFolder: 'Edited',
+  },
+  {
     key:         'crop',
     category:    CATEGORIES.ORGANIZE,
     icon:        '📐',

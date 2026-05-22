@@ -54,6 +54,7 @@ const OcrPdf = lazy(() => import('./pages/OcrPdf'));
 const InspectPdf = lazy(() => import('./pages/InspectPdf'));
 const LinearizePdf = lazy(() => import('./pages/LinearizePdf'));
 const VoiceReaderPdf = lazy(() => import('./pages/VoiceReaderPdf'));
+const EditPdf = lazy(() => import('./pages/EditPdf'));
 
 export default function App() {
   const variantRoutes = getVariantRoutes();
@@ -115,6 +116,7 @@ export default function App() {
               <Route path="/inspect-pdf" element={<InspectPdf />} />
               <Route path="/linearize-pdf" element={<LinearizePdf />} />
               <Route path="/voice-reader-pdf" element={<VoiceReaderPdf />} />
+              <Route path="/edit-pdf" element={<EditPdf />} />
               <Route path="/my-files"     element={<MyFiles />} />
               <Route path="/about" element={<About />} />
               <Route path="/privacy" element={<Privacy />} />
