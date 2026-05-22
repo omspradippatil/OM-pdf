@@ -3135,5 +3135,13 @@ body {
   color: white;
   transform: translateY(-2px);
 }
+.support-badge-v2 {
+  background: rgba(236, 72, 153, 0.1);
+  color: #ec4899;
+}
+.support-badge-v2:hover {
+  background: #ec4899 !important;
+  color: white !important;
+}
 
 

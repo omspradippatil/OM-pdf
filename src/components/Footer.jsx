@@ -61,6 +61,12 @@ const MessageIcon = ({ size }) => (
   </svg>
 );
 
+const HeartIcon = ({ size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+  </svg>
+);
+
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
@@ -83,10 +89,14 @@ export default function Footer() {
               <a href="https://ompradippatil.netlify.app/" target="_blank" rel="noopener noreferrer" className="creator-name">OM Patil</a>
             </div>
             
-            <div className="footer-os-section">
+            <div className="footer-os-section" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <a href="https://github.com/omspradippatil/OM-pdf" target="_blank" rel="noopener noreferrer" className="os-badge-v2">
                 <GitHubIcon size={16} />
                 <span>Contribute on GitHub</span>
+              </a>
+              <a href="https://ompradippatil.netlify.app/donate/" target="_blank" rel="noopener noreferrer" className="os-badge-v2 support-badge-v2">
+                <HeartIcon size={16} />
+                <span>Support Project</span>
               </a>
             </div>
           </div>

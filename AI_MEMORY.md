@@ -911,3 +911,27 @@ Suggested 10 high-value, offline-first tools:
 - `README.md`
 - `AI_MEMORY.md`
 
+---
+
+## ✅ Completed (Session 20) — Support Project Button in Footer
+
+### Goal
+- Add a "Support Project" button to the footer pointing to `https://ompradippatil.netlify.app/donate/`.
+
+### Implementation
+- **Footer UI Component**:
+  - Added a new `HeartIcon` inline SVG component.
+  - Inserted the "Support Project" link button next to "Contribute on GitHub" inside `.footer-os-section`.
+- **CSS Styles**:
+  - Defined `.support-badge-v2` styling with `#ec4899` pink branding, blending with the existing modern UI.
+- **Documentation**:
+  - Updated `README.md`'s support section to include the donation link.
+  - Updated `AI_MEMORY.md`.
+
+### Files Modified/Created
+- `src/components/Footer.jsx`
+- `src/style.css`
+- `README.md`
+- `AI_MEMORY.md`
+
+
