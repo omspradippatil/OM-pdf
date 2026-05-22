@@ -1635,9 +1635,39 @@ body {
   .trust-badges { flex-wrap: wrap; justify-content: center; }
 }
 
-
+/* --- Open Source Section --- */
+.footer-os-section {
+  margin-top: 16px;
+}
+.os-badge-v2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--primary);
+  padding: 6px 12px;
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.os-badge-v2:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-2px);
+}
+.support-badge-v2 {
+  background: rgba(236, 72, 153, 0.1);
+  color: #ec4899;
+}
+.support-badge-v2:hover {
+  background: #ec4899 !important;
+  color: white !important;
+}
 
 /* ─── Mega Dropdown ─── */
+
 .mega-dropdown {
   min-width: 360px !important;
   padding: 12px !important;
