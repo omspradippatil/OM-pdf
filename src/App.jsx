@@ -58,6 +58,7 @@ const EditPdf = lazy(() => import('./pages/EditPdf'));
 const PdfToPptx = lazy(() => import('./pages/PdfToPptx'));
 const HtmlToPdf = lazy(() => import('./pages/HtmlToPdf'));
 const EsignPdf = lazy(() => import('./pages/EsignPdf'));
+const DriveCallback = lazy(() => import('./pages/DriveCallback'));
 
 export default function App() {
   const variantRoutes = getVariantRoutes();
@@ -121,6 +122,8 @@ export default function App() {
               <Route path="/voice-reader-pdf" element={<VoiceReaderPdf />} />
               <Route path="/edit-pdf" element={<EditPdf />} />
               <Route path="/pdf-to-pptx" element={<PdfToPptx />} />
+              <Route path="/pdf-to-ppt" element={<PdfToPptx />} />
+              <Route path="/drive-callback" element={<DriveCallback />} />
               <Route path="/html-to-pdf" element={<HtmlToPdf />} />
               <Route path="/esign-pdf" element={<EsignPdf />} />
               <Route path="/my-files"     element={<MyFiles />} />
@@ -137,6 +140,7 @@ export default function App() {
                   element={toolComponents[route.toolKey]}
                 />
               ))}
+              <Route path="*" element={<Home />} />
             </Routes>
           </Suspense>
         </main>

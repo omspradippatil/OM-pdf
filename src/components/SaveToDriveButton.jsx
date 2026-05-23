@@ -24,7 +24,7 @@ const DriveIcon = () => (
  * @prop {string}               [mimeType]  - defaults to 'application/pdf'
  */
 export default function SaveToDriveButton({ bytes, filename, toolFolder, mimeType = 'application/pdf' }) {
-  const { user, login, ensureDriveToken } = useAuth();
+  const { user, login, ensureDriveToken, driveConnected } = useAuth();
   const [status, setStatus] = useState('idle');   // idle | loading | success | error
   const [link, setLink]     = useState('');
   const [errMsg, setErrMsg] = useState('');
@@ -47,12 +47,18 @@ export default function SaveToDriveButton({ bytes, filename, toolFolder, mimeTyp
       }, 500);
       return;
     }
+
     setStatus('loading'); setLink(''); setErrMsg('');
     try {
       let ok = await ensureDriveToken();
       if (ok === false) {
-        setStatus('idle');
-        setErrMsg('Continue in Google to grant Drive access, then try again.');
+        if (!driveConnected) {
+          setStatus('idle');
+          setErrMsg('Continue in Google to grant Drive access, then try again.');
+          return;
+        }
+        setStatus('error');
+        setErrMsg('Drive is unavailable right now.');
         return;
       }
 

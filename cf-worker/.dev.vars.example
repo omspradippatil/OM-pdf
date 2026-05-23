@@ -1,0 +1,9 @@
+# Local dev secrets — DO NOT COMMIT THIS FILE
+# Copy this to .dev.vars and fill in your values.
+# These are only used by `wrangler dev` locally.
+# For production, set secrets with: wrangler secret put <NAME>
+
+GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-your-client-secret
+ENCRYPTION_KEY=generate-with-npm-run-gen-key-64-hex-chars
+FIREBASE_PROJECT_ID=your-firebase-project-id

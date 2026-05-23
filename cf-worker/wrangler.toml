@@ -1,0 +1,27 @@
+name = "om-pdf-drive-worker"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# ── KV Namespace ──────────────────────────────────────────────────
+# After running `wrangler kv:namespace create DRIVE_TOKENS`,
+# paste the id returned here.
+[[kv_namespaces]]
+binding = "DRIVE_TOKENS"
+id      = "51eac8672c9a4223b5119472d7fda13a"            # e.g. "abc123..."
+preview_id = "REPLACE_WITH_YOUR_KV_PREVIEW_ID" # used by `wrangler dev`
+
+# ── Routes ────────────────────────────────────────────────────────
+# Update <subdomain> to match your Cloudflare Workers subdomain.
+# Format: https://<worker-name>.<account>.workers.dev/*
+# routes = [{ pattern = "om-pdf-drive-worker.<account>.workers.dev/*", zone_name = "workers.dev" }]
+
+# ── Environment variables (non-secret) ───────────────────────────
+[vars]
+WORKER_ENV = "production"
+
+# Secrets are set via:
+#   wrangler secret put GOOGLE_CLIENT_ID
+#   wrangler secret put GOOGLE_CLIENT_SECRET
+#   wrangler secret put ENCRYPTION_KEY
+#   wrangler secret put FIREBASE_PROJECT_ID

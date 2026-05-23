@@ -2,6 +2,7 @@ import SEO from '../components/SEO';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { listDriveFiles, deleteFromDrive, hasDriveAccess, loadStoredDriveToken } from '../services/googleDrive';
+import DriveConnectButton from '../components/DriveConnectButton';
 import { logUserAction } from '../services/activityLog';
 import ToolPageLayout from '../components/ToolPageLayout';
 import '../styles/MyFiles.css';
@@ -73,7 +74,7 @@ function SectionHeader({ title, count, onRefresh, loading }) {
 
 /* ─── Main Component ── */
 export default function MyFiles() {
-  const { user, login, ensureDriveToken } = useAuth();
+  const { user, login, ensureDriveToken, driveConnected } = useAuth();
 
   const [driveFiles, setDriveFiles]       = useState([]);
   const [driveLoading, setDriveLoading]   = useState(false);
@@ -181,6 +182,32 @@ export default function MyFiles() {
           loading={driveLoading}
         />
         {driveError && <div className="alert alert-warning"><span>⚠️ {driveError}</span></div>}
+
+        {!driveConnected && (
+          <div className="drive-setup-banner" style={{
+            background: 'rgba(38, 132, 252, 0.08)',
+            border: '1px dashed #2684FC',
+            borderRadius: '12px',
+            padding: '20px',
+            margin: '0 0 24px 0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px',
+            textAlign: 'left'
+          }}>
+            <div>
+              <h3 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)' }}>
+                Enable Silent Background Save ⚡
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)', maxWidth: 500 }}>
+                Link your Google Drive account to save your generated files in the background without any annoying authentication popups.
+              </p>
+            </div>
+            <DriveConnectButton label="Connect Google Drive" />
+          </div>
+        )}
 
         {driveLoading && (
           <div className="mf-loading">

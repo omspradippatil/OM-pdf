@@ -178,6 +178,7 @@ OM-pdf/
 ├── vite.config.js              # Vite bundler config (output → dist/, code splits pdf-lib)
 ├── netlify.toml                # Netlify deploy config (build cmd + publish dir + headers)
 ├── .gitignore                  # Ignores node_modules/, dist/, .env, OS/editor files
+├── cf-worker/                  # Cloudflare Worker backend for Drive token status/refresh/revoke
 ├├── public/                     # Static files & WASM binaries
 │   ├── qpdf.js                 # Security engine loader
 │   ├── qpdf.wasm               # Security engine binary
@@ -207,6 +208,7 @@ OM-pdf/
 | **PDF Rendering** | [pdfjs-dist](https://mozilla.github.io/pdf.js/) (Thumbnails) |
 | **Security Engine** | QPDF (WASM) — [pdfGuard](src/utils/pdfGuard.js) |
 | **Backend / Auth** | [Firebase](https://firebase.google.com/) (Auth, Firestore) |
+| **Edge Backend** | [Cloudflare Workers](https://developers.cloudflare.com/workers/) (Drive token status/refresh/revoke API) |
 | **Cloud Storage** | [Google Drive API](https://developers.google.com/drive) (Persistence) |
 | **Drag & Drop** | [@dnd-kit/core](https://dndkit.com/) |
 | **Compression** | [JSZip](https://stuk.github.io/jszip/) |
@@ -229,7 +231,8 @@ OM PDF is engineered around a **local-first, security-hardened architecture** th
    - Unified credentials authenticate Firebase user profiles and Google Drive access concurrently.
    - Access tokens are short-lived (55-minute TTL) and cached in storage for security.
    - Silent background token refresh runs before expiration, with a visibility listener checking token age on tab-focus, minimizing interactive login popups.
-   - Safe try-catch boundaries prevent preflight CORS or Cloud Functions failures from disrupting offline utility functionality.
+   - A Cloudflare Worker fronts the Drive token API (`/api/drive/status`, `/api/drive/callback`, `/api/drive/refresh`, `/api/drive/revoke`) on an allowlisted origin via `VITE_CF_WORKER_URL`.
+   - Safe try-catch boundaries prevent preflight CORS, worker, or backend failures from disrupting offline utility functionality.
 4. **Google Search Console Optimization**: The SEO system implements:
    - Dynamic page canonical URL injection using `react-helmet-async` to prevent duplicate indexing.
    - Sitemap exclusions (`sitemap.xml`) and robots directives (`robots.txt`) for private/account URLs (`/my-files` and `/feedback`) utilizing the `noindex, nofollow, noarchive` rules.

@@ -1,0 +1,11 @@
+# Secrets & Environment vars
+.dev.vars
+.dev.vars.local
+
+# Wrangler cache & local database emulators
+.wrangler/
+
+# Dependency directories
+node_modules/
+dist/
+package-lock.json

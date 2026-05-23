@@ -984,5 +984,26 @@ Suggested 10 high-value, offline-first tools:
 - `README.md`
 - `AI_MEMORY.md`
 
+---
+
+## ✅ Completed (Session 22) — Cloudflare Worker Drive API Docs Alignment
+
+### Goal
+- Update the project documentation to reflect the current Drive backend architecture and the CORS-safe fallback path.
+
+### Architecture Notes
+- [x] Added the Cloudflare Worker edge backend to `README.md` so the project structure and tech stack now reflect the Drive token API layer.
+- [x] Documented the Worker-backed Drive endpoints in `README.md`:
+  - `/api/drive/status`
+  - `/api/drive/callback`
+  - `/api/drive/refresh`
+  - `/api/drive/revoke`
+- [x] Clarified that the browser uses `VITE_CF_WORKER_URL` for Drive token status/refresh/revoke and that the client degrades gracefully if the Worker is blocked, unavailable, or returns a CORS/preflight failure.
+- [x] Preserved the local-first guarantee: when the Drive backend is unreachable, the app still works for all offline PDF tools instead of failing the main login path.
+
+### Documentation Updated
+- `README.md`
+- `AI_MEMORY.md`
+
 
 

@@ -12,13 +12,18 @@ import {
 import {
   clearDriveAccessToken,
   hasDriveAccess,
-  isTokenExpiringSoon,
   loadStoredDriveToken,
   setDriveAccessToken,
 } from '../services/googleDrive';
 import { ensureUserProfile } from '../services/userProfile';
 import { syncStatsWithCloud } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
+import {
+  cfExchangeCode,
+  cfRefreshToken,
+  cfRevokeToken,
+  workerAvailable,
+} from '../services/cfTokenService';
 
 const AuthContext = createContext(null);
 
@@ -140,9 +145,9 @@ export function AuthProvider({ children }) {
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
   const [authBusy, setAuthBusy] = useState(false);
+  const [driveConnected, setDriveConnected] = useState(false);
   const authActionRef = useRef(false);
   const successTimerRef = useRef(null);
-  const driveRefreshRef = useRef(false);
 
   const showSuccess = useCallback((message) => {
     setAuthSuccess(message);
@@ -184,20 +189,15 @@ export function AuthProvider({ children }) {
         setAuthError(getAuthErrorMessage(error));
       } finally {
         if (cancelled) return;
-        unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+        unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
           setUser(nextUser);
           setLoading(false);
           if (nextUser) {
-            loadStoredDriveToken(nextUser.uid);
-            if (!driveRefreshRef.current && isTokenExpiringSoon()) {
-              driveRefreshRef.current = true;
-              login({ drive: true, silent: true }).finally(() => {
-                driveRefreshRef.current = false;
-              });
-            }
+            setDriveConnected(loadStoredDriveToken(nextUser.uid));
             void finishSignedInUser(nextUser);
           } else {
             clearDriveAccessToken();
+            setDriveConnected(false);
           }
         });
       }
@@ -211,59 +211,13 @@ export function AuthProvider({ children }) {
     };
   }, [showSuccess]);
 
-  /**
-   * Silently refresh the Drive OAuth token using Firebase's token refresh.
-   * This is 100% invisible — no popup, no redirect, no flicker.
-   * Returns true if a fresh Drive token was obtained, false otherwise.
-   */
-  const silentDriveRefresh = useCallback(async () => {
-    try {
-      const currentUser = auth?.currentUser;
-      if (!currentUser) return false;
-
-      // If token is still valid in memory, nothing to do
-      if (hasDriveAccess()) return true;
-
-      // Force-refresh the Firebase session token (pure background network call, zero UI)
-      await currentUser.getIdToken(true).catch(() => {});
-
-      // Check again — getIdToken won't give us a new Drive OAuth token,
-      // but it keeps the Firebase session alive. If the Drive token is still
-      // within its TTL (55 min window), we're good.
-      if (hasDriveAccess()) return true;
-
-      // Last resort: open a prompt=none popup — Google closes it immediately
-      // (no visible UI for the user) and returns a fresh credential.
-      // Fully swallowed if it throws for any reason.
-      const provider = createGoogleProvider({
-        prompt: 'none',
-        loginHint: currentUser.email || undefined,
-        drive: true,
-      });
-      const result = await signInWithPopup(auth, provider).catch(() => null);
-      if (result) {
-        saveTokenFromResult(result, true);
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  }, []);
-
-  const login = useCallback(async ({ drive = true, silent = false } = {}) => {
+  const login = useCallback(async ({ drive = true } = {}) => {
     if (!firebaseReady || !auth) {
       const configErr = window.__FIREBASE_ERROR__ || 'Firebase environment variables are missing.';
-      if (!silent) setAuthError(`Configuration error: ${configErr}`);
+      setAuthError(`Configuration error: ${configErr}`);
       return false;
     }
     if (authActionRef.current) return false;
-
-    // For silent background refreshes, never open any visible UI.
-    // Use silentDriveRefresh which is entirely invisible.
-    if (silent) {
-      return silentDriveRefresh();
-    }
 
     authActionRef.current = true;
     setAuthBusy(true);
@@ -317,7 +271,7 @@ export function AuthProvider({ children }) {
       authActionRef.current = false;
       setAuthBusy(false);
     }
-  }, [showSuccess, silentDriveRefresh]);
+  }, [showSuccess]);
 
   const logout = useCallback(async () => {
     if (!firebaseReady || !auth || authActionRef.current) return;
@@ -327,7 +281,15 @@ export function AuthProvider({ children }) {
     setAuthError('');
 
     try {
+      if (workerAvailable()) {
+        const idToken = await currentUser?.getIdToken().catch(() => null);
+        if (idToken) {
+          // Revoke token on the Worker (non-blocking)
+          cfRevokeToken(idToken).catch(() => {});
+        }
+      }
       clearDriveAccessToken();
+      setDriveConnected(false);
       await logUserAction(currentUser, 'sign_out', { status: 'success' }).catch(() => {});
       await signOut(auth);
       showSuccess('Signed out.');
@@ -355,12 +317,21 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      // First try a completely invisible background refresh (no UI at all)
-      const silentOk = await silentDriveRefresh();
-      if (silentOk) return true;
+      // Try the Cloudflare Worker refresh path first.
+      const idToken = await currentUser.getIdToken();
+      if (idToken && workerAvailable()) {
+        const result = await cfRefreshToken(idToken);
+        if (result?.access_token) {
+          setDriveAccessToken(result.access_token, result.expires_in * 1000, currentUser.uid);
+          setDriveConnected(true);
+          return true;
+        }
+        if (result?.needs_reauth) {
+          setDriveConnected(false);
+        }
+      }
 
-      // Only if silent fails do we show the user a visible re-auth popup
-      // This is user-initiated (they clicked Save to Drive), so a popup is expected
+      // If the Worker cannot refresh, fall back to an explicit user-facing reauth.
       const success = await login({ drive: true, silent: false });
       if (!success) throw new Error('Could not refresh Google Drive token.');
       return true;
@@ -368,18 +339,6 @@ export function AuthProvider({ children }) {
       console.error('[Auth] Drive re-auth failed:', error);
       throw new Error(getAuthErrorMessage(error));
     }
-  }, [user, login, silentDriveRefresh]);
-
-  useEffect(() => {
-    if (!user || !firebaseReady || !auth) return undefined;
-    const onVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') return;
-      if (isTokenExpiringSoon()) {
-        login({ drive: true, silent: true }).catch(() => {});
-      }
-    };
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
   }, [user, login]);
 
   return (
@@ -394,6 +353,8 @@ export function AuthProvider({ children }) {
       login,
       logout,
       ensureDriveToken,
+      driveConnected,
+      setDriveConnected,
     }}>
       {children}
     </AuthContext.Provider>
