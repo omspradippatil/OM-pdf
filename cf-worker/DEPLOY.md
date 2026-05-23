@@ -34,11 +34,11 @@ VITE_GOOGLE_DRIVE_OAUTH_CLIENT_ID=your-offline-client-id.apps.googleusercontent.
 CF_WORKER_GOOGLE_CLIENT_SECRET=your-offline-client-secret
 
 # Firebase Project ID (typically matches your Firebase console project ID)
-CF_WORKER_FIREBASE_PROJECT_ID=om-pdf-website
+CF_WORKER_FIREBASE_PROJECT_ID=your-firebase-project-id
 
-# Generate a random 64-char hex key (or keep the pre-generated one in .env)
+# Generate a random 64-char hex key
 # This key is used to encrypt Google refresh tokens inside Cloudflare KV.
-CF_WORKER_ENCRYPTION_KEY=702da4483ba770b01d70ad3d9597bdc48dc3e41095eb492c1ccfa9125e083649
+CF_WORKER_ENCRYPTION_KEY=your-64-char-hex-key
 ```
 
 ---
