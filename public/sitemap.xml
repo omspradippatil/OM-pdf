@@ -288,4 +288,22 @@
     <changefreq>monthly</changefreq>
     <priority>0.1</priority>
   </url>
+  <url>
+    <loc>https://om-pdf.netlify.app/pdf-to-pptx</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://om-pdf.netlify.app/html-to-pdf</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://om-pdf.netlify.app/esign-pdf</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
 </urlset>

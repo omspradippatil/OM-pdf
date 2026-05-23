@@ -296,6 +296,27 @@ export const SEO_METADATA = {
     keywords: "pdf voice reader, text to speech pdf, read aloud pdf, pdf accessibility, audio pdf reader",
     url: "https://om-pdf.netlify.app/voice-reader-pdf",
   },
+
+  pdfToPptx: {
+    title: "PDF to PowerPoint Converter Free | Offline PPTX Export | OM PDF",
+    description: "Convert every PDF page into a PowerPoint slide. No upload, fully offline. Works with any PDF — instant PPTX download.",
+    keywords: "pdf to powerpoint, pdf to pptx, convert pdf to pptx, pdf to slides, offline pdf converter, pdf to presentation",
+    url: "https://om-pdf.netlify.app/pdf-to-pptx",
+  },
+
+  htmlToPdf: {
+    title: "HTML to PDF Converter Online Free | Live Editor | OM PDF",
+    description: "Write HTML & CSS in a live editor and export a pixel-perfect PDF instantly. No upload, no server — runs entirely in your browser.",
+    keywords: "html to pdf, html to pdf converter, convert html to pdf, html css to pdf, online html pdf tool, browser html pdf",
+    url: "https://om-pdf.netlify.app/html-to-pdf",
+  },
+
+  esignPdf: {
+    title: "E-Sign PDF Online Free | Place Signature Fields | OM PDF",
+    description: "Add electronic signatures, names, dates and initials to PDFs by clicking to place fields on any page. 100% offline and free.",
+    keywords: "esign pdf, electronic signature pdf, sign pdf online, add signature to pdf, pdf esign tool, digital sign pdf free",
+    url: "https://om-pdf.netlify.app/esign-pdf",
+  },
 };
 
 /**
@@ -365,6 +386,12 @@ export function getSeoMetadata(toolKey) {
     'linearize': 'linearize',
     'voicereader': 'voiceReader',
     'voice_reader': 'voiceReader',
+    'pdftopptx': 'pdfToPptx',
+    'pdf_to_pptx': 'pdfToPptx',
+    'htmltopdf': 'htmlToPdf',
+    'html_to_pdf': 'htmlToPdf',
+    'esignpdf': 'esignPdf',
+    'esign_pdf': 'esignPdf',
   };
 
   const metadataKey = keyMap[key] || toolKey;

@@ -93,6 +93,9 @@ All tools run **100% locally in the browser** using client-side libraries (such 
 - 📏 **Custom Headers & Footers** — Add dynamic text labels and page numbers to margins.
 - 🔢 **Bates Numbering** — Assign sequential numbering for legal and medical indexing.
 - 🔊 **Voice Reader PDF** — Read document text aloud using a local text-to-speech engine.
+- 📊 **PDF to PowerPoint** — Convert each PDF page into a PowerPoint slide. Fully offline, exports `.pptx`.
+- 🌐 **HTML to PDF** — Write HTML & CSS in a live editor and export a pixel-perfect PDF instantly.
+- ✍️ **E-Sign PDF** — Place signature, name, date and initial fields on any page and download the signed PDF.
 
 ### 🛡️ Security & Metadata
 - 📝 **Metadata Editor** — View and edit standard properties (Title, Author, Subject, Keywords).

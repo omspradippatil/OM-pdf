@@ -935,4 +935,54 @@ Suggested 10 high-value, offline-first tools:
 - `README.md`
 - `AI_MEMORY.md`
 
+---
+
+## ✅ Completed (Session 21)
+
+### 3 New Fully-Offline Tools
+
+#### New Tools Added
+1. **PDF to PowerPoint (PPTX)** — `/pdf-to-pptx`
+2. **HTML to PDF (Live Code Editor)** — `/html-to-pdf`
+3. **Visual E-Sign PDF** — `/esign-pdf`
+
+#### Implementation Details
+
+**PDF to PPTX** (`src/pages/PdfToPptx.jsx`):
+- Uses `pdfjs-dist` (already in project) to render each PDF page to canvas at configurable scale
+- Uses `pptxgenjs` (newly installed) to assemble slides from JPEG canvas exports
+- Supports Widescreen 16:9 and Standard 4:3 slide formats
+- Shows thumbnail grid preview (first 8 pages) before conversion
+- Per-page progress bar during rendering
+
+**HTML to PDF** (`src/pages/HtmlToPdf.jsx`):
+- Split-pane layout: dark code textarea on left, live `<iframe>` preview on right
+- Uses `html2canvas` (newly installed) to capture rendered iframe DOM into canvas blocks
+- Uses `pdf-lib` to stitch canvas captures into a PDF with multi-page pagination
+- Supports A4, Letter, A3, Legal page sizes
+- Dark code editor with monospace font
+
+**E-Sign PDF** (`src/pages/EsignPdf.jsx`):
+- Click-to-place workflow: select field type → click canvas → field marker appears
+- Field types: Signature, Initial, Date, Name (each with distinct color)
+- Multi-page support: fields stored with `pageIndex`
+- Uses `pdf-lib` to stamp text values at exact % coordinates converted to PDF space
+- Sidebar shows live list of all placed fields (editable, deletable)
+
+#### New Dependencies Installed
+- `pptxgenjs@^3.12.0` — client-side PPTX generation
+- `html2canvas@^1.4.1` — DOM to canvas capture
+
+#### Files Modified/Created
+- `src/pages/PdfToPptx.jsx` (New)
+- `src/pages/HtmlToPdf.jsx` (New)
+- `src/pages/EsignPdf.jsx` (New)
+- `src/constants/tools.js` (3 new tool entries)
+- `src/constants/seoMetadata.js` (3 new SEO entries + keyMap)
+- `src/App.jsx` (3 lazy imports + 3 routes)
+- `public/sitemap.xml` (3 new URLs)
+- `README.md`
+- `AI_MEMORY.md`
+
+
 
