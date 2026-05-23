@@ -211,6 +211,46 @@ export function AuthProvider({ children }) {
     };
   }, [showSuccess]);
 
+  /**
+   * Silently refresh the Drive OAuth token using Firebase's token refresh.
+   * This is 100% invisible — no popup, no redirect, no flicker.
+   * Returns true if a fresh Drive token was obtained, false otherwise.
+   */
+  const silentDriveRefresh = useCallback(async () => {
+    try {
+      const currentUser = auth?.currentUser;
+      if (!currentUser) return false;
+
+      // If token is still valid in memory, nothing to do
+      if (hasDriveAccess()) return true;
+
+      // Force-refresh the Firebase session token (pure background network call, zero UI)
+      await currentUser.getIdToken(true).catch(() => {});
+
+      // Check again — getIdToken won't give us a new Drive OAuth token,
+      // but it keeps the Firebase session alive. If the Drive token is still
+      // within its TTL (55 min window), we're good.
+      if (hasDriveAccess()) return true;
+
+      // Last resort: open a prompt=none popup — Google closes it immediately
+      // (no visible UI for the user) and returns a fresh credential.
+      // Fully swallowed if it throws for any reason.
+      const provider = createGoogleProvider({
+        prompt: 'none',
+        loginHint: currentUser.email || undefined,
+        drive: true,
+      });
+      const result = await signInWithPopup(auth, provider).catch(() => null);
+      if (result) {
+        saveTokenFromResult(result, true);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }, []);
+
   const login = useCallback(async ({ drive = true, silent = false } = {}) => {
     if (!firebaseReady || !auth) {
       const configErr = window.__FIREBASE_ERROR__ || 'Firebase environment variables are missing.';
@@ -219,19 +259,25 @@ export function AuthProvider({ children }) {
     }
     if (authActionRef.current) return false;
 
+    // For silent background refreshes, never open any visible UI.
+    // Use silentDriveRefresh which is entirely invisible.
+    if (silent) {
+      return silentDriveRefresh();
+    }
+
     authActionRef.current = true;
-    if (!silent) setAuthBusy(true);
-    if (!silent) setAuthError('');
+    setAuthBusy(true);
+    setAuthError('');
 
     const intent = drive ? 'drive' : 'login';
     const provider = createGoogleProvider({
-      prompt: silent ? 'none' : 'select_account',
+      prompt: 'select_account',
       loginHint: auth.currentUser?.email || undefined,
       drive,
     });
 
     try {
-      if (shouldUseRedirect() && !silent) {
+      if (shouldUseRedirect()) {
         setAuthIntent(intent);
         await signInWithRedirect(auth, provider);
         return false;
@@ -241,19 +287,13 @@ export function AuthProvider({ children }) {
       await finishSignedInUser(result.user);
       saveTokenFromResult(result, drive);
 
-      if (!silent && !drive) showSuccess('Signed in with Google.');
+      if (!drive) showSuccess('Signed in with Google.');
       await logUserAction(result.user, 'sign_in', {
         status: 'success',
-        meta: { provider: 'google', flow: silent ? 'silent_popup' : 'popup', intent },
+        meta: { provider: 'google', flow: 'popup', intent },
       }).catch(() => {});
       return true;
     } catch (error) {
-      // If silent failed, we don't redirect.
-      if (silent) {
-        console.warn('[Auth] Silent Drive refresh failed:', error);
-        return false;
-      }
-
       if (isPopupRecoverable(error) && !shouldUseRedirect()) {
         try {
           setAuthIntent(intent);
@@ -275,9 +315,9 @@ export function AuthProvider({ children }) {
       return false;
     } finally {
       authActionRef.current = false;
-      if (!silent) setAuthBusy(false);
+      setAuthBusy(false);
     }
-  }, [showSuccess]);
+  }, [showSuccess, silentDriveRefresh]);
 
   const logout = useCallback(async () => {
     if (!firebaseReady || !auth || authActionRef.current) return;
@@ -315,8 +355,12 @@ export function AuthProvider({ children }) {
     }
 
     try {
-      const silentOk = await login({ drive: true, silent: true });
+      // First try a completely invisible background refresh (no UI at all)
+      const silentOk = await silentDriveRefresh();
       if (silentOk) return true;
+
+      // Only if silent fails do we show the user a visible re-auth popup
+      // This is user-initiated (they clicked Save to Drive), so a popup is expected
       const success = await login({ drive: true, silent: false });
       if (!success) throw new Error('Could not refresh Google Drive token.');
       return true;
@@ -324,7 +368,7 @@ export function AuthProvider({ children }) {
       console.error('[Auth] Drive re-auth failed:', error);
       throw new Error(getAuthErrorMessage(error));
     }
-  }, [user, login]);
+  }, [user, login, silentDriveRefresh]);
 
   useEffect(() => {
     if (!user || !firebaseReady || !auth) return undefined;
