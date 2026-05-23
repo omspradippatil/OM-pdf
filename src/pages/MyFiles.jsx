@@ -91,11 +91,13 @@ export default function MyFiles() {
         setDriveReady(false);
         return;
       }
-      const ok = await ensureDriveToken();
-      if (ok === false) {
-        setDriveError('Complete Google authorization, then click Refresh.');
-        setDriveReady(false);
-        return;
+      if (interactive) {
+        const ok = await ensureDriveToken();
+        if (ok === false) {
+          setDriveError('Complete Google authorization, then click Refresh.');
+          setDriveReady(false);
+          return;
+        }
       }
       let list;
       try {
