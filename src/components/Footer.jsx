@@ -72,6 +72,40 @@ export default function Footer() {
 
   return (
     <footer className="footer-v2">
+      <style>{`
+        .footer-os-section {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+          margin-top: 16px;
+        }
+        .os-badge-v2 {
+          display: inline-flex !important;
+          align-items: center !important;
+          gap: 8px !important;
+          background: rgba(37, 99, 235, 0.1) !important;
+          color: var(--primary) !important;
+          padding: 6px 12px !important;
+          border-radius: 100px !important;
+          font-size: 0.8rem !important;
+          font-weight: 700 !important;
+          text-decoration: none !important;
+          transition: all 0.2s !important;
+        }
+        .os-badge-v2:hover {
+          background: var(--primary) !important;
+          color: white !important;
+          transform: translateY(-2px) !important;
+        }
+        .support-badge-v2 {
+          background: rgba(236, 72, 153, 0.1) !important;
+          color: #ec4899 !important;
+        }
+        .support-badge-v2:hover {
+          background: #ec4899 !important;
+          color: white !important;
+        }
+      `}</style>
       <div className="footer-v2-container">
         <div className="footer-v2-main">
           <div className="footer-v2-brand">
