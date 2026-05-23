@@ -185,31 +185,47 @@ export default function MyFiles() {
         />
         {driveError && <div className="alert alert-warning"><span>⚠️ {driveError}</span></div>}
 
-        {!driveConnected && (
-          <div className="drive-setup-banner" style={{
-            background: 'rgba(38, 132, 252, 0.08)',
-            border: '1px dashed #2684FC',
-            borderRadius: '12px',
-            padding: '20px',
-            margin: '0 0 24px 0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '16px',
-            textAlign: 'left'
-          }}>
-            <div>
-              <h3 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)' }}>
-                Enable Silent Background Save ⚡
-              </h3>
-              <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)', maxWidth: 500 }}>
-                Link your Google Drive account to save your generated files in the background without any annoying authentication popups.
-              </p>
-            </div>
-            <DriveConnectButton label="Connect Google Drive" />
+        <div className="drive-setup-banner" style={{
+          background: driveConnected ? 'rgba(16, 185, 129, 0.08)' : 'rgba(38, 132, 252, 0.08)',
+          border: driveConnected ? '1px dashed #10B981' : '1px dashed #2684FC',
+          borderRadius: '12px',
+          padding: '20px',
+          margin: '0 0 24px 0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '16px',
+          textAlign: 'left'
+        }}>
+          <div>
+            <h3 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)' }}>
+              Enable Silent Background Save ⚡
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)', maxWidth: 520 }}>
+              {driveConnected
+                ? 'Status: Connected. Background token refresh is active for Google Drive saves.'
+                : 'Link your Google Drive account to save your generated files in the background without any annoying authentication popups.'}
+            </p>
           </div>
-        )}
+          {driveConnected ? (
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 12px',
+              borderRadius: '999px',
+              background: 'rgba(16, 185, 129, 0.12)',
+              color: '#059669',
+              fontWeight: 700,
+              fontSize: '0.85rem'
+            }}>
+              ✅ Connected
+            </span>
+          ) : (
+            <DriveConnectButton label="Connect Google Drive" />
+          )}
+        </div>
 
         {driveLoading && (
           <div className="mf-loading">
