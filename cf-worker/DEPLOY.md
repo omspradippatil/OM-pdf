@@ -9,7 +9,7 @@ This guide explains how to set up and deploy the Cloudflare Worker that enables 
 Since standard Firebase Auth popup logins do not return a `refresh_token` (a Google OAuth restriction), we use a separate, secondary Google OAuth flow that requests offline consent.
 
 1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2. Select your Firebase project (e.g., `om-pdf-website`).
+2. Select your Firebase project (e.g., `your-firebase-project-id`).
 3. Navigate to **APIs & Services** > **Credentials**.
 4. Click **Create Credentials** > **OAuth client ID**.
 5. Select **Application type**: `Web application`.
