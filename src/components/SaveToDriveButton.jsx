@@ -66,8 +66,8 @@ export default function SaveToDriveButton({ bytes, filename, toolFolder, mimeTyp
       try {
         result = await uploadToDrive(bytes, filename, user?.email || null, toolFolder, mimeType);
       } catch (uploadErr) {
-        // If 401, token was cleared in service. Try to renew once automatically.
-        if (uploadErr.message.includes('401')) {
+        // If the access token expired, renew once automatically through the Worker.
+        if (uploadErr.message.includes('401') || uploadErr.message.includes('DRIVE_TOKEN_EXPIRED')) {
           console.log('[Drive] Token expired, attempting auto-renewal...');
           const retryOk = await ensureDriveToken(true);
           if (retryOk) {

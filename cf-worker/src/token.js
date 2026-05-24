@@ -23,6 +23,11 @@ export async function exchangeCode(code, redirectUri, clientId, clientSecret) {
 
   const data = await resp.json();
   if (!resp.ok || data.error) {
+    console.error('[google-token-exchange]', {
+      status: resp.status,
+      error: data.error || null,
+      error_description: data.error_description || null,
+    });
     throw new Error(data.error_description || data.error || 'Code exchange failed');
   }
   if (!data.refresh_token) {

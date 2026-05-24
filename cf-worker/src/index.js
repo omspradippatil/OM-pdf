@@ -75,6 +75,42 @@ async function deleteRefreshToken(uid, env) {
   await env.DRIVE_TOKENS.delete(`rt:${uid}`);
 }
 
+async function keepDriveTokensWarm(env) {
+  let cursor;
+  let checked = 0;
+  let refreshed = 0;
+  let revoked = 0;
+  let failed = 0;
+
+  do {
+    const page = await env.DRIVE_TOKENS.list({ prefix: 'rt:', cursor });
+    cursor = page.cursor;
+
+    for (const key of page.keys || []) {
+      checked++;
+      try {
+        const encrypted = await env.DRIVE_TOKENS.get(key.name);
+        if (!encrypted) continue;
+
+        const refreshToken = await decrypt(encrypted, env.ENCRYPTION_KEY);
+        await refreshAccessToken(refreshToken, env.GOOGLE_CLIENT_ID, env.GOOGLE_CLIENT_SECRET);
+        refreshed++;
+      } catch (e) {
+        if (e.message === 'REFRESH_TOKEN_REVOKED') {
+          await env.DRIVE_TOKENS.delete(key.name);
+          revoked++;
+        } else {
+          failed++;
+          console.error('[scheduled-refresh]', key.name, e.message);
+        }
+      }
+    }
+  } while (cursor);
+
+  console.log('[scheduled-refresh]', { checked, refreshed, revoked, failed });
+  return { checked, refreshed, revoked, failed };
+}
+
 // ── Route handlers ────────────────────────────────────────────────────────
 
 /**
@@ -158,6 +194,10 @@ async function handleStatus(request, env) {
 
 // ── Main fetch handler ────────────────────────────────────────────────────
 export default {
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(keepDriveTokensWarm(env));
+  },
+
   async fetch(request, env) {
     // Handle CORS preflight
     if (request.method === 'OPTIONS') {

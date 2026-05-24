@@ -20,6 +20,11 @@ preview_id = "REPLACE_WITH_YOUR_KV_PREVIEW_ID" # used by `wrangler dev`
 [vars]
 WORKER_ENV = "production"
 
+# Server-side Drive maintenance. Runs even when the website is closed.
+# Touches stored Google refresh tokens regularly so Drive stays connected.
+[triggers]
+crons = ["*/50 * * * *"]
+
 # Secrets are set via:
 #   wrangler secret put GOOGLE_CLIENT_ID
 #   wrangler secret put GOOGLE_CLIENT_SECRET

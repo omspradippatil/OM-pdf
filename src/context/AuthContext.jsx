@@ -12,6 +12,7 @@ import {
 import {
   clearDriveAccessToken,
   hasDriveAccess,
+  isTokenExpiringSoon,
   loadStoredDriveToken,
   setDriveAccessToken,
 } from '../services/googleDrive';
@@ -19,7 +20,7 @@ import { ensureUserProfile } from '../services/userProfile';
 import { syncStatsWithCloud } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
 import {
-  cfExchangeCode,
+  cfDriveStatus,
   cfRefreshToken,
   cfRevokeToken,
   workerAvailable,
@@ -30,6 +31,7 @@ const AuthContext = createContext(null);
 const AUTH_INTENT_KEY = 'om_pdf_auth_intent';
 const SUCCESS_TIMEOUT_MS = 5000;
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+const DRIVE_REFRESH_INTERVAL_MS = 50 * 60 * 1000;
 
 function setAuthIntent(intent) {
   try {
@@ -148,6 +150,7 @@ export function AuthProvider({ children }) {
   const [driveConnected, setDriveConnected] = useState(false);
   const authActionRef = useRef(false);
   const successTimerRef = useRef(null);
+  const driveRefreshPromiseRef = useRef(null);
 
   const showSuccess = useCallback((message) => {
     setAuthSuccess(message);
@@ -157,6 +160,50 @@ export function AuthProvider({ children }) {
 
   useEffect(() => () => {
     if (successTimerRef.current) clearTimeout(successTimerRef.current);
+  }, []);
+
+  const refreshDriveFromWorker = useCallback(async (currentUser, { force = false } = {}) => {
+    if (!currentUser || !workerAvailable()) return false;
+    if (!force) {
+      loadStoredDriveToken(currentUser.uid);
+      if (hasDriveAccess() && !isTokenExpiringSoon()) {
+        setDriveConnected(true);
+        return true;
+      }
+    }
+
+    if (driveRefreshPromiseRef.current) return driveRefreshPromiseRef.current;
+
+    driveRefreshPromiseRef.current = (async () => {
+      try {
+        const idToken = await currentUser.getIdToken();
+        const result = await cfRefreshToken(idToken);
+        if (result?.access_token) {
+          setDriveAccessToken(result.access_token, result.expires_in * 1000, currentUser.uid);
+          setDriveConnected(true);
+          return true;
+        }
+        if (result?.needs_reauth) {
+          setDriveConnected(false);
+          return false;
+        }
+
+        const status = await cfDriveStatus(idToken);
+        if (status?.connected) {
+          setDriveConnected(true);
+          return false;
+        }
+        setDriveConnected(false);
+        return false;
+      } catch (error) {
+        console.warn('[Auth] Silent Drive refresh failed:', error);
+        return false;
+      } finally {
+        driveRefreshPromiseRef.current = null;
+      }
+    })();
+
+    return driveRefreshPromiseRef.current;
   }, []);
 
   useEffect(() => {
@@ -193,7 +240,9 @@ export function AuthProvider({ children }) {
           setUser(nextUser);
           setLoading(false);
           if (nextUser) {
-            setDriveConnected(loadStoredDriveToken(nextUser.uid));
+            const hasCachedToken = loadStoredDriveToken(nextUser.uid);
+            setDriveConnected(hasCachedToken);
+            void refreshDriveFromWorker(nextUser, { force: !hasCachedToken || isTokenExpiringSoon() });
             void finishSignedInUser(nextUser);
           } else {
             clearDriveAccessToken();
@@ -209,7 +258,34 @@ export function AuthProvider({ children }) {
       cancelled = true;
       if (unsubscribe) unsubscribe();
     };
-  }, [showSuccess]);
+  }, [showSuccess, refreshDriveFromWorker]);
+
+  useEffect(() => {
+    const currentUser = auth?.currentUser || user;
+    if (!currentUser) return undefined;
+
+    const refreshIfNeeded = () => {
+      loadStoredDriveToken(currentUser.uid);
+      if (isTokenExpiringSoon()) {
+        void refreshDriveFromWorker(currentUser, { force: true });
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refreshIfNeeded();
+    };
+
+    refreshIfNeeded();
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', refreshIfNeeded);
+    const timer = window.setInterval(refreshIfNeeded, DRIVE_REFRESH_INTERVAL_MS);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', refreshIfNeeded);
+      window.clearInterval(timer);
+    };
+  }, [user, refreshDriveFromWorker]);
 
   const login = useCallback(async ({ drive = true } = {}) => {
     if (!firebaseReady || !auth) {
@@ -306,29 +382,26 @@ export function AuthProvider({ children }) {
     }
   }, [showSuccess]);
 
-  const ensureDriveToken = useCallback(async (force = false) => {
+  const ensureDriveToken = useCallback(async (force = false, { interactive = true } = {}) => {
     if (!firebaseReady || !auth) throw new Error('Firebase is not configured.');
     const currentUser = auth.currentUser || user;
     if (!currentUser) throw new Error('Sign in with Google first.');
 
     if (!force) {
       loadStoredDriveToken(currentUser.uid);
-      if (hasDriveAccess()) return true;
+      if (hasDriveAccess() && !isTokenExpiringSoon()) {
+        setDriveConnected(true);
+        return true;
+      }
     }
 
     try {
       // Try the Cloudflare Worker refresh path first.
-      const idToken = await currentUser.getIdToken();
-      if (idToken && workerAvailable()) {
-        const result = await cfRefreshToken(idToken);
-        if (result?.access_token) {
-          setDriveAccessToken(result.access_token, result.expires_in * 1000, currentUser.uid);
-          setDriveConnected(true);
-          return true;
-        }
-        if (result?.needs_reauth) {
-          setDriveConnected(false);
-        }
+      const refreshed = await refreshDriveFromWorker(currentUser, { force: true });
+      if (refreshed) return true;
+
+      if (!interactive) {
+        return false;
       }
 
       // If the Worker cannot refresh, fall back to an explicit user-facing reauth.
@@ -339,7 +412,7 @@ export function AuthProvider({ children }) {
       console.error('[Auth] Drive re-auth failed:', error);
       throw new Error(getAuthErrorMessage(error));
     }
-  }, [user, login]);
+  }, [user, login, refreshDriveFromWorker]);
 
   return (
     <AuthContext.Provider value={{

@@ -13,7 +13,7 @@ import { setDriveAccessToken } from '../services/googleDrive';
 const REDIRECT_URI = `${window.location.origin}/drive-callback`;
 
 export default function DriveCallback() {
-  const { user, setDriveConnected } = useAuth();
+  const { user, ensureDriveToken, setDriveConnected } = useAuth();
   const navigate = useNavigate();
   const [status, setStatus] = useState('processing'); // processing | success | error
   const [message, setMessage] = useState('Connecting Google Drive…');
@@ -59,6 +59,12 @@ export default function DriveCallback() {
         const result  = await cfExchangeCode(idToken, code, REDIRECT_URI);
 
         if (!result || !result.access_token) {
+          const refreshed = await ensureDriveToken(true, { interactive: false });
+          if (refreshed) {
+            if (!cancelled) { setStatus('success'); setMessage('Google Drive connected! Redirecting...'); }
+            setTimeout(() => navigate('/my-files'), 1500);
+            return;
+          }
           throw new Error('Worker did not return an access token.');
         }
 

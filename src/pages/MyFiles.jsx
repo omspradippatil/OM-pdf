@@ -87,6 +87,9 @@ export default function MyFiles() {
     try {
       loadStoredDriveToken(user.uid);
       if (!interactive && !hasDriveAccess()) {
+        await ensureDriveToken(false, { interactive: false });
+      }
+      if (!interactive && !hasDriveAccess()) {
         setDriveError('Connect Google Drive to list your saved files.');
         setDriveReady(false);
         return;
@@ -103,7 +106,7 @@ export default function MyFiles() {
       try {
         list = await listDriveFiles(user?.email || null);
       } catch (listErr) {
-        if (listErr.message.includes('401')) {
+        if (listErr.message.includes('401') || listErr.message.includes('DRIVE_TOKEN_EXPIRED')) {
           const retryOk = await ensureDriveToken(true);
           if (retryOk) {
             list = await listDriveFiles(user?.email || null);

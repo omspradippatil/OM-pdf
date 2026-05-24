@@ -1005,5 +1005,41 @@ Suggested 10 high-value, offline-first tools:
 - `README.md`
 - `AI_MEMORY.md`
 
+---
 
+## Completed (Session 23) - Cloudflare Worker Drive Auto-Refresh Fix
+
+### Goal
+- Stop `/my-files` from repeatedly showing "Connect Google Drive to list your saved files" for users who already completed the Worker-backed offline Drive consent flow.
+- Replace stale browser-only token checks with Worker refresh-token renewal around Google's roughly 1-hour access token expiry window.
+
+### Root Cause
+- `AuthContext.jsx` only loaded the browser-cached access token on auth startup. If that short-lived token expired, `driveConnected` became false even though the Cloudflare Worker still had a valid refresh token.
+- `/my-files` used a non-interactive local-token check and showed the connect prompt before attempting the Worker `/api/drive/refresh` path.
+- Save/list retry logic only looked for literal `401` strings, while the Drive service often throws `DRIVE_TOKEN_EXPIRED`.
+
+### Architecture Change
+- [x] `AuthContext.jsx` now silently refreshes Drive tokens from the Cloudflare Worker on Firebase auth startup, tab focus, visibility changes, and a 50-minute interval before the 1-hour Google access token expiry window.
+- [x] Added a shared in-flight refresh promise so overlapping startup/focus/listing checks do not spam the Worker.
+- [x] `ensureDriveToken(force, { interactive })` now supports non-interactive refresh mode. Silent paths return `false` instead of opening Google auth.
+- [x] If the Worker reports stored Drive status but cannot provide an access token due to a transient issue, the UI can preserve the connected state instead of immediately pretending the user never linked Drive.
+- [x] `/my-files` now attempts `ensureDriveToken(false, { interactive: false })` before showing the connect warning.
+- [x] `SaveToDriveButton` and `MyFiles` now treat both `401` and `DRIVE_TOKEN_EXPIRED` as refreshable errors and retry once after Worker renewal.
+- [x] `cf-worker/wrangler.toml` now defines a Cloudflare Cron Trigger (`*/30 * * * *`) so the Worker wakes up every 30 minutes even when the website is closed.
+- [x] `cf-worker/src/index.js` now implements `scheduled()` maintenance that lists encrypted `rt:*` refresh tokens in KV, decrypts them, calls Google's refresh endpoint, and deletes revoked refresh tokens.
+- [x] `DriveCallback.jsx` now recovers from a callback response failure by immediately trying a silent Worker refresh if the backend already saved the refresh token.
+
+### Validation Performed
+- [x] `npm run build` passes.
+
+### Files Modified
+- `src/context/AuthContext.jsx`
+- `src/components/SaveToDriveButton.jsx`
+- `src/pages/MyFiles.jsx`
+- `src/pages/DriveCallback.jsx`
+- `cf-worker/wrangler.toml`
+- `cf-worker/src/index.js`
+- `cf-worker/src/token.js`
+- `README.md`
+- `AI_MEMORY.md`
 
