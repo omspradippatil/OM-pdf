@@ -59,6 +59,7 @@ const PdfToPptx = lazy(() => import('./pages/PdfToPptx'));
 const HtmlToPdf = lazy(() => import('./pages/HtmlToPdf'));
 const EsignPdf = lazy(() => import('./pages/EsignPdf'));
 const DriveCallback = lazy(() => import('./pages/DriveCallback'));
+const AllTools = lazy(() => import('./pages/AllTools'));
 
 export default function App() {
   const variantRoutes = getVariantRoutes();
@@ -81,6 +82,7 @@ export default function App() {
           <Suspense fallback={<div className="page-loader">Loading...</div>}>
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/tools" element={<AllTools />} />
               <Route path="/merge-pdf"    element={<MergePDF />} />
               <Route path="/split-pdf"    element={<SplitPDF />} />
               <Route path="/rotate-pdf"   element={<RotatePDF />} />

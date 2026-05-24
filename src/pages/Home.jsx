@@ -59,12 +59,6 @@ const faqSchema = {
 };
 
 export default function Home() {
-  const toolsRef = useRef(null);
-
-  const scrollToTools = (e) => {
-    e.preventDefault();
-    toolsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
 
   return (
     <div className="home-page">
@@ -109,9 +103,9 @@ export default function Home() {
                 </svg>
                 Merge PDF
               </Link>
-              <a href="#tools" className="btn-secondary" onClick={scrollToTools}>
+              <Link to="/tools" className="btn-secondary">
                 Explore All Tools →
-              </a>
+              </Link>
             </div>
 
             <div className="hero-trust-bar">
