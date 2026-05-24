@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
 import SEO from '../components/SEO';
 import { Link } from 'react-router-dom';
-import { TOOLS } from '../constants/tools';
 import PrivacyDashboard from '../components/PrivacyDashboard';
 import '../styles/Home.css';
 
@@ -144,40 +143,7 @@ export default function Home() {
 
 
 
-      {/* ══════════ ALL TOOLS GRID ══════════ */}
-      <section
-        id="tools"
-        ref={toolsRef}
-        className="tools-section"
-        aria-label="PDF Tools"
-      >
-        <div className="section-header">
-          <h2 className="section-title">Everything you need for PDFs</h2>
-          <p className="section-sub">Professional PDF tools — all free, all private, all local.</p>
-        </div>
 
-        <div className="tools-grid">
-          {TOOLS.map((tool) => (
-            <Link
-              key={tool.key}
-              to={tool.path}
-              className="tool-card"
-              style={{ '--card-color': tool.color }}
-              aria-label={`Open ${tool.title} tool`}
-            >
-              <div
-                className="tool-card-icon"
-                style={{ background: tool.color + '18', color: tool.color }}
-              >
-                {tool.icon}
-              </div>
-              <h3 className="tool-card-title">{tool.title}</h3>
-              <p className="tool-card-desc">{tool.desc}</p>
-              <span className="tool-card-cta">Use tool →</span>
-            </Link>
-          ))}
-        </div>
-      </section>
 
       {/* ══════════ PRIVACY COMPARISON ══════════ */}
       <section className="privacy-section" aria-label="Privacy comparison">
