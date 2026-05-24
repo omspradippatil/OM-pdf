@@ -233,6 +233,7 @@ OM PDF is engineered around a **local-first, security-hardened architecture** th
    - Silent background token refresh runs through the Cloudflare Worker on app startup, tab focus, visibility changes, and a 50-minute interval so access tokens are renewed before Google's 1-hour expiry window.
    - A Cloudflare Cron Trigger also runs the Worker every 30 minutes to refresh stored Drive refresh tokens while the website is closed, keeping long-lived Drive connections warm server-side.
    - Expired Drive API responses (`401` / `DRIVE_TOKEN_EXPIRED`) trigger one automatic Worker refresh and retry before showing any user-facing failure.
+   - If Google revokes or expires the stored refresh token, the Worker deletes the invalid KV entry and returns `needs_reauth`; the frontend then starts the Google offline consent flow again because OAuth re-consent requires user interaction.
    - `/my-files` now attempts a silent Worker refresh before displaying the "Connect Google Drive" prompt, so previously connected users do not see reconnect messaging just because the browser-cached access token expired.
    - A Cloudflare Worker fronts the Drive token API (`/api/drive/status`, `/api/drive/callback`, `/api/drive/refresh`, `/api/drive/revoke`) on an allowlisted origin via `VITE_CF_WORKER_URL`.
    - Safe try-catch boundaries prevent preflight CORS, worker, or backend failures from disrupting offline utility functionality.

@@ -1,6 +1,7 @@
 // src/components/DriveConnectButton.jsx
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
+import { beginDriveOAuthConnection } from '../services/driveOAuth';
 
 const GoogleDriveIcon = () => (
   <svg width="18" height="18" viewBox="0 0 87.3 78" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: 8 }}>
@@ -23,30 +24,12 @@ export default function DriveConnectButton({
 
   const handleConnect = (e) => {
     e.preventDefault();
-    const clientId = import.meta.env.VITE_GOOGLE_DRIVE_OAUTH_CLIENT_ID;
-    if (!clientId || clientId.includes('PASTE_YOUR')) {
-      alert('Google Drive client ID is not configured. Please add VITE_GOOGLE_DRIVE_OAUTH_CLIENT_ID to your .env file.');
+    try {
+      beginDriveOAuthConnection({ email: user?.email || null, redirectTo: redirectTo || '/my-files' });
+    } catch (error) {
+      alert(error.message);
       return;
     }
-
-    const redirectUri = encodeURIComponent(`${window.location.origin}/drive-callback`);
-    const scope = encodeURIComponent('https://www.googleapis.com/auth/drive.file email profile');
-    const state = encodeURIComponent(redirectTo || '/my-files');
-    const email = user?.email;
-
-    let authUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code` +
-      `&client_id=${encodeURIComponent(clientId)}` +
-      `&redirect_uri=${redirectUri}` +
-      `&scope=${scope}` +
-      `&access_type=offline` +
-      `&prompt=consent` +
-      `&state=${state}`;
-
-    if (email) {
-      authUrl += `&login_hint=${encodeURIComponent(email)}`;
-    }
-
-    window.location.href = authUrl;
   };
 
   return (

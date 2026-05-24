@@ -23,7 +23,7 @@ WORKER_ENV = "production"
 # Server-side Drive maintenance. Runs even when the website is closed.
 # Touches stored Google refresh tokens regularly so Drive stays connected.
 [triggers]
-crons = ["*/50 * * * *"]
+crons = ["*/30 * * * *"]
 
 # Secrets are set via:
 #   wrangler secret put GOOGLE_CLIENT_ID

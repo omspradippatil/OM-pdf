@@ -1028,6 +1028,8 @@ Suggested 10 high-value, offline-first tools:
 - [x] `cf-worker/wrangler.toml` now defines a Cloudflare Cron Trigger (`*/30 * * * *`) so the Worker wakes up every 30 minutes even when the website is closed.
 - [x] `cf-worker/src/index.js` now implements `scheduled()` maintenance that lists encrypted `rt:*` refresh tokens in KV, decrypts them, calls Google's refresh endpoint, and deletes revoked refresh tokens.
 - [x] `DriveCallback.jsx` now recovers from a callback response failure by immediately trying a silent Worker refresh if the backend already saved the refresh token.
+- [x] Added shared `src/services/driveOAuth.js` so all re-auth paths use the same Google offline consent URL (`access_type=offline`, `prompt=consent`).
+- [x] `ensureDriveToken()` now redirects to the offline Drive consent flow when the Worker cannot refresh because the refresh token is missing, revoked, or expired. Cloudflare cannot complete this re-auth server-side because Google requires user consent.
 
 ### Validation Performed
 - [x] `npm run build` passes.
@@ -1037,9 +1039,10 @@ Suggested 10 high-value, offline-first tools:
 - `src/components/SaveToDriveButton.jsx`
 - `src/pages/MyFiles.jsx`
 - `src/pages/DriveCallback.jsx`
+- `src/services/driveOAuth.js`
+- `src/components/DriveConnectButton.jsx`
 - `cf-worker/wrangler.toml`
 - `cf-worker/src/index.js`
 - `cf-worker/src/token.js`
 - `README.md`
 - `AI_MEMORY.md`
-

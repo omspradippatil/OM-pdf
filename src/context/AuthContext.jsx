@@ -25,6 +25,7 @@ import {
   cfRevokeToken,
   workerAvailable,
 } from '../services/cfTokenService';
+import { beginDriveOAuthConnection } from '../services/driveOAuth';
 
 const AuthContext = createContext(null);
 
@@ -404,15 +405,18 @@ export function AuthProvider({ children }) {
         return false;
       }
 
-      // If the Worker cannot refresh, fall back to an explicit user-facing reauth.
-      const success = await login({ drive: true, silent: false });
-      if (!success) throw new Error('Could not refresh Google Drive token.');
-      return true;
+      // If the Worker cannot refresh, the stored Google refresh token is missing,
+      // revoked, or expired. Only the browser can complete Google's consent screen.
+      beginDriveOAuthConnection({
+        email: currentUser.email || null,
+        redirectTo: `${window.location.pathname}${window.location.search}` || '/my-files',
+      });
+      return false;
     } catch (error) {
       console.error('[Auth] Drive re-auth failed:', error);
       throw new Error(getAuthErrorMessage(error));
     }
-  }, [user, login, refreshDriveFromWorker]);
+  }, [user, refreshDriveFromWorker]);
 
   return (
     <AuthContext.Provider value={{
