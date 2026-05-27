@@ -237,6 +237,7 @@ OM PDF is engineered around a **local-first, security-hardened architecture** th
    - `/my-files` now attempts a silent Worker refresh before displaying the "Connect Google Drive" prompt, so previously connected users do not see reconnect messaging just because the browser-cached access token expired.
    - A Cloudflare Worker fronts the Drive token API (`/api/drive/status`, `/api/drive/callback`, `/api/drive/refresh`, `/api/drive/revoke`) on an allowlisted origin via `VITE_CF_WORKER_URL`.
    - Safe try-catch boundaries prevent preflight CORS, worker, or backend failures from disrupting offline utility functionality.
+   - **Cross-device State Synchronization**: The UI immediately resolves its local Drive connection status (preventing false "Not connected" warnings) without needing a secondary refresh, seamlessly tracking authentication state across new devices when valid Drive tokens are retrieved via backend sync or popup consent.
 4. **Google Search Console Optimization**: The SEO system implements:
    - Dynamic page canonical URL injection using `react-helmet-async` to prevent duplicate indexing.
    - Sitemap exclusions (`sitemap.xml`) and robots directives (`robots.txt`) for private/account URLs (`/my-files` and `/feedback`) utilizing the `noindex, nofollow, noarchive` rules.

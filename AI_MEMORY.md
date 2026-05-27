@@ -1046,3 +1046,24 @@ Suggested 10 high-value, offline-first tools:
 - `cf-worker/src/token.js`
 - `README.md`
 - `AI_MEMORY.md`
+
+---
+
+## Completed (Session 24) - Drive UI Connection Status Fix
+
+### Goal
+- Fix an issue where logging into a new device correctly fetched and saved the Google Drive access token, but the UI (like `MyFiles.jsx`) incorrectly showed "Not connected".
+
+### Root Cause
+- In `AuthContext.jsx`, both `login` and `bootAuth` correctly called `saveTokenFromResult` which stored the valid Drive token. However, they ignored its boolean return value and never called `setDriveConnected(true)`.
+- As a result, the `driveConnected` React state remained `false`, causing the UI to display the connection prompt banner, even though the internal `accessToken` was present and working (`hasDriveAccess()` was true).
+
+### Architecture Change
+- [x] Updated `login` and `bootAuth` in `src/context/AuthContext.jsx` to explicitly call `setDriveConnected(true)` if `saveTokenFromResult(result, drive)` returns `true`.
+- [x] This ensures that immediately after a successful Google login that includes the Drive scope, the application UI accurately reflects the connected state without requiring a page reload or a secondary silent refresh.
+
+### Files Modified
+- `src/context/AuthContext.jsx`
+- `AI_MEMORY.md`
+- `README.md`
+

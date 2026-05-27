@@ -224,7 +224,9 @@ export function AuthProvider({ children }) {
           const drive = intent === 'drive';
 
           await finishSignedInUser(result.user);
-          saveTokenFromResult(result, drive);
+          if (saveTokenFromResult(result, drive)) {
+            setDriveConnected(true);
+          }
 
           if (!drive) showSuccess('Signed in with Google.');
           await logUserAction(result.user, 'sign_in', {
@@ -316,7 +318,9 @@ export function AuthProvider({ children }) {
 
       const result = await signInWithPopup(auth, provider);
       await finishSignedInUser(result.user);
-      saveTokenFromResult(result, drive);
+      if (saveTokenFromResult(result, drive)) {
+        setDriveConnected(true);
+      }
 
       if (!drive) showSuccess('Signed in with Google.');
       await logUserAction(result.user, 'sign_in', {
