@@ -60,6 +60,12 @@ const HtmlToPdf = lazy(() => import('./pages/HtmlToPdf'));
 const EsignPdf = lazy(() => import('./pages/EsignPdf'));
 const DriveCallback = lazy(() => import('./pages/DriveCallback'));
 const AllTools = lazy(() => import('./pages/AllTools'));
+const ExcelPdf = lazy(() => import('./pages/ExcelPdf'));
+const DarkModePdf = lazy(() => import('./pages/DarkModePdf'));
+const BookletPdf = lazy(() => import('./pages/BookletPdf'));
+const MarkdownPdf = lazy(() => import('./pages/MarkdownPdf'));
+const RemoveLinksPdf = lazy(() => import('./pages/RemoveLinksPdf'));
+const QrPdf = lazy(() => import('./pages/QrPdf'));
 
 export default function App() {
   const variantRoutes = getVariantRoutes();
@@ -128,6 +134,12 @@ export default function App() {
               <Route path="/drive-callback" element={<DriveCallback />} />
               <Route path="/html-to-pdf" element={<HtmlToPdf />} />
               <Route path="/esign-pdf" element={<EsignPdf />} />
+              <Route path="/excel-pdf" element={<ExcelPdf />} />
+              <Route path="/dark-mode-pdf" element={<DarkModePdf />} />
+              <Route path="/booklet-pdf" element={<BookletPdf />} />
+              <Route path="/markdown-pdf" element={<MarkdownPdf />} />
+              <Route path="/remove-links-pdf" element={<RemoveLinksPdf />} />
+              <Route path="/qr-pdf" element={<QrPdf />} />
               <Route path="/my-files"     element={<MyFiles />} />
               <Route path="/about" element={<About />} />
               <Route path="/privacy" element={<Privacy />} />

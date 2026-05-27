@@ -317,6 +317,48 @@ export const SEO_METADATA = {
     keywords: "esign pdf, electronic signature pdf, sign pdf online, add signature to pdf, pdf esign tool, digital sign pdf free",
     url: "https://om-pdf.netlify.app/esign-pdf",
   },
+
+  excelPdf: {
+    title: "Convert Excel to PDF & PDF to Excel Online Free | OM PDF",
+    description: "Convert spreadsheet tables to PDF or extract tabular data from PDFs to Excel (.xlsx/.csv) instantly. 100% offline and private.",
+    keywords: "excel to pdf, pdf to excel, convert xlsx to pdf, convert csv to pdf, pdf to csv, extract tables from pdf",
+    url: "https://om-pdf.netlify.app/excel-pdf",
+  },
+
+  darkModePdf: {
+    title: "Dark Mode PDF Online Free — Invert PDF Colors | OM PDF",
+    description: "Invert PDF colors to dark mode instantly in your browser. Perfect for night reading. 100% private, free, and offline.",
+    keywords: "dark mode pdf, invert pdf colors, night mode pdf, black background pdf, invert colors pdf online free",
+    url: "https://om-pdf.netlify.app/dark-mode-pdf",
+  },
+
+  bookletPdf: {
+    title: "Booklet Creator Online Free — Multiple Pages per Sheet | OM PDF",
+    description: "Put 2, 4, or 8 PDF pages onto a single sheet of paper (N-up layout). Save paper and create booklets offline.",
+    keywords: "booklet creator, n-up pdf, multiple pages per sheet, 2 pages per sheet pdf, print booklet pdf online",
+    url: "https://om-pdf.netlify.app/booklet-pdf",
+  },
+
+  markdownPdf: {
+    title: "Markdown to PDF Converter Online Free | Live Editor | OM PDF",
+    description: "Write markdown in a split-screen live editor and download it as a styled PDF. Zero-upload, 100% browser-based.",
+    keywords: "markdown to pdf, convert md to pdf, markdown editor online, compile markdown to pdf",
+    url: "https://om-pdf.netlify.app/markdown-pdf",
+  },
+
+  removeLinksPdf: {
+    title: "Remove Links from PDF Online Free | Sanitize PDF | OM PDF",
+    description: "Strip all clickable hyperlinks and annotations from your PDF. Secure, instant, and runs entirely in your browser.",
+    keywords: "remove links from pdf, strip hyperlinks pdf, remove url annotations, sanitize pdf links",
+    url: "https://om-pdf.netlify.app/remove-links-pdf",
+  },
+
+  qrPdf: {
+    title: "QR Code Generator to PDF Online Free | Bulk Print | OM PDF",
+    description: "Generate single or bulk QR codes and print them onto a PDF grid layout. 100% offline, private, and free.",
+    keywords: "qr code to pdf, bulk qr code generator, print qr codes, qr code grid pdf, label generator",
+    url: "https://om-pdf.netlify.app/qr-pdf",
+  },
 };
 
 /**
@@ -392,6 +434,18 @@ export function getSeoMetadata(toolKey) {
     'html_to_pdf': 'htmlToPdf',
     'esignpdf': 'esignPdf',
     'esign_pdf': 'esignPdf',
+    'excelpdf': 'excelPdf',
+    'excel_pdf': 'excelPdf',
+    'darkmodepdf': 'darkModePdf',
+    'dark_mode_pdf': 'darkModePdf',
+    'bookletpdf': 'bookletPdf',
+    'booklet_pdf': 'bookletPdf',
+    'markdownpdf': 'markdownPdf',
+    'markdown_pdf': 'markdownPdf',
+    'removelinkspdf': 'removeLinksPdf',
+    'remove_links_pdf': 'removeLinksPdf',
+    'qrpdf': 'qrPdf',
+    'qr_pdf': 'qrPdf',
   };
 
   const metadataKey = keyMap[key] || toolKey;

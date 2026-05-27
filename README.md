@@ -47,10 +47,16 @@ Merge or split PDF files instantly — right in your browser. No uploads, no sig
 - 🧼 **Sanitize Metadata** — remove hidden metadata fields
 - 📌 **Flatten Forms** — lock fillable fields into static content
 - 🧵 **PDF to Long Image** — export a single tall image
+- 📊 **Excel & PDF Converter** — convert spreadsheets to PDF and extract tables to Excel
+- 🌙 **Dark Mode PDF** — invert PDF page background colors for comfortable night reading
+- 📖 **Booklet Creator** — put 2, 4, or 8 PDF pages onto a single sheet of paper
+- 🧑💻 **Markdown to PDF** — write Markdown with a live styled preview
+- 🔗 **Remove Links** — strip all clickable hyperlink annotations from PDFs
+- 📸 **QR Code Generator** — generate bulk QR codes into printable PDF grids
 
 ---
 
-## 🛠️ Tool Directory (39 Offline-First Tools)
+## 🛠️ Tool Directory (45 Offline-First Tools)
 
 All tools run **100% locally in the browser** using client-side libraries (such as `pdf-lib`, `pdf.js`, and `qpdf` via WebAssembly). Files never leave your device.
 
@@ -66,6 +72,7 @@ All tools run **100% locally in the browser** using client-side libraries (such 
 - 🧩 **Merge with Ranges** — Merge multiple files using specific page range criteria per file.
 - 🧭 **Auto Rotate & Deskew** — Automatically fix skewed and misoriented pages.
 - 📐 **Crop PDF** — Crop margins and adjust page dimensions.
+- 📖 **Booklet Creator** — Arrange multiple PDF pages onto a single sheet (N-up layout) to create printable booklets.
 - ⚖️ **Compare PDF** — Visually or textually compare two PDFs side-by-side.
 - 🔍 **Inspect PDF** — Developer tool to extract structural elements, tags, and metadata to JSON.
 
@@ -79,6 +86,8 @@ All tools run **100% locally in the browser** using client-side libraries (such 
 - 🔍 **PDF to Text** — Extract all selectable text content from a PDF instantly.
 - 🤖 **OCR PDF** — Convert scanned images to searchable text documents locally.
 - ⚡ **Linearize PDF** — Optimize byte layout for Fast Web View in browsers.
+- 📊 **Excel & PDF Converter** — Convert Excel spreadsheets to PDF or extract tabular data to spreadsheet files.
+- 📸 **QR Code Generator** — Generate bulk QR codes from custom text and arrange them on a printable PDF grid.
 
 ### 📝 View & Edit
 - 🏷️ **Watermark PDF** — Add text or image watermarks with position, opacity, and angle controls.
@@ -86,6 +95,8 @@ All tools run **100% locally in the browser** using client-side libraries (such 
 - ✏️ **Edit PDF** — Draw, annotate, delete pages, rotate, and add content directly.
 - 🔢 **Page Numbers** — Add customizable page numbers (position, style, font, size).
 - ⚫ **Grayscale PDF** — Convert colored PDF pages to clean black-and-white grayscale.
+- 🌙 **Dark Mode PDF** — Invert PDF page colors to a high-contrast dark layout for night reading.
+- 🧑💻 **Markdown to PDF** — Write Markdown in a live editor and compile to a styled PDF.
 - 📏 **Resize Pages** — Standardize page sizes to common presets (A4, Letter, A3, etc.).
 - ⬚ **Add Margins** — Add or trim custom margins on all pages.
 - ⚖️ **Compare PDF** — Compare two PDFs side-by-side with visual and text diffs.
@@ -105,6 +116,7 @@ All tools run **100% locally in the browser** using client-side libraries (such 
 - 🧼 **Sanitize Metadata** — Deep clean hidden metadata and structural tags.
 - 📌 **Flatten Forms** — Flatten interactive form fields to prevent further editing.
 - ⬛ **Redact PDF** — Mask and sanitize sensitive data permanently from pages.
+- 🔗 **Remove Links** — Strip all clickable web reference hyperlink annotations from your PDF.
 
 ---
 
@@ -164,6 +176,9 @@ All packages are documented in [`DEPENDENCIES.md`](DEPENDENCIES.md).
 | `pdf-lib` | `^1.17.1` | PDF creation, merging, and manipulation (runs client-side) |
 | `pdfjs-dist` | `^5.6.205` | PDF rendering engine — generates thumbnail previews |
 | `jszip` | `^3.10.1` | ZIP archive creation — bundles split pages into one download |
+| `xlsx` | `^0.18.5` | Spreadsheet parsing and generation (runs client-side) |
+| `marked` | `^12.0.1` | Markdown parser and rendering engine (runs client-side) |
+| `qrcode` | `^1.5.3` | QR Code pattern generator (runs client-side) |
 | `vite` *(dev)* | `^5.2.0` | Build tool and dev server |
 
 ---

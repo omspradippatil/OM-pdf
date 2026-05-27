@@ -1067,3 +1067,49 @@ Suggested 10 high-value, offline-first tools:
 - `AI_MEMORY.md`
 - `README.md`
 
+---
+
+## ✅ Completed (Session 25) — Implementation of 6 New Offline PDF Tools
+
+### Goal
+- Add 6 new high-value client-side PDF tools: Excel & PDF Converter, Dark Mode PDF, Booklet Creator, Markdown to PDF, Remove Links, and QR Code Generator.
+- Enforce the 100% offline-first, browser-only execution policy.
+
+### Implementation Details
+1. **Excel & PDF Converter** (`ExcelPdf.jsx`):
+   - Excel to PDF: Uses `xlsx` to parse spreadsheet matrices and renders to styled HTML frames before compiling into PDF pages via `html2canvas` + `pdf-lib`.
+   - PDF to Excel: Uses `pdfjs-dist` to extract character bounding coordinates and groups them into tabular worksheet columns/rows before exporting as `.xlsx` or `.csv`.
+2. **Dark Mode PDF** (`DarkModePdf.jsx`):
+   - Renders pages to canvas via `pdfjs-dist` and inverts RGB channel bytes mathematically. Re-embeds the resulting images into a dark-themed PDF output via `pdf-lib`.
+3. **Booklet Creator** (`BookletPdf.jsx`):
+   - Arranges multiple source PDF pages onto A4/Letter sheets using custom column/row N-up layout grids (2-up, 4-up, 8-up) and page coordinate translations.
+4. **Markdown to PDF** (`MarkdownPdf.jsx`):
+   - Monospace Markdown split-screen editor that translates Markdown in real-time to a preview iframe using `marked` styled with GitHub print styles. Generates PDFs via `html2canvas` + `pdf-lib`.
+5. **Remove Links** (`RemoveLinksPdf.jsx`):
+   - Lower-level PDF dictionary walking that filters out `/Link` subtype annotations from pages' `/Annots` array to sanitize clickable links.
+6. **QR Code Generator** (`QrPdf.jsx`):
+   - Generates bulk QR code labels from list arrays via `qrcode` and arranges them on printable PDF grid patterns.
+
+### Routing, SEO, and Build Setup
+- **`src/constants/tools.js`**: Registered all 6 tools in mega-menu metadata.
+- **`src/constants/seoMetadata.js`**: Configured custom low-competition titles, descriptions, and key-mappings.
+- **`src/App.jsx`**: Wired lazy route components for all new tools.
+- **`public/sitemap.xml`**: Appended sitemap discovery paths.
+- **`DEPENDENCIES.md` & `README.md`**: Updated dependency tables to document new runtime packages.
+- **Build Verification**: Executed `npm run build` which successfully bundled the app and executed `prerender-seo.js` to create static HTML configurations for all 49 pages.
+
+### Files Modified/Created
+- `src/pages/ExcelPdf.jsx` (New)
+- `src/pages/DarkModePdf.jsx` (New)
+- `src/pages/BookletPdf.jsx` (New)
+- `src/pages/MarkdownPdf.jsx` (New)
+- `src/pages/RemoveLinksPdf.jsx` (New)
+- `src/pages/QrPdf.jsx` (New)
+- `src/constants/tools.js`
+- `src/constants/seoMetadata.js`
+- `src/App.jsx`
+- `public/sitemap.xml`
+- `README.md`
+- `DEPENDENCIES.md`
+- `AI_MEMORY.md`
+
