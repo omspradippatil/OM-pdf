@@ -141,6 +141,10 @@ export default function Navbar() {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     My Files
                   </Link>
+                  <Link to="/profile" className="dropdown-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    My Profile
+                  </Link>
                   <button className="dropdown-item logout" onClick={logout} disabled={authBusy}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
                     Logout
@@ -198,7 +202,12 @@ export default function Navbar() {
             ))}
             <div className="mobile-auth-section">
               {user 
-                ? <button className="mobile-link-btn logout" onClick={logout} disabled={authBusy}>Logout</button>
+                ? (
+                  <>
+                    <Link to="/profile" className="mobile-link-btn" onClick={() => setMenuOpen(false)}>My Profile</Link>
+                    <button className="mobile-link-btn logout" onClick={logout} disabled={authBusy}>Logout</button>
+                  </>
+                )
                 : <button className="mobile-link-btn login" onClick={() => login()} disabled={authBusy}><GoogleIcon /> Sign In with Google</button>
               }
             </div>

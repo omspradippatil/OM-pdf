@@ -67,6 +67,7 @@ const BookletPdf = lazy(() => import('./pages/BookletPdf'));
 const MarkdownPdf = lazy(() => import('./pages/MarkdownPdf'));
 const RemoveLinksPdf = lazy(() => import('./pages/RemoveLinksPdf'));
 const QrPdf = lazy(() => import('./pages/QrPdf'));
+const Profile = lazy(() => import('./pages/Profile'));
 
 export default function App() {
   const variantRoutes = getVariantRoutes();
@@ -143,6 +144,7 @@ export default function App() {
                 <Route path="/remove-links-pdf" element={<RemoveLinksPdf />} />
                 <Route path="/qr-pdf" element={<QrPdf />} />
                 <Route path="/my-files"     element={<MyFiles />} />
+                <Route path="/profile"      element={<Profile />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/how-it-works" element={<HowItWorks />} />
