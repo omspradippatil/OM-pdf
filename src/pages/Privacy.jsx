@@ -1,4 +1,5 @@
 import React from 'react';
+import { useExport } from '../context/ExportContext';
 import SEO from '../components/SEO';
 
 export default function Privacy() {

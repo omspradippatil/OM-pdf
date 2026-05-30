@@ -8,6 +8,7 @@ import PdfCanvas from '../components/PdfCanvas';
 import { downloadBytes } from '../splitPdf';
 import { formatBytes } from '../fileManager';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
@@ -59,7 +60,7 @@ export default function PageNumbers() {
     try {
       const bytes = await addPageNumbers(file, opts, setProgress);
       const name  = `${(filename.trim()||'numbered')}_${new Date().toISOString().slice(0,10)}.pdf`;
-      downloadBytes(bytes, name);
+      triggerExport(bytes, name, 'application/pdf', "Page Numbers");
       lastBytesRef.current = bytes; lastNameRef.current = name;
       setSuccess(`"${name}" — page numbers added`);
       addRecentFile({ tool:'page_numbers', name, size:bytes.byteLength||0, pages });
@@ -133,7 +134,7 @@ export default function PageNumbers() {
           </div>
           <div className="ux-result-body">
             <div className="ux-result-actions">
-               <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => downloadBytes(lastBytesRef.current, lastNameRef.current)}>
+               <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => triggerExport(lastBytesRef.current, lastNameRef.current, 'application/pdf', "Page Numbers")}>
                 ↓ Download
               </button>
               <SaveToDriveButton bytes={lastBytesRef.current} filename={lastNameRef.current} toolFolder="Page Numbers" />

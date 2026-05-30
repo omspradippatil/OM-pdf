@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import SEO from '../components/SEO';
 import { db, collection, addDoc, serverTimestamp } from '../firebase';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 
 const SendIcon = ({ size }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

@@ -7,18 +7,13 @@ import RecentFilesPanel from '../components/RecentFilesPanel';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import PdfCanvas from '../components/PdfCanvas';
 
-function downloadBytes(bytes, name) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-  const a = document.createElement('a'); a.href = url; a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-}
 
 function hexToRgb(hex) {
   const clean = hex.replace('#', '').trim();
@@ -77,6 +72,7 @@ async function applyHeadersFooters(file, settings, onProgress) {
 }
 
 export default function HeadersFootersPdf() {
+  const { triggerExport } = useExport();
   const { user } = useAuth();
   const [file, setFile] = useState(null);
   const [progress, setProgress] = useState(0);
@@ -104,7 +100,7 @@ export default function HeadersFootersPdf() {
     try {
       const bytes = await applyHeadersFooters(file, { headerText, footerText, fontSize, color, margin }, setProgress);
       const name = file.name.replace(/\.pdf$/i, '_hf.pdf');
-      downloadBytes(bytes, name);
+      triggerExport(bytes, name, 'application/pdf', "HeadersFooters");
       setLastBytes(bytes); setLastName(name);
       setSuccess(`"${name}" created!`);
       addRecentFile({ tool: 'headers_footers', name, size: bytes.byteLength || 0 });
@@ -162,7 +158,7 @@ export default function HeadersFootersPdf() {
             <p className="ux-result-success-title">Successfully Applied!</p>
           </div>
           <div className="ux-result-body">
-             <button className="ux-btn-primary" onClick={() => downloadBytes(lastBytes, lastName)}>↓ Download</button>
+             <button className="ux-btn-primary" onClick={() => triggerExport(lastBytes, lastName, 'application/pdf', "HeadersFooters")}>↓ Download</button>
              <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="HeadersFooters" />
           </div>
         </div>

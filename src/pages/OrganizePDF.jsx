@@ -6,6 +6,7 @@ import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import RecentFilesPanel from '../components/RecentFilesPanel';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';

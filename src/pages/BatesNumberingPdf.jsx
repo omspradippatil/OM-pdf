@@ -7,18 +7,13 @@ import RecentFilesPanel from '../components/RecentFilesPanel';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import JSZip from 'jszip';
 
-function downloadBytes(bytes, name) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: name.endsWith('.zip') ? 'application/zip' : 'application/pdf' }));
-  const a = document.createElement('a'); a.href = url; a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-}
 
 function hexToRgb(hex) {
   const clean = hex.replace('#', '').trim();
@@ -75,6 +70,7 @@ async function applyBatesNumbering(files, settings, onProgress) {
 }
 
 export default function BatesNumberingPdf() {
+  const { triggerExport } = useExport();
   const { user } = useAuth();
   const [files, setFiles] = useState([]);
   const [progress, setProgress] = useState(0);
@@ -103,7 +99,7 @@ export default function BatesNumberingPdf() {
     setError(''); setSuccess(''); setWorking(true); setProgress(10);
     try {
       const { bytes, name } = await applyBatesNumbering(files, { prefix, suffix, startIndex, padding, fontSize, color, margin }, setProgress);
-      downloadBytes(bytes, name);
+      triggerExport(bytes, name, 'application/pdf', "BatesNumbered");
       setLastBytes(bytes); setLastName(name);
       setSuccess(`"${name}" created!`);
       addRecentFile({ tool: 'bates_numbering', name, size: bytes.byteLength || 0 });
@@ -163,7 +159,7 @@ export default function BatesNumberingPdf() {
             <p className="ux-result-success-title">Successfully Stamped!</p>
           </div>
           <div className="ux-result-body">
-             <button className="ux-btn-primary" onClick={() => downloadBytes(lastBytes, lastName)}>↓ Download</button>
+             <button className="ux-btn-primary" onClick={() => triggerExport(lastBytes, lastName, 'application/pdf', "BatesNumbered")}>↓ Download</button>
              <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="BatesNumbered" />
           </div>
         </div>

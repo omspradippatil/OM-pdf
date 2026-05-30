@@ -6,6 +6,7 @@ import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
@@ -24,13 +25,6 @@ const FIELD_COLORS = {
 let nextId = 1;
 
 /* ─── Helpers ──────────────────────────────────────────────────── */
-function downloadBytes(bytes, name) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-  const a = document.createElement('a');
-  a.href = url; a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-}
 
 /** Draw text/value onto a PDF page at % coords using pdf-lib */
 async function applyFieldsToPdf(file, fields) {
@@ -68,6 +62,7 @@ function hexToRgb(hex) {
 
 /* ─── Component ────────────────────────────────────────────────── */
 export default function EsignPdf() {
+  const { triggerExport } = useExport();
   const { user } = useAuth();
   const [file, setFile]           = useState(null);
   const [pageCount, setPageCount] = useState(1);
@@ -129,7 +124,7 @@ export default function EsignPdf() {
       const bytes = await applyFieldsToPdf(file, filled);
       setProgress(90);
       const name = file.name.replace(/\.pdf$/i, '_signed.pdf');
-      downloadBytes(bytes, name);
+      triggerExport(bytes, name, 'application/pdf', "Signed");
       setLastBytes(bytes); setLastName(name);
       setSuccess(`"${name}" created with ${filled.length} field${filled.length !== 1 ? 's' : ''}!`);
       addRecentFile({ tool: 'esign_pdf', name, size: bytes.byteLength });
@@ -260,7 +255,7 @@ export default function EsignPdf() {
             <p className="ux-result-success-title">Signed!</p>
           </div>
           <div className="ux-result-body">
-            <button className="ux-btn-primary" onClick={() => downloadBytes(lastBytes, lastName)}>↓ Download Again</button>
+            <button className="ux-btn-primary" onClick={() => triggerExport(lastBytes, lastName, 'application/pdf', "Signed")}>↓ Download Again</button>
             <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Signed" />
           </div>
         </div>

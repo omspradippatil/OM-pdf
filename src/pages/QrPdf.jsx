@@ -10,6 +10,7 @@ import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 
 const DEFAULT_ITEMS = `https://om-pdf.netlify.app/merge-pdf
 https://om-pdf.netlify.app/split-pdf
@@ -19,6 +20,7 @@ OM-PDF Label 2
 OM-PDF Label 3`;
 
 export default function QrPdf() {
+  const { triggerExport } = useExport();
   const { user } = useAuth();
   const [inputText, setInputText] = useState(DEFAULT_ITEMS);
   const [filename, setFilename] = useState('qr_codes');
@@ -207,7 +209,7 @@ export default function QrPdf() {
           </div>
           <div className="ux-result-body">
             <div className="ux-result-actions">
-              <button className="ux-btn-primary" style={{ marginTop: 0 }} onClick={() => downloadBytes(lastBytes, lastName)}>↓ Download Again</button>
+              <button className="ux-btn-primary" style={{ marginTop: 0 }} onClick={() => triggerExport(lastBytes, lastName, 'application/pdf', "QRCodes")}>↓ Download Again</button>
               <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="QRCodes" />
             </div>
           </div>

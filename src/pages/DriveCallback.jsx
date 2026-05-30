@@ -7,12 +7,14 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { cfExchangeCode } from '../services/cfTokenService';
 import { setDriveAccessToken } from '../services/googleDrive';
 
 const REDIRECT_URI = `${window.location.origin}/drive-callback`;
 
 export default function DriveCallback() {
+  const { triggerExport } = useExport();
   const { user, ensureDriveToken, setDriveConnected } = useAuth();
   const navigate = useNavigate();
   const [status, setStatus] = useState('processing'); // processing | success | error

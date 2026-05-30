@@ -6,6 +6,7 @@ import {
 import { mergePDFs, downloadPDF, getPageCount, timestampedFilename } from '../pdfMerger';
 import { generateThumbnail } from '../thumbnailGenerator';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';

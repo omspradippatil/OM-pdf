@@ -6,6 +6,7 @@ import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import { formatBytes } from '../fileManager';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { generatePageThumbnails } from '../thumbnailGenerator';
 import { addRecentFile } from '../services/recentFiles';

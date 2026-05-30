@@ -13,16 +13,11 @@ import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 
-function downloadBytes(bytes, name, mimeType) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: mimeType }));
-  const a = document.createElement('a');
-  a.href = url; a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-}
 
 export default function ExcelPdf() {
+  const { triggerExport } = useExport();
   const { user } = useAuth();
   const [mode, setMode] = useState('excel2pdf'); // 'excel2pdf' or 'pdf2excel'
   const [file, setFile] = useState(null);
@@ -200,7 +195,7 @@ export default function ExcelPdf() {
       setProgress(95);
       const bytes = await pdfDoc.save();
       const name = file.name.substring(0, file.name.lastIndexOf('.')) + '_sheet.pdf';
-      downloadBytes(bytes, name, 'application/pdf');
+      triggerExport(bytes, name, 'application/pdf', "Excel");
 
       setLastBytes(bytes);
       setLastName(name);
@@ -307,7 +302,7 @@ export default function ExcelPdf() {
         type: 'array'
       });
 
-      downloadBytes(outBytes, name, mime);
+      triggerExport(outBytes, name, mime, "Excel");
       
       setLastBytes(outBytes);
       setLastName(name);
@@ -391,7 +386,7 @@ export default function ExcelPdf() {
           </div>
           <div className="ux-result-body">
             <div className="ux-result-actions">
-              <button className="ux-btn-primary" style={{ marginTop: 0 }} onClick={() => downloadBytes(lastBytes, lastName, mode === 'excel2pdf' ? 'application/pdf' : (exportType === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv'))}>↓ Download Again</button>
+              <button className="ux-btn-primary" style={{ marginTop: 0 }} onClick={() => triggerExport(lastBytes, lastName, mode === 'excel2pdf' ? 'application/pdf' : (exportType === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv', "Excel"))}>↓ Download Again</button>
               {mode === 'excel2pdf' && <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Excel" />}
             </div>
           </div>

@@ -7,17 +7,12 @@ import RecentFilesPanel from '../components/RecentFilesPanel';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
 import { PDFDocument } from 'pdf-lib';
 
-function downloadBytes(bytes, name) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-  const a = document.createElement('a'); a.href = url; a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-}
 
 // In a full production environment, this would use a qpdf-wasm worker to truly linearize the PDF layout.
 // For this MVP, we perform an optimization re-save using pdf-lib to ensure clean object streams.
@@ -39,6 +34,7 @@ async function linearizePdf(file, onProgress) {
 }
 
 export default function LinearizePdf() {
+  const { triggerExport } = useExport();
   const { user } = useAuth();
   const [file, setFile] = useState(null);
   const [progress, setProgress] = useState(0);
@@ -60,7 +56,7 @@ export default function LinearizePdf() {
     try {
       const bytes = await linearizePdf(file, setProgress);
       const name = file.name.replace(/\.pdf$/i, '_linearized.pdf');
-      downloadBytes(bytes, name);
+      triggerExport(bytes, name, 'application/pdf', "Optimized");
       setLastBytes(bytes); setLastName(name);
       setSuccess(`"${name}" created!`);
       addRecentFile({ tool: 'linearize', name, size: bytes.byteLength || 0 });
@@ -90,7 +86,7 @@ export default function LinearizePdf() {
             <p className="ux-result-success-title">Successfully Optimized!</p>
           </div>
           <div className="ux-result-body">
-             <button className="ux-btn-primary" onClick={() => downloadBytes(lastBytes, lastName)}>↓ Download Fast Web View PDF</button>
+             <button className="ux-btn-primary" onClick={() => triggerExport(lastBytes, lastName, 'application/pdf', "Optimized")}>↓ Download Fast Web View PDF</button>
              <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Optimized" />
           </div>
         </div>

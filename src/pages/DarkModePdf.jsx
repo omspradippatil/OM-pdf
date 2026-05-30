@@ -11,6 +11,7 @@ import { PDFDocument } from 'pdf-lib';
 import { formatBytes } from '../fileManager';
 import { generateThumbnail } from '../thumbnailGenerator';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
@@ -60,6 +61,7 @@ async function buildDarkModePdf(file, options, onProgress) {
 }
 
 export default function DarkModePdf() {
+  const { triggerExport } = useExport();
   const { user } = useAuth();
   const [file, setFile] = useState(null);
   const [pages, setPages] = useState(null);

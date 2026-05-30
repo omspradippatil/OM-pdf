@@ -11,6 +11,7 @@ import { pdfjsLib } from '../utils/pdfjs';
 import { formatBytes } from '../fileManager';
 import { generateThumbnail } from '../thumbnailGenerator';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
@@ -23,6 +24,7 @@ const PAGE_SIZES = {
 };
 
 export default function BookletPdf() {
+  const { triggerExport } = useExport();
   const { user } = useAuth();
   const [file, setFile] = useState(null);
   const [pages, setPages] = useState(null);

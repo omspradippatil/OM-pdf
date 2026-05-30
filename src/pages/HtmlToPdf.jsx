@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
+import { useExport } from '../context/ExportContext';
 import ToolPageLayout from '../components/ToolPageLayout';
 import ProgressBar from '../components/ProgressBar';
 import ToolSeoHead from '../components/ToolSeoHead';
@@ -39,15 +40,9 @@ const DEFAULT_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
-function downloadBytes(bytes, name) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-  const a = document.createElement('a');
-  a.href = url; a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-}
 
 export default function HtmlToPdf() {
+  const { triggerExport } = useExport();
   const [html, setHtml] = useState(DEFAULT_HTML);
   const [filename, setFilename] = useState('document');
   const [pageSize, setPageSize] = useState('A4');
@@ -119,7 +114,7 @@ export default function HtmlToPdf() {
       setProgress(95);
       const bytes = await pdfDoc.save();
       const name = `${filename || 'document'}_${new Date().toISOString().slice(0, 10)}.pdf`;
-      downloadBytes(bytes, name);
+      triggerExport(bytes, name, 'application/pdf', "Exported");
       setLastBytes(bytes); setLastName(name);
       setSuccess(`"${name}" created with ${numPages} page${numPages !== 1 ? 's' : ''}!`);
       addRecentFile({ tool: 'html_to_pdf', name, size: bytes.byteLength });
@@ -176,7 +171,7 @@ export default function HtmlToPdf() {
             <p className="ux-result-success-title">PDF Generated!</p>
           </div>
           <div className="ux-result-body">
-            <button className="ux-btn-primary" onClick={() => downloadBytes(lastBytes, lastName)}>↓ Download Again</button>
+            <button className="ux-btn-primary" onClick={() => triggerExport(lastBytes, lastName, 'application/pdf', "Exported")}>↓ Download Again</button>
           </div>
         </div>
       )}

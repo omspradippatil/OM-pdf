@@ -1,4 +1,5 @@
 import React from 'react';
+import { useExport } from '../context/ExportContext';
 import { Link, useParams } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { getBlogPost } from '../constants/blogPosts';

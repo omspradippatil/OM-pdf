@@ -4,6 +4,7 @@ import DropZone from '../components/DropZone';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { bumpLocalJob } from '../services/privacyStats';
 import { pdfjsLib } from '../utils/pdfjs';
@@ -80,6 +81,7 @@ function downloadJson(data, filename) {
 }
 
 export default function InspectPdf() {
+  const { triggerExport } = useExport();
   const { user } = useAuth();
   const [file, setFile] = useState(null);
   const [working, setWorking] = useState(false);

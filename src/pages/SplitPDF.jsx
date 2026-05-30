@@ -10,6 +10,7 @@ import { formatBytes } from '../fileManager';
 import { parsePageRanges, extractPages, splitEveryPage, splitEveryNPages, downloadBytes } from '../splitPdf';
 import { generatePageThumbnails } from '../thumbnailGenerator';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
@@ -73,7 +74,7 @@ export default function SplitPDF() {
         if (!indices.length) throw new Error('No valid pages in that range.');
         const bytes = await extractPages(file, indices);
         const name  = `${baseName}_pages.pdf`;
-        downloadBytes(bytes, name);
+        triggerExport(bytes, name, 'application/pdf', "Split");
         addRecentFile({ tool: 'split', name, size: bytes.byteLength || 0 });
         setSuccess(`Extracted ${indices.length} pages → "${name}"`);
         setLastResult({ bytes, name, mime: 'application/pdf' });
@@ -158,7 +159,7 @@ export default function SplitPDF() {
             <div className="ux-result-body">
               <div className="ux-result-actions">
                 <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => {
-                  if (lastResult.mime === 'application/pdf') downloadBytes(lastResult.bytes, lastResult.name);
+                  if (lastResult.mime === 'application/pdf') triggerExport(lastResult.bytes, lastResult.name, 'application/pdf', "Split");
                   else {
                     const url = URL.createObjectURL(lastResult.bytes);
                     const a = document.createElement('a'); a.href = url; a.download = lastResult.name;

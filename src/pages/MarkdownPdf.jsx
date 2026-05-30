@@ -10,6 +10,7 @@ import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 
 const DEFAULT_MARKDOWN = `# My Markdown Document
 
@@ -44,15 +45,9 @@ console.log(greet("OM PDF User"));
 Write your markdown on the left, preview it on the right, and download your styled PDF!
 `;
 
-function downloadBytes(bytes, name) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-  const a = document.createElement('a');
-  a.href = url; a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-}
 
 export default function MarkdownPdf() {
+  const { triggerExport } = useExport();
   const { user } = useAuth();
   const [markdown, setMarkdown] = useState(DEFAULT_MARKDOWN);
   const [filename, setFilename] = useState('document');
@@ -220,7 +215,7 @@ export default function MarkdownPdf() {
       setProgress(95);
       const bytes = await pdfDoc.save();
       const name = `${filename || 'document'}_markdown.pdf`;
-      downloadBytes(bytes, name);
+      triggerExport(bytes, name, 'application/pdf', "Markdown");
       setLastBytes(bytes); setLastName(name);
       setSuccess(`"${name}" created with ${numPages} page${numPages !== 1 ? 's' : ''}!`);
       
@@ -282,7 +277,7 @@ export default function MarkdownPdf() {
           </div>
           <div className="ux-result-body">
             <div className="ux-result-actions">
-              <button className="ux-btn-primary" style={{ marginTop: 0 }} onClick={() => downloadBytes(lastBytes, lastName)}>↓ Download Again</button>
+              <button className="ux-btn-primary" style={{ marginTop: 0 }} onClick={() => triggerExport(lastBytes, lastName, 'application/pdf', "Markdown")}>↓ Download Again</button>
               <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Markdown" />
             </div>
           </div>

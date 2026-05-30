@@ -10,6 +10,7 @@ import { formatBytes } from '../fileManager';
 import { parsePageRanges, extractPages, downloadBytes } from '../splitPdf';
 import { generatePageThumbnails } from '../thumbnailGenerator';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
@@ -98,7 +99,7 @@ export default function ExtractPages() {
       setProgress(85);
       const baseName = file.name.replace(/\.pdf$/i, '');
       const name = `${baseName}_extracted.pdf`;
-      downloadBytes(bytes, name);
+      triggerExport(bytes, name, 'application/pdf', "Extracted Pages");
       setLastBytes(bytes);
       setLastName(name);
       setSuccess(`Extracted ${indices.length} page${indices.length === 1 ? '' : 's'}.`);
@@ -155,7 +156,7 @@ export default function ExtractPages() {
           </div>
           <div className="ux-result-body">
             <div className="ux-result-actions">
-              <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => downloadBytes(lastBytes, lastName)}>
+              <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => triggerExport(lastBytes, lastName, 'application/pdf', "Extracted Pages")}>
                 Download Again
               </button>
               <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Extracted Pages" />

@@ -1,10 +1,12 @@
 import React from 'react';
+import { useExport } from '../context/ExportContext';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { TOOLS } from '../constants/tools';
 import '../styles/Home.css'; // Re-use the home grid styles
 
 export default function AllTools() {
+  const { triggerExport } = useExport();
   return (
     <div className="home-page" style={{ paddingTop: '80px', minHeight: '100vh' }}>
       <SEO 

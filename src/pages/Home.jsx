@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { useExport } from '../context/ExportContext';
 import SEO from '../components/SEO';
 import { Link } from 'react-router-dom';
 import PrivacyDashboard from '../components/PrivacyDashboard';

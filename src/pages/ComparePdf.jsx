@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useExport } from '../context/ExportContext';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ToolSeoHead from '../components/ToolSeoHead';
@@ -21,6 +22,7 @@ async function extractTextFromPdf(file) {
 }
 
 export default function ComparePdf() {
+  const { triggerExport } = useExport();
   const [file1, setFile1] = useState(null);
   const [file2, setFile2] = useState(null);
   

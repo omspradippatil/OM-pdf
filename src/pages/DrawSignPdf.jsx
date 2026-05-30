@@ -7,6 +7,7 @@ import RecentFilesPanel from '../components/RecentFilesPanel';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
@@ -15,12 +16,6 @@ import { PDFDocument } from 'pdf-lib';
 import PdfCanvas from '../components/PdfCanvas';
 import '../styles/WatermarkPDF.css'; // Reuse watermark styles for basic layout
 
-function downloadBytes(bytes, name) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-  const a = document.createElement('a'); a.href = url; a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-}
 
 // Generate an image from text
 function createTextSignature(text, fontColor) {
@@ -70,6 +65,7 @@ async function applySignature(file, sigDataUrl, pageIndex, xPct, yPct, scale, on
 }
 
 export default function DrawSignPdf() {
+  const { triggerExport } = useExport();
   const { user } = useAuth();
   const [file, setFile] = useState(null);
   const [progress, setProgress] = useState(0);
@@ -124,7 +120,7 @@ export default function DrawSignPdf() {
     try {
       const bytes = await applySignature(file, sigDataUrl, pageIndex, pos.x, pos.y, scale, setProgress);
       const name = file.name.replace(/\.pdf$/i, '_signed.pdf');
-      downloadBytes(bytes, name);
+      triggerExport(bytes, name, 'application/pdf', "Signed");
       setLastBytes(bytes); setLastName(name);
       setSuccess(`"${name}" created!`);
       addRecentFile({ tool: 'draw_sign', name, size: bytes.byteLength || 0 });
@@ -213,7 +209,7 @@ export default function DrawSignPdf() {
             <p className="ux-result-success-title">Signed Successfully!</p>
           </div>
           <div className="ux-result-body">
-             <button className="ux-btn-primary" onClick={() => downloadBytes(lastBytes, lastName)}>↓ Download</button>
+             <button className="ux-btn-primary" onClick={() => triggerExport(lastBytes, lastName, 'application/pdf', "Signed")}>↓ Download</button>
              <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Signed" />
           </div>
         </div>

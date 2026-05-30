@@ -7,6 +7,7 @@ import RecentFilesPanel from '../components/RecentFilesPanel';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
@@ -14,12 +15,6 @@ import { pdfjsLib } from '../utils/pdfjs';
 import Tesseract from 'tesseract.js';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
-function downloadBytes(bytes, name) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-  const a = document.createElement('a'); a.href = url; a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-}
 
 async function renderPageToDataURL(page) {
   const scale = 2; // Higher scale for better OCR
@@ -103,6 +98,7 @@ async function runOcrOnPdf(file, language, onProgress) {
 }
 
 export default function OcrPdf() {
+  const { triggerExport } = useExport();
   const { user } = useAuth();
   const [file, setFile] = useState(null);
   const [progress, setProgress] = useState(0);
@@ -126,7 +122,7 @@ export default function OcrPdf() {
     try {
       const bytes = await runOcrOnPdf(file, language, setProgress);
       const name = file.name.replace(/\.pdf$/i, '_ocr.pdf');
-      downloadBytes(bytes, name);
+      triggerExport(bytes, name, 'application/pdf', "OCR");
       setLastBytes(bytes); setLastName(name);
       setSuccess(`"${name}" created!`);
       addRecentFile({ tool: 'ocr', name, size: bytes.byteLength || 0 });
@@ -170,7 +166,7 @@ export default function OcrPdf() {
             <p className="ux-result-success-title">Successfully Converted!</p>
           </div>
           <div className="ux-result-body">
-             <button className="ux-btn-primary" onClick={() => downloadBytes(lastBytes, lastName)}>↓ Download Searchable PDF</button>
+             <button className="ux-btn-primary" onClick={() => triggerExport(lastBytes, lastName, 'application/pdf', "OCR")}>↓ Download Searchable PDF</button>
              <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="OCR" />
           </div>
         </div>

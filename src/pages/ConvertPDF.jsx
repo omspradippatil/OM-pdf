@@ -6,6 +6,7 @@ import SaveToDriveButton from '../components/SaveToDriveButton';
 import { pdfjsLib } from '../utils/pdfjs';
 import { formatBytes } from '../fileManager';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';

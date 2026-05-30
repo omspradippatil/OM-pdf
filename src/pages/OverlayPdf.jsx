@@ -7,18 +7,13 @@ import RecentFilesPanel from '../components/RecentFilesPanel';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
 import { PDFDocument } from 'pdf-lib';
 import PdfCanvas from '../components/PdfCanvas';
 
-function downloadBytes(bytes, name) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-  const a = document.createElement('a'); a.href = url; a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-}
 
 async function applyOverlay(primaryFile, templateFile, position, onProgress) {
   const bufPrimary = await primaryFile.arrayBuffer();
@@ -63,6 +58,7 @@ async function applyOverlay(primaryFile, templateFile, position, onProgress) {
 }
 
 export default function OverlayPdf() {
+  const { triggerExport } = useExport();
   const { user } = useAuth();
   const [primaryFile, setPrimaryFile] = useState(null);
   const [templateFile, setTemplateFile] = useState(null);
@@ -91,7 +87,7 @@ export default function OverlayPdf() {
     try {
       const bytes = await applyOverlay(primaryFile, templateFile, position, setProgress);
       const name = primaryFile.name.replace(/\.pdf$/i, '_overlayed.pdf');
-      downloadBytes(bytes, name);
+      triggerExport(bytes, name, 'application/pdf', "Overlayed");
       setLastBytes(bytes); setLastName(name);
       setSuccess(`"${name}" created!`);
       addRecentFile({ tool: 'overlay', name, size: bytes.byteLength || 0 });
@@ -128,7 +124,7 @@ export default function OverlayPdf() {
             <p className="ux-result-success-title">Successfully Overlayed!</p>
           </div>
           <div className="ux-result-body">
-             <button className="ux-btn-primary" onClick={() => downloadBytes(lastBytes, lastName)}>↓ Download</button>
+             <button className="ux-btn-primary" onClick={() => triggerExport(lastBytes, lastName, 'application/pdf', "Overlayed")}>↓ Download</button>
              <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Overlayed" />
           </div>
         </div>

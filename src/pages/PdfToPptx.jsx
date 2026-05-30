@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useExport } from '../context/ExportContext';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
@@ -33,6 +34,7 @@ async function renderPageToDataUrl(pdfDoc, pageNum, scale = 2.0) {
 }
 
 export default function PdfToPptx() {
+  const { triggerExport } = useExport();
   const [file, setFile] = useState(null);
   const [pageCount, setPageCount] = useState(0);
   const [thumbs, setThumbs] = useState([]);

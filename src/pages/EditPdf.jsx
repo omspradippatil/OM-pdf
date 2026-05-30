@@ -4,6 +4,7 @@ import DropZone from '../components/DropZone';
 import PdfCanvas from '../components/PdfCanvas';
 import ToolSeoHead from '../components/ToolSeoHead';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
@@ -38,6 +39,7 @@ function hexToRgb(hex) {
 }
 
 export default function EditPdf() {
+  const { triggerExport } = useExport();
   const { user } = useAuth();
   
   // File state (Map of docId -> File object)
@@ -435,11 +437,7 @@ export default function EditPdf() {
       const firstFileName = Object.values(sourceFiles)[0]?.name || 'document.pdf';
       const name = firstFileName.replace(/\.pdf$/i, '_edited.pdf');
       
-      const blob = new Blob([bytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = name;
-      document.body.appendChild(a); a.click();
-      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+      triggerExport(bytes, name, 'application/pdf', 'Edited');
 
       addRecentFile({ tool: 'edit_pdf', name, size: bytes.byteLength });
       bumpLocalJob();

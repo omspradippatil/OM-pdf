@@ -2978,3 +2978,56 @@ input[type='range'].ux-range::-moz-range-thumb {
   .ux-tool-icon { display: none; }
   .ux-privacy-banner { padding: 8px 16px; }
 }
+
+/* Modal Overlay Styles */
+.ux-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.2s ease;
+}
+.ux-modal-container {
+  background: var(--bg-card);
+  width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ux-modal-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ux-modal-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.ux-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.ux-modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+[data-theme='dark'] .ux-modal-overlay {
+  background: rgba(0, 0, 0, 0.75);
+}

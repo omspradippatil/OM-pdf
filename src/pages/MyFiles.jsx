@@ -1,6 +1,7 @@
 import SEO from '../components/SEO';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { listDriveFiles, deleteFromDrive, hasDriveAccess, loadStoredDriveToken } from '../services/googleDrive';
 import DriveConnectButton from '../components/DriveConnectButton';
 import { logUserAction } from '../services/activityLog';
@@ -74,6 +75,7 @@ function SectionHeader({ title, count, onRefresh, loading }) {
 
 /* ─── Main Component ── */
 export default function MyFiles() {
+  const { triggerExport } = useExport();
   const { user, login, ensureDriveToken, driveConnected } = useAuth();
 
   const [driveFiles, setDriveFiles]       = useState([]);

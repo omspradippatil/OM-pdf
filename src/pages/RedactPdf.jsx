@@ -7,6 +7,7 @@ import RecentFilesPanel from '../components/RecentFilesPanel';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
 import { useAuth } from '../context/AuthContext';
+import { useExport } from '../context/ExportContext';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
@@ -14,12 +15,6 @@ import { formatBytes } from '../fileManager';
 import { PDFDocument, rgb } from 'pdf-lib';
 import PdfCanvas from '../components/PdfCanvas';
 
-function downloadBytes(bytes, name) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-  const a = document.createElement('a'); a.href = url; a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-}
 
 async function redactPdf(file, boxesByPage, onProgress) {
   const buf = await file.arrayBuffer();
@@ -52,6 +47,7 @@ async function redactPdf(file, boxesByPage, onProgress) {
 }
 
 export default function RedactPdf() {
+  const { triggerExport } = useExport();
   const { user } = useAuth();
   const [file, setFile] = useState(null);
   const [progress, setProgress] = useState(0);
@@ -82,7 +78,7 @@ export default function RedactPdf() {
     try {
       const bytes = await redactPdf(file, boxesByPage, setProgress);
       const name = file.name.replace(/\.pdf$/i, '_redacted.pdf');
-      downloadBytes(bytes, name);
+      triggerExport(bytes, name, 'application/pdf', "Redacted");
       setLastBytes(bytes); setLastName(name);
       setSuccess(`"${name}" created!`);
       addRecentFile({ tool: 'redact', name, size: bytes.byteLength || 0 });
@@ -178,7 +174,7 @@ export default function RedactPdf() {
             <p className="ux-result-success-title">Successfully Redacted!</p>
           </div>
           <div className="ux-result-body">
-             <button className="ux-btn-primary" onClick={() => downloadBytes(lastBytes, lastName)}>↓ Download</button>
+             <button className="ux-btn-primary" onClick={() => triggerExport(lastBytes, lastName, 'application/pdf', "Redacted")}>↓ Download</button>
              <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Redacted" />
           </div>
         </div>
