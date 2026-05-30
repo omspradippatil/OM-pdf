@@ -68,6 +68,7 @@ const MarkdownPdf = lazy(() => import('./pages/MarkdownPdf'));
 const RemoveLinksPdf = lazy(() => import('./pages/RemoveLinksPdf'));
 const QrPdf = lazy(() => import('./pages/QrPdf'));
 const Profile = lazy(() => import('./pages/Profile'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 export default function App() {
   const variantRoutes = getVariantRoutes();
@@ -158,7 +159,7 @@ export default function App() {
                     element={toolComponents[route.toolKey]}
                   />
                 ))}
-                <Route path="*" element={<Home />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </main>
