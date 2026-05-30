@@ -336,7 +336,7 @@ This project uses a **Proprietary License** — see [LICENSE](LICENSE) for full 
 
 ## ⭐ Show Your Support
 
-If you found this project helpful, please give it a **⭐ star** on GitHub or consider [supporting the project](https://ompradippatil.netlify.app/donate/)!
+If you found this project helpful, please give it a **⭐ star** on GitHub or consider [supporting the project](https://ompradippatil.netlify.app/donate)!
 
 ---
 
