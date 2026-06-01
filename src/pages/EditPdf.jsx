@@ -9,6 +9,9 @@ import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { saveSession, loadSession, clearSession } from '../services/sessionRecovery';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import '../styles/EditPdf.css';
 
 // SVG Icons
@@ -39,6 +42,62 @@ function hexToRgb(hex) {
   } : { r: 0, g: 0, b: 0 };
 }
 
+const SortableThumbnail = ({ p, i, activePageId, setActivePageId, sourceFiles, addMenuOpenId, setAddMenuOpenId, rotatePage, deletePage, insertSecondaryFile, addBlankPageAfter }) => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: p.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: transform ? 1 : 0,
+    position: 'relative'
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="edit-pdf-thumbnail-wrap" {...attributes} {...listeners}>
+      <div 
+        className={`edit-pdf-thumbnail-card ${activePageId === p.id ? 'active' : ''}`}
+        onPointerDown={() => setActivePageId(p.id)}
+        style={{ transform: `rotate(${p.rotation}deg)` }}
+      >
+        {p.type === 'original' && sourceFiles[p.sourceDocId] ? (
+          <PdfCanvas file={sourceFiles[p.sourceDocId]} pageNumber={p.originalIndex + 1} width={136} />
+        ) : (
+          <div style={{ width: 136, height: 192, background: 'white' }} />
+        )}
+      </div>
+      <div className="edit-pdf-page-label">{i + 1}</div>
+      
+      <div className="edit-pdf-thumbnail-controls">
+        <button className="edit-pdf-thumbnail-btn" title="Add Page" onPointerDown={(e) => { e.stopPropagation(); setAddMenuOpenId(addMenuOpenId === p.id ? null : p.id); }}>
+          <IconPlus />
+        </button>
+        <button className="edit-pdf-thumbnail-btn" title="Rotate 90°" onPointerDown={(e) => { e.stopPropagation(); rotatePage(p.id); }}>
+          <IconRotate />
+        </button>
+        <button className="edit-pdf-thumbnail-btn" title="Delete page" onPointerDown={(e) => { e.stopPropagation(); deletePage(p.id); }}>
+          <IconTrash />
+        </button>
+      </div>
+
+      {addMenuOpenId === p.id && (
+        <div className="edit-pdf-add-menu" onPointerDown={e => e.stopPropagation()}>
+          <button className="edit-pdf-add-menu-btn" onClick={() => addBlankPageAfter(p.id)}>
+            Blank Page
+          </button>
+          <label className="edit-pdf-add-menu-btn">
+            Insert Another PDF
+            <input 
+              type="file" 
+              accept="application/pdf" 
+              style={{ display: 'none' }} 
+              onChange={(e) => insertSecondaryFile(e.target.files, p.id)} 
+            />
+          </label>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function EditPdf() {
   const { triggerExport } = useExport();
   const { user } = useAuth();
@@ -67,6 +126,24 @@ export default function EditPdf() {
 
   // Sidebar menus
   const [addMenuOpenId, setAddMenuOpenId] = useState(null);
+
+  // DnD Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 } // 5px drag required to differentiate from a click
+    })
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (active.id !== over?.id && over?.id) {
+      setPages((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   // Auto-Save / Recovery
   useEffect(() => {
@@ -620,54 +697,28 @@ export default function EditPdf() {
             <span>Pages</span>
             <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{pages.length}</span>
           </div>
-          <div className="edit-pdf-thumbnails">
-            {pages.map((p, i) => (
-              <div key={p.id} className="edit-pdf-thumbnail-wrap">
-                <div 
-                  className={`edit-pdf-thumbnail-card ${activePageId === p.id ? 'active' : ''}`}
-                  onClick={() => setActivePageId(p.id)}
-                  style={{ transform: `rotate(${p.rotation}deg)` }}
-                >
-                  {p.type === 'original' && sourceFiles[p.sourceDocId] ? (
-                    <PdfCanvas file={sourceFiles[p.sourceDocId]} pageNumber={p.originalIndex + 1} width={136} />
-                  ) : (
-                    <div style={{ width: 136, height: 192, background: 'white' }} />
-                  )}
-                </div>
-                <div className="edit-pdf-page-label">{i + 1}</div>
-                
-                <div className="edit-pdf-thumbnail-controls">
-                  <button className="edit-pdf-thumbnail-btn" title="Add Page" onClick={(e) => { e.stopPropagation(); setAddMenuOpenId(addMenuOpenId === p.id ? null : p.id); }}>
-                    <IconPlus />
-                  </button>
-                  <button className="edit-pdf-thumbnail-btn" title="Rotate 90°" onClick={(e) => { e.stopPropagation(); rotatePage(p.id); }}>
-                    <IconRotate />
-                  </button>
-                  <button className="edit-pdf-thumbnail-btn" title="Delete page" onClick={(e) => { e.stopPropagation(); deletePage(p.id); }}>
-                    <IconTrash />
-                  </button>
-                </div>
-
-                {/* Add Page Modal/Menu */}
-                {addMenuOpenId === p.id && (
-                  <div className="edit-pdf-add-menu">
-                    <button className="edit-pdf-add-menu-btn" onClick={() => addBlankPageAfter(p.id)}>
-                      Blank Page
-                    </button>
-                    <label className="edit-pdf-add-menu-btn">
-                      Insert Another PDF
-                      <input 
-                        type="file" 
-                        accept="application/pdf" 
-                        style={{ display: 'none' }} 
-                        onChange={(e) => insertSecondaryFile(e.target.files, p.id)} 
-                      />
-                    </label>
-                  </div>
-                )}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={pages.map(p => p.id)} strategy={verticalListSortingStrategy}>
+              <div className="edit-pdf-thumbnails">
+                {pages.map((p, i) => (
+                  <SortableThumbnail 
+                    key={p.id}
+                    p={p}
+                    i={i}
+                    activePageId={activePageId}
+                    setActivePageId={setActivePageId}
+                    sourceFiles={sourceFiles}
+                    addMenuOpenId={addMenuOpenId}
+                    setAddMenuOpenId={setAddMenuOpenId}
+                    rotatePage={rotatePage}
+                    deletePage={deletePage}
+                    insertSecondaryFile={insertSecondaryFile}
+                    addBlankPageAfter={addBlankPageAfter}
+                  />
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         </div>
 
         {/* Main Canvas Workspace */}

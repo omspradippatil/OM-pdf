@@ -5,7 +5,7 @@ import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
 import RecentFilesPanel from '../components/RecentFilesPanel';
 import SaveToDriveButton from '../components/SaveToDriveButton';
-import { PDFDocument, StandardFonts } from 'pdf-lib';
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
@@ -122,7 +122,7 @@ export default function QrPdf() {
             y: textY,
             size: 7,
             font: helveticaFont,
-            color: pdfDoc.context.obj(0.2) // dark gray
+            color: rgb(0.2, 0.2, 0.2) // dark gray
           });
         }
       }
