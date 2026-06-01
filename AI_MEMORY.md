@@ -1110,6 +1110,27 @@ Suggested 10 high-value, offline-first tools:
 - `src/App.jsx`
 - `public/sitemap.xml`
 - `README.md`
-- `DEPENDENCIES.md`
 - `AI_MEMORY.md`
+
+---
+
+## ✅ Completed (Session 26) — Drive Token Auto-Refresh UI Fix
+
+### Goal
+- Fix a UI issue where logging into a new device with an existing email would incorrectly show a "reconnect background refresh" warning, despite the Cloudflare Worker actively maintaining a valid Drive refresh token for that user.
+
+### Root Cause
+- When a user logged into a new device, their short-lived Google access token was saved, but if a silent background refresh from the Cloudflare Worker was triggered and hit a transient error (e.g. rate limit, CORS, or a network hiccup fetching the new access token), the frontend `cfRefreshToken` would throw an error.
+- The `AuthContext.jsx` catch block failed to check the worker's base connection status (`cfDriveStatus`), resulting in the `driveConnected` state incorrectly flipping to `false` and triggering the disconnected warning banner in `MyFiles.jsx`.
+
+### Architecture Change
+- [x] **Fallback Status Check**: Updated the `catch` block in `refreshDriveFromWorker` (inside `src/context/AuthContext.jsx`) to explicitly query `cfDriveStatus`. If the Worker confirms the user is connected (has a valid refresh token in KV), the frontend now correctly sets `driveConnected(true)` even if the access token fetch temporarily failed.
+- [x] **Accurate Transient Error Messaging**: Modified `MyFiles.jsx` so that if `driveConnected` is true but file listing fails due to missing an access token, it displays a specific transient error message ("Drive is connected, but a transient error prevented fetching files. Please click Refresh.") instead of falsely instructing the user to re-link their Google account.
+- [x] **Loading State Banner Fix**: Hid the Drive setup banner while `driveLoading` is true in `MyFiles.jsx` to prevent the UI from flickering between disconnected and connected states during the initial boot sequence.
+
+### Files Modified
+- `src/context/AuthContext.jsx`
+- `src/pages/MyFiles.jsx`
+- `AI_MEMORY.md`
+
 

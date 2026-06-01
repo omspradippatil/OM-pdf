@@ -192,12 +192,21 @@ export function AuthProvider({ children }) {
         const status = await cfDriveStatus(idToken);
         if (status?.connected) {
           setDriveConnected(true);
-          return false;
+          return false; // Connected on backend, but no access token returned
         }
         setDriveConnected(false);
         return false;
       } catch (error) {
         console.warn('[Auth] Silent Drive refresh failed:', error);
+        try {
+          const idToken = await currentUser.getIdToken();
+          const status = await cfDriveStatus(idToken);
+          if (status?.connected) {
+            setDriveConnected(true);
+            return false;
+          }
+        } catch (e) {}
+        setDriveConnected(false);
         return false;
       } finally {
         driveRefreshPromiseRef.current = null;

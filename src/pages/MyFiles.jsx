@@ -92,7 +92,11 @@ export default function MyFiles() {
         await ensureDriveToken(false, { interactive: false });
       }
       if (!interactive && !hasDriveAccess()) {
-        setDriveError('Connect Google Drive to list your saved files.');
+        if (driveConnected) {
+          setDriveError('Drive is connected, but a transient error prevented fetching files. Please click Refresh.');
+        } else {
+          setDriveError('Connect Google Drive to list your saved files.');
+        }
         setDriveReady(false);
         return;
       }
@@ -191,12 +195,12 @@ export default function MyFiles() {
         {driveError && <div className="alert alert-warning"><span>⚠️ {driveError}</span></div>}
 
         <div className="drive-setup-banner" style={{
+          display: driveLoading ? 'none' : 'flex',
           background: driveConnected ? 'rgba(16, 185, 129, 0.08)' : 'rgba(38, 132, 252, 0.08)',
           border: driveConnected ? '1px dashed #10B981' : '1px dashed #2684FC',
           borderRadius: '12px',
           padding: '20px',
           margin: '0 0 24px 0',
-          display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
