@@ -1,10 +1,12 @@
 import React, { useState, useRef } from 'react';
+import JSZip from 'jszip';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
+import FileList from '../components/FileList';
 import { unlockPdf } from '../utils/pdfGuard';
 import { formatBytes } from '../fileManager';
 import { useAuth } from '../context/AuthContext';
@@ -12,52 +14,98 @@ import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
-import { generateThumbnail } from '../thumbnailGenerator';
 import RecentFilesPanel from '../components/RecentFilesPanel';
 import '../styles/UnlockPDF.css';
 
 export default function UnlockPDF() {
   const { user } = useAuth();
-  const [file, setFile]         = useState(null);
+  const [files, setFiles]       = useState([]);
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [progress, setProgress] = useState(0);
   const [working, setWorking]   = useState(false);
   const [error, setError]       = useState('');
   const [success, setSuccess]   = useState('');
-  const [thumbnail, setThumbnail] = useState(null);
   const lastBytesRef = useRef(null);
   const lastNameRef  = useRef('');
+  const isZipRef     = useRef(false);
 
-  const loadFile = (raw) => {
-    const f = Array.isArray(raw) ? raw[0] : (raw?.[0] || raw);
-    if (!f || f.type !== 'application/pdf') { setError('Select a valid PDF.'); return; }
-    setFile(f); setError(''); setSuccess(''); setProgress(0); setThumbnail(null);
-    generateThumbnail(f).then(url => setThumbnail(url));
+  const loadFiles = (raw) => {
+    const valid = Array.from(raw).filter(f => f.type === 'application/pdf');
+    if (!valid.length) { setError('Select at least one valid PDF.'); return; }
+    
+    const newFiles = valid.map(f => ({
+      id: Math.random().toString(36).substr(2, 9),
+      file: f,
+      name: f.name,
+      size: f.size
+    }));
+    
+    setFiles(prev => [...prev, ...newFiles]);
+    setError(''); setSuccess(''); setProgress(0);
+  };
+
+  const removeFile = (id) => {
+    setFiles(prev => prev.filter(f => f.id !== id));
   };
 
   const handleUnlock = async () => {
-    if (!file) return;
+    if (!files.length) return;
     if (!password) { setError('Please enter the current password.'); return; }
-    setError(''); setSuccess(''); setWorking(true); setProgress(30);
+    setError(''); setSuccess(''); setWorking(true); setProgress(0);
     try {
-      const buffer = await file.arrayBuffer();
-      setProgress(60);
-      const inputData = new Uint8Array(buffer);
-      const outputData = await unlockPdf(inputData, password);
-      setProgress(90);
-      const name = file.name.replace(/\.pdf$/i, '_unlocked.pdf');
-      const blob = new Blob([outputData], { type: 'application/pdf' });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.body.appendChild(document.createElement('a'));
-      a.href = url; a.download = name; a.click();
-      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-      lastBytesRef.current = outputData; lastNameRef.current = name;
-      setSuccess('PDF successfully unlocked!');
-      setProgress(100);
-      addRecentFile({ tool: 'unlock', name, size: outputData.byteLength || 0 });
-      bumpLocalJob();
-      await logUserAction(user, 'unlock', { tool: 'unlock', status: 'success', meta: { outputName: name } });
+      if (files.length === 1) {
+        setProgress(30);
+        const fileObj = files[0].file;
+        const buffer = await fileObj.arrayBuffer();
+        setProgress(60);
+        const inputData = new Uint8Array(buffer);
+        const outputData = await unlockPdf(inputData, password);
+        setProgress(90);
+        const name = fileObj.name.replace(/\.pdf$/i, '_unlocked.pdf');
+        const blob = new Blob([outputData], { type: 'application/pdf' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.body.appendChild(document.createElement('a'));
+        a.href = url; a.download = name; a.click();
+        setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+        lastBytesRef.current = outputData; lastNameRef.current = name; isZipRef.current = false;
+        setSuccess('PDF successfully unlocked!');
+        setProgress(100);
+        addRecentFile({ tool: 'unlock', name, size: outputData.byteLength || 0 });
+        bumpLocalJob();
+        await logUserAction(user, 'unlock', { tool: 'unlock', status: 'success', meta: { outputName: name, batch: false } });
+      } else {
+        const zip = new JSZip();
+        const folder = zip.folder('Unlocked_PDFs');
+        
+        for (let i = 0; i < files.length; i++) {
+          const fileObj = files[i].file;
+          const buffer = await fileObj.arrayBuffer();
+          const inputData = new Uint8Array(buffer);
+          
+          setProgress(Math.round(((i + 0.5) / files.length) * 90));
+          const outputData = await unlockPdf(inputData, password);
+          
+          folder.file(fileObj.name.replace(/\.pdf$/i, '_unlocked.pdf'), outputData);
+          setProgress(Math.round(((i + 1) / files.length) * 90));
+        }
+        
+        setProgress(95);
+        const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+        setProgress(100);
+        
+        const zipName = `unlocked_batch_${Date.now()}.zip`;
+        const url = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a'); a.href = url; a.download = zipName;
+        a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+        
+        lastBytesRef.current = zipBlob; lastNameRef.current = zipName; isZipRef.current = true;
+        setSuccess(`Successfully unlocked ${files.length} files!`);
+        
+        addRecentFile({ tool: 'unlock_batch', name: zipName, size: zipBlob.size });
+        bumpLocalJob();
+        await logUserAction(user, 'unlock', { tool: 'unlock', status: 'success', meta: { outputName: zipName, batch: true, count: files.length } });
+      }
     } catch (err) {
       setError('Incorrect password or file is not encrypted.');
     } finally { setWorking(false); setProgress(0); }
@@ -107,12 +155,12 @@ export default function UnlockPDF() {
           <div className="ux-result-body">
             <div className="ux-result-actions">
               <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => {
-                 const blob = new Blob([lastBytesRef.current], { type: 'application/pdf' });
+                 const blob = isZipRef.current ? lastBytesRef.current : new Blob([lastBytesRef.current], { type: 'application/pdf' });
                  const url = URL.createObjectURL(blob);
                  const a = document.createElement('a'); a.href = url; a.download = lastNameRef.current;
                  a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
               }}>↓ Download</button>
-              <SaveToDriveButton bytes={lastBytesRef.current} filename={lastNameRef.current} toolFolder="Unlocked" />
+              <SaveToDriveButton bytes={lastBytesRef.current} filename={lastNameRef.current} toolFolder="Unlocked" mimeType={isZipRef.current ? "application/zip" : "application/pdf"} />
             </div>
           </div>
         </div>
@@ -121,7 +169,7 @@ export default function UnlockPDF() {
   );
 
   const actionButton = (
-    <button className="ux-action-btn" onClick={handleUnlock} disabled={working || !file}>
+    <button className="ux-action-btn" onClick={handleUnlock} disabled={working || !files.length}>
       {working ? (
         <span style={{ display:'flex', alignItems:'center', gap:8 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ animation:'spin 1s linear infinite' }}>
@@ -152,28 +200,32 @@ export default function UnlockPDF() {
     >
       <ToolSeoHead toolKey="unlock" />
 
-      {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a locked PDF to unlock" hint="Single PDF · 200 MB Recommended" />
+      {!files.length ? (
+        <DropZone onFiles={loadFiles} label="Drop locked PDF(s) to unlock" hint="Multiple PDFs supported · 200 MB Recommended" multiple />
       ) : (
         <div className="ux-workspace-content">
           <div className="ux-toolbar-inline">
             <div>
               <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Workspace</h2>
-              <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>Enter the password in the right panel to decrypt this file.</p>
+              <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>{files.length} file{files.length > 1 ? 's' : ''} ready to unlock.</p>
             </div>
-            <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFile(null); setSuccess(''); setError(''); setPassword(''); setThumbnail(null); }}>
-              Remove File
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <label className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px', cursor: 'pointer' }}>
+                Add More
+                <input type="file" multiple accept=".pdf" style={{ display: 'none' }} onChange={(e) => loadFiles(e.target.files)} />
+              </label>
+              <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFiles([]); setSuccess(''); setError(''); setPassword(''); }}>
+                Clear All
+              </button>
+            </div>
           </div>
 
-          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flex:1, minHeight:280, gap:14, background:'var(--bg-card)', borderRadius:'16px', border:'1px solid var(--border)' }}>
-            <div className="ux-page-card" style={{ width: '220px', cursor: 'default' }}>
-              <div className="ux-page-thumb-wrap" style={{ height: '300px' }}>
-                {thumbnail ? <img className="ux-page-thumb-img" src={thumbnail} alt="PDF Preview" /> : <div className="ux-page-thumb-placeholder" />}
-              </div>
-            </div>
-            <p style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--text-primary)', margin:0 }}>{file.name}</p>
-            <p style={{ fontSize:'0.85rem', color:'var(--text-muted)', margin:0 }}>{formatBytes(file.size)} · Encrypted Document</p>
+          <div style={{ flex: 1, overflow: 'auto', background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border)' }}>
+            <FileList 
+              files={files} 
+              onRemove={removeFile}
+              onClear={() => setFiles([])}
+            />
           </div>
         </div>
       )}

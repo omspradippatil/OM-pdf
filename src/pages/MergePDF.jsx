@@ -11,12 +11,13 @@ import SaveToDriveButton from '../components/SaveToDriveButton';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
-import { saveSession, loadSession, clearSession } from '../services/sessionRecovery';
+import { useCrashRecovery } from '../hooks/useCrashRecovery';
 import ToolPageLayout from '../components/ToolPageLayout';
 import FileList from '../components/FileList';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import CrashRecoveryBanner from '../components/CrashRecoveryBanner';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
 import '../styles/MergePDF.css';
@@ -34,6 +35,15 @@ export default function MergePDF() {
   const lastBytesRef = useRef(null);
   const lastNameRef  = useRef('');
   const fileInputRef = useRef(null);
+
+  const {
+    hasRecoveredData,
+    recovering,
+    recoverFiles,
+    discardRecovery,
+    saveFilesToCache,
+    clearCache
+  } = useCrashRecovery('merge_session');
 
   const handleFiles = useCallback(async (rawFiles) => {
     const { warnings } = addFiles(Array.from(rawFiles));
@@ -68,28 +78,19 @@ export default function MergePDF() {
   }, []);
 
   React.useEffect(() => {
-    // Attempt crash recovery on mount
-    loadSession('merge_session').then(session => {
-      if (session && session.files && session.files.length > 0) {
-        if (window.confirm("We found an unsaved session from your previous visit. Resume session?")) {
-          handleFiles(session.files);
-        } else {
-          clearSession('merge_session');
-        }
-      }
-    });
-
     const unsub = subscribe(list => {
       setFiles([...list]);
-      // Save raw File objects to IDB for recovery
-      if (list.length > 0) {
-        saveSession('merge_session', list.map(f => f.file));
-      } else {
-        clearSession('merge_session');
-      }
+      saveFilesToCache(list.map(f => f.file));
     });
     return unsub;
-  }, [handleFiles]);
+  }, [saveFilesToCache]);
+
+  const handleRestore = async () => {
+    const session = await recoverFiles();
+    if (session && session.files && session.files.length > 0) {
+      handleFiles(session.files);
+    }
+  };
 
   const handleMerge = async () => {
     if (files.length < 2) { setError('Add at least 2 PDF files.'); return; }
@@ -210,6 +211,14 @@ export default function MergePDF() {
       <ToolSeoHead toolKey="merge" />
 
       <input type="file" ref={fileInputRef} style={{ display:'none' }} accept=".pdf" multiple onChange={e => handleFiles(e.target.files)} />
+
+      {hasRecoveredData && (
+        <CrashRecoveryBanner
+          onRestore={handleRestore}
+          onDiscard={discardRecovery}
+          recovering={recovering}
+        />
+      )}
 
       {/* Workspace: Drop zone + sortable file list */}
       {!files.length ? (

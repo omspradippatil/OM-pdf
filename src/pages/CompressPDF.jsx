@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import JSZip from 'jszip';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
+import FileList from '../components/FileList';
 import RecentFilesPanel from '../components/RecentFilesPanel';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
@@ -13,7 +15,6 @@ import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
 import { runPdfWorkerTask } from '../workers/workerClient';
-import { generateThumbnail } from '../thumbnailGenerator';
 
 const LEVELS = [
   { id: 'screen',  label: 'Maximum',  desc: 'Smallest size (72 dpi images)', badge: '85%+ reduction' },
@@ -23,43 +24,99 @@ const LEVELS = [
 
 export default function CompressPDF() {
   const { user } = useAuth();
-  const [file, setFile]           = useState(null);
+  const [files, setFiles]         = useState([]);
   const [level, setLevel]         = useState('ebook');
   const [progress, setProgress]   = useState(0);
   const [compressing, setCompressing] = useState(false);
   const [error, setError]         = useState('');
   const [result, setResult]       = useState(null);
-  const [thumbnail, setThumbnail] = useState(null);
 
-  const loadFile = (raw) => {
-    const f = Array.isArray(raw) ? raw[0] : (raw?.[0] || raw);
-    if (!f || f.type !== 'application/pdf') { setError('Select a valid PDF.'); return; }
-    setFile(f); setError(''); setResult(null); setThumbnail(null);
-    generateThumbnail(f).then(url => {
-      if (url) setThumbnail(url);
-    });
+  const loadFiles = (raw) => {
+    const valid = Array.from(raw).filter(f => f.type === 'application/pdf');
+    if (!valid.length) { setError('Select at least one valid PDF.'); return; }
+    
+    const newFiles = valid.map(f => ({
+      id: Math.random().toString(36).substr(2, 9),
+      file: f,
+      name: f.name,
+      size: f.size
+    }));
+    
+    setFiles(prev => [...prev, ...newFiles]);
+    setError(''); setResult(null);
   };
   const fileInputRef = React.useRef(null);
 
+  const removeFile = (id) => {
+    setFiles(prev => prev.filter(f => f.id !== id));
+  };
+
   const handleCompress = async () => {
-    if (!file) return;
+    if (!files.length) return;
     setError(''); setResult(null); setCompressing(true); setProgress(0);
     try {
-      const buffer = await file.arrayBuffer();
-      const { bytes: out } = await runPdfWorkerTask('compress_lossless', { buffer, level }, [buffer], setProgress);
-      setProgress(100);
-      const name = file.name.replace(/\.pdf$/i, '_compressed.pdf');
-      const blob = new Blob([out], { type: 'application/pdf' });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a'); a.href = url; a.download = name;
-      document.body.appendChild(a); a.click();
-      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-      const saved = Math.max(0, file.size - out.byteLength);
-      const pct   = file.size ? Math.round((saved / file.size) * 100) : 0;
-      setResult({ bytes: out, name, originalSize: file.size, compressedSize: out.byteLength, saved, pct });
-      addRecentFile({ tool: 'compress', name, size: out.byteLength || 0 });
-      bumpLocalJob();
-      await logUserAction(user, 'compress', { tool: 'compress', status: 'success', meta: { outputName: name, level, pct } });
+      if (files.length === 1) {
+        // Single file processing
+        const fileObj = files[0].file;
+        const buffer = await fileObj.arrayBuffer();
+        const { bytes: out } = await runPdfWorkerTask('compress_lossless', { buffer, level }, [buffer], setProgress);
+        setProgress(100);
+        const name = fileObj.name.replace(/\.pdf$/i, '_compressed.pdf');
+        const blob = new Blob([out], { type: 'application/pdf' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a'); a.href = url; a.download = name;
+        document.body.appendChild(a); a.click();
+        setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+        
+        const saved = Math.max(0, fileObj.size - out.byteLength);
+        const pct   = fileObj.size ? Math.round((saved / fileObj.size) * 100) : 0;
+        setResult({ bytes: out, name, originalSize: fileObj.size, compressedSize: out.byteLength, saved, pct, isZip: false });
+        
+        addRecentFile({ tool: 'compress', name, size: out.byteLength || 0 });
+        bumpLocalJob();
+        await logUserAction(user, 'compress', { tool: 'compress', status: 'success', meta: { outputName: name, level, pct, batch: false } });
+      } else {
+        // Batch processing
+        const zip = new JSZip();
+        const folder = zip.folder('Compressed_PDFs');
+        let totalOriginal = 0;
+        let totalCompressed = 0;
+
+        for (let i = 0; i < files.length; i++) {
+          const fileObj = files[i].file;
+          const buffer = await fileObj.arrayBuffer();
+          
+          const progressCallback = (p) => {
+            const base = (i / files.length) * 100;
+            const current = (p / 100) * (100 / files.length);
+            setProgress(Math.round(base + current));
+          };
+          
+          const { bytes: out } = await runPdfWorkerTask('compress_lossless', { buffer, level }, [buffer], progressCallback);
+          
+          totalOriginal += fileObj.size;
+          totalCompressed += out.byteLength;
+          folder.file(fileObj.name.replace(/\.pdf$/i, '_compressed.pdf'), out);
+        }
+
+        setProgress(95);
+        const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+        setProgress(100);
+        
+        const zipName = `compressed_batch_${Date.now()}.zip`;
+        const url = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a'); a.href = url; a.download = zipName;
+        a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+        
+        const saved = Math.max(0, totalOriginal - totalCompressed);
+        const pct = totalOriginal ? Math.round((saved / totalOriginal) * 100) : 0;
+        
+        setResult({ bytes: zipBlob, name: zipName, originalSize: totalOriginal, compressedSize: totalCompressed, saved, pct, isZip: true, count: files.length });
+        
+        addRecentFile({ tool: 'compress_batch', name: zipName, size: zipBlob.size });
+        bumpLocalJob();
+        await logUserAction(user, 'compress', { tool: 'compress', status: 'success', meta: { outputName: zipName, level, pct, batch: true, count: files.length } });
+      }
     } catch (err) {
       setError('Compression failed: ' + (err.message || 'Unexpected error.'));
       await logUserAction(user, 'compress', { tool: 'compress', status: 'error', meta: { error: err?.message } });
@@ -101,7 +158,7 @@ export default function CompressPDF() {
               <span className="ux-savings-badge">−{result.pct}% ({formatBytes(result.saved)})</span>
             </div>
             <div className="ux-result-actions">
-              <SaveToDriveButton bytes={result.bytes} filename={result.name} toolFolder="Compressed" />
+              <SaveToDriveButton bytes={result.bytes} filename={result.name} toolFolder="Compressed" mimeType={result.isZip ? "application/zip" : "application/pdf"} />
             </div>
           </div>
         </div>
@@ -117,31 +174,35 @@ export default function CompressPDF() {
       sidebarContent={sidebarContent}
       actionLabel={compressing ? 'Compressing…' : 'Compress PDF'}
       onAction={handleCompress}
-      actionDisabled={compressing || !file}
+      actionDisabled={compressing || !files.length}
     >
       <ToolSeoHead toolKey="compress" />
-      {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a PDF to compress" hint="Single PDF · 200 MB Recommended" />
+      {!files.length ? (
+        <DropZone onFiles={loadFiles} label="Drop PDF(s) to compress" hint="Multiple PDFs supported · 200 MB Recommended" multiple />
       ) : (
         <div className="ux-workspace-content">
           <div className="ux-toolbar-inline">
             <div>
               <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Workspace</h2>
-              <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>Configure compression settings in the right panel.</p>
+              <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>{files.length} file{files.length > 1 ? 's' : ''} ready to compress.</p>
             </div>
-            <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFile(null); setResult(null); setError(''); }}>
-              Remove File
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <label className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px', cursor: 'pointer' }}>
+                Add More
+                <input type="file" multiple accept=".pdf" style={{ display: 'none' }} onChange={(e) => loadFiles(e.target.files)} />
+              </label>
+              <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFiles([]); setResult(null); setError(''); }}>
+                Clear All
+              </button>
+            </div>
           </div>
 
-          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flex:1, minHeight:280, gap:14, background:'var(--bg-card)', borderRadius:'16px', border:'1px solid var(--border)' }}>
-            <div className="ux-page-card" style={{ width: '220px', cursor: 'default' }}>
-              <div className="ux-page-thumb-wrap" style={{ height: '300px' }}>
-                {thumbnail ? <img className="ux-page-thumb-img" src={thumbnail} alt="PDF Preview" /> : <div className="ux-page-thumb-placeholder" />}
-              </div>
-            </div>
-            <p style={{ fontSize:'1.1rem', fontWeight:700, color:'var(--text-primary)', margin:0 }}>{file.name}</p>
-            <p style={{ fontSize:'0.85rem', color:'var(--text-muted)', margin:0 }}>{formatBytes(file.size)} · Ready to compress</p>
+          <div style={{ flex: 1, overflow: 'auto', background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border)' }}>
+            <FileList 
+              files={files} 
+              onRemove={removeFile}
+              onClear={() => setFiles([])}
+            />
           </div>
         </div>
       )}

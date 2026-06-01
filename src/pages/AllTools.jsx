@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { TOOLS } from '../constants/tools';
 import { useFavorites } from '../hooks/useFavorites';
+import ToolCard from '../components/ToolCard';
 import '../styles/Home.css';
 
 export default function AllTools() {
@@ -13,35 +14,7 @@ export default function AllTools() {
   const otherTools = TOOLS.filter(t => !favorites.includes(t.key));
 
   const renderToolCard = (tool, isFavorite) => (
-    <Link
-      key={tool.key}
-      to={tool.path}
-      className="tool-card"
-      style={{ '--card-color': tool.color, position: 'relative' }}
-      aria-label={`Open ${tool.title} tool`}
-    >
-      <button 
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(tool.key); }}
-        className="tool-fav-btn"
-        title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-        style={{
-          position: 'absolute', top: 12, right: 12, background: 'transparent', border: 'none', 
-          cursor: 'pointer', fontSize: '1.2rem', padding: '4px', opacity: isFavorite ? 1 : 0.4,
-          transition: 'all 0.2s', zIndex: 2
-        }}
-      >
-        {isFavorite ? '⭐️' : '☆'}
-      </button>
-      <div
-        className="tool-card-icon"
-        style={{ background: tool.color + '18', color: tool.color }}
-      >
-        {tool.icon}
-      </div>
-      <h3 className="tool-card-title">{tool.title}</h3>
-      <p className="tool-card-desc">{tool.desc}</p>
-      <span className="tool-card-cta">Use tool →</span>
-    </Link>
+    <ToolCard key={tool.key} tool={tool} isFavorite={isFavorite} toggleFavorite={toggleFavorite} />
   );
 
   return (

@@ -38,8 +38,8 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        navigateFallbackDenylist: [/^\/__\/auth/]
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,xml,txt,wasm}'],
+        navigateFallbackDenylist: [/^\/__\/auth/, /^\/sitemap\.xml/, /^\/robots\.txt/, /^\/google.*\.html/]
       }
     })
   ],

@@ -242,11 +242,11 @@ export default function MyFiles() {
         }}>
           <div>
             <h3 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', fontWeight: 700, color: 'var(--text)' }}>
-              Enable Silent Background Save ⚡
+              {driveConnected ? 'Silent Background Save Active ⚡' : 'Enable Silent Background Save ⚡'}
             </h3>
             <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)', maxWidth: 520 }}>
               {driveConnected
-                ? 'Status: Connected. Background token refresh is active for Google Drive saves.'
+                ? 'Your Google Drive is connected. Files are saved in the background automatically.'
                 : 'Link your Google Drive account to save your generated files in the background without any annoying authentication popups.'}
             </p>
           </div>

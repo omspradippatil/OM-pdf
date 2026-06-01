@@ -81,10 +81,10 @@ function AnimatedLayout() {
     <AnimatePresence mode="wait">
       <motion.div
         key={location.pathname}
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -15 }}
-        transition={{ duration: 0.25, ease: "easeInOut" }}
+        initial={{ opacity: 0, y: 15, scale: 0.99 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -15, scale: 0.99 }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         style={{ display: 'flex', flexDirection: 'column', flex: 1, width: '100%', minHeight: '100%' }}
       >
         <Suspense fallback={<div className="page-loader">Loading...</div>}>

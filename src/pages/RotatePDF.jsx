@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import JSZip from 'jszip';
 import { PDFDocument, degrees } from 'pdf-lib';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
+import FileList from '../components/FileList';
 import { formatBytes } from '../fileManager';
 import { useAuth } from '../context/AuthContext';
-import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { generatePageThumbnails } from '../thumbnailGenerator';
 import { addRecentFile } from '../services/recentFiles';
@@ -17,7 +18,7 @@ import ToolSeoContent from '../components/ToolSeoContent';
 import '../styles/RotatePDF.css';
 import PdfCanvas from '../components/PdfCanvas';
 
-async function rotatePDF(file, rotations, onProgress) {
+async function rotatePDF(file, rotations, onProgress, globalRotation = null) {
   onProgress?.(10);
   const buf    = await file.arrayBuffer();
   onProgress?.(30);
@@ -25,7 +26,7 @@ async function rotatePDF(file, rotations, onProgress) {
   const pages  = pdfDoc.getPages();
   onProgress?.(50);
   pages.forEach((page, idx) => {
-    const delta = rotations?.[idx] || 0;
+    const delta = globalRotation !== null ? globalRotation : (rotations?.[idx] || 0);
     if (!delta) return;
     const current = page.getRotation().angle;
     const next = (current + ((delta % 360) + 360) % 360) % 360;
@@ -37,37 +38,54 @@ async function rotatePDF(file, rotations, onProgress) {
   return bytes;
 }
 
-function download(bytes, name) {
-  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
-  const a   = document.createElement('a');
-  a.href = url; a.download = name;
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
-}
-
 export default function RotatePDF() {
   const { user } = useAuth();
-  const [file, setFile]               = useState(null);
+  const [files, setFiles]               = useState([]);
   const [pageThumbs, setPageThumbs]   = useState([]);
   const [rotations, setRotations]     = useState([]);
   const [selectedPage, setSelectedPage] = useState(1);
+  const [globalRotation, setGlobalRotation] = useState(0); // for batch mode
   const [progress, setProgress]       = useState(0);
   const [rotating, setRotating]       = useState(false);
   const [error, setError]             = useState('');
   const [previewError, setPreviewError] = useState('');
   const [success, setSuccess]         = useState('');
-  const [lastBytes, setLastBytes]     = useState(null);
-  const [lastName, setLastName]       = useState('');
+  const lastBytesRef = useRef(null);
+  const lastNameRef  = useRef('');
+  const isZipRef     = useRef(false);
 
-  const loadFile = (raw) => {
-    const f = Array.isArray(raw) ? raw[0] : (raw?.[0] || raw);
-    if (!f || f.type !== 'application/pdf') { setError('Select a valid PDF.'); return; }
-    setFile(f); setError(''); setSuccess('');
-    setPageThumbs([]); setRotations([]); setSelectedPage(1); setPreviewError('');
+  const loadFiles = (raw) => {
+    const valid = Array.from(raw).filter(f => f.type === 'application/pdf');
+    if (!valid.length) { setError('Select at least one valid PDF.'); return; }
+    
+    const newFiles = valid.map(f => ({
+      id: Math.random().toString(36).substr(2, 9),
+      file: f,
+      name: f.name,
+      size: f.size
+    }));
+    
+    setFiles(prev => {
+      const updated = [...prev, ...newFiles];
+      if (updated.length > 1) {
+        setPageThumbs([]); setRotations([]); setSelectedPage(1); setPreviewError('');
+      }
+      return updated;
+    });
+    setError(''); setSuccess(''); setProgress(0); setGlobalRotation(0);
+  };
+
+  const removeFile = (id) => {
+    setFiles(prev => {
+      const next = prev.filter(f => f.id !== id);
+      if (next.length !== 1) { setPageThumbs([]); setRotations([]); setSelectedPage(1); setPreviewError(''); }
+      return next;
+    });
   };
 
   useEffect(() => {
-    if (!file) return;
+    if (files.length !== 1) return;
+    const file = files[0].file;
     let active = true;
     generatePageThumbnails(file).then(thumbs => {
       if (!active) return;
@@ -79,24 +97,70 @@ export default function RotatePDF() {
       }
     });
     return () => { active = false; };
-  }, [file]);
+  }, [files]);
 
   const rotatePage = (index, delta) => {
     setRotations(prev => { const next = [...prev]; next[index] = (next[index] + delta + 360) % 360; return next; });
   };
-  const rotateAll = (delta) => setRotations(prev => prev.map(v => (v + delta + 360) % 360));
+  const rotateAll = (delta) => {
+    if (files.length === 1) {
+      setRotations(prev => prev.map(v => (v + delta + 360) % 360));
+    } else {
+      setGlobalRotation(prev => (prev + delta + 360) % 360);
+    }
+  };
 
   const handleRotate = async () => {
-    if (!file) return;
+    if (!files.length) return;
     setError(''); setSuccess(''); setRotating(true); setProgress(0);
     try {
-      const bytes = await rotatePDF(file, rotations, setProgress);
-      const name  = file.name.replace(/\.pdf$/i, '_rotated.pdf');
-      setLastBytes(bytes); setLastName(name);
-      download(bytes, name);
-      setSuccess(`"${name}" rotated and saved`);
-      addRecentFile({ tool: 'rotate', name, size: bytes.byteLength || 0, pages: rotations.length });
-      bumpLocalJob();
+      if (files.length === 1) {
+        const fileObj = files[0].file;
+        const bytes = await rotatePDF(fileObj, rotations, setProgress, null);
+        const name  = fileObj.name.replace(/\.pdf$/i, '_rotated.pdf');
+        
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = name;
+        document.body.appendChild(a); a.click();
+        setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+
+        lastBytesRef.current = bytes; lastNameRef.current = name; isZipRef.current = false;
+        setProgress(100);
+        setSuccess(`"${name}" rotated and saved`);
+        addRecentFile({ tool: 'rotate', name, size: bytes.byteLength || 0, pages: rotations.length });
+        bumpLocalJob();
+        await logUserAction(user, 'rotate', { tool: 'rotate', status: 'success', meta: { batch: false } });
+      } else {
+        const zip = new JSZip();
+        const folder = zip.folder('Rotated_PDFs');
+        
+        for (let i = 0; i < files.length; i++) {
+          const fileObj = files[i].file;
+          
+          setProgress(Math.round(((i + 0.5) / files.length) * 90));
+          const bytes = await rotatePDF(fileObj, null, null, globalRotation);
+          
+          folder.file(fileObj.name.replace(/\.pdf$/i, '_rotated.pdf'), bytes);
+          setProgress(Math.round(((i + 1) / files.length) * 90));
+        }
+        
+        setProgress(95);
+        const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+        setProgress(100);
+        
+        const zipName = `rotated_batch_${Date.now()}.zip`;
+        const url = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a'); a.href = url; a.download = zipName;
+        a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+        
+        lastBytesRef.current = zipBlob; lastNameRef.current = zipName; isZipRef.current = true;
+        setSuccess(`Successfully rotated ${files.length} files!`);
+        
+        addRecentFile({ tool: 'rotate_batch', name: zipName, size: zipBlob.size });
+        bumpLocalJob();
+        await logUserAction(user, 'rotate', { tool: 'rotate', status: 'success', meta: { batch: true, count: files.length } });
+      }
     } catch (err) {
       setError('Rotation failed: ' + (err.message || 'Unexpected error.'));
       await logUserAction(user, 'rotate', { tool: 'rotate', status: 'error', meta: { error: err?.message } });
@@ -108,7 +172,7 @@ export default function RotatePDF() {
       <p className="ux-section-label">Rotation Options</p>
 
       {/* Bulk rotate buttons */}
-      {pageThumbs.length > 0 && (
+      {(pageThumbs.length > 0 || files.length > 1) && (
         <div className="ux-field">
           <label className="ux-label">Rotate All Pages</label>
           <div style={{ display:'flex', gap:10 }}>
@@ -122,11 +186,14 @@ export default function RotatePDF() {
           <button className="ux-btn-secondary" style={{ width:'100%', marginTop:10 }} onClick={() => rotateAll(180)}>
             ⟳ Rotate All 180°
           </button>
+          {files.length > 1 && (
+            <p className="ux-hint" style={{ marginTop: 8 }}>Global rotation: {globalRotation}° applied to all files.</p>
+          )}
         </div>
       )}
 
       {/* Selected page info */}
-      {pageThumbs.length > 0 && (
+      {files.length === 1 && pageThumbs.length > 0 && (
         <div className="ux-summary">
           <div className="ux-summary-row">
             <span>Selected Page</span>
@@ -140,7 +207,7 @@ export default function RotatePDF() {
       )}
 
       {/* Per-page rotate */}
-      {pageThumbs.length > 0 && (
+      {files.length === 1 && pageThumbs.length > 0 && (
         <div className="ux-field">
           <label className="ux-label">Rotate Selected Page</label>
           <div style={{ display:'flex', gap:8 }}>
@@ -162,10 +229,15 @@ export default function RotatePDF() {
           </div>
           <div className="ux-result-body">
             <div className="ux-result-actions">
-              <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => download(lastBytes, lastName)}>
+              <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => {
+                const blob = isZipRef.current ? lastBytesRef.current : new Blob([lastBytesRef.current], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = lastNameRef.current;
+                a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+              }}>
                 ↓ Download
               </button>
-              <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Rotated" />
+              <SaveToDriveButton bytes={lastBytesRef.current} filename={lastNameRef.current} toolFolder="Rotated" mimeType={isZipRef.current ? "application/zip" : "application/pdf"} />
             </div>
           </div>
         </div>
@@ -174,7 +246,7 @@ export default function RotatePDF() {
   );
 
   const actionButton = (
-    <button className="ux-action-btn" onClick={handleRotate} disabled={rotating || !file}>
+    <button className="ux-action-btn" onClick={handleRotate} disabled={rotating || !files.length}>
       {rotating ? (
         <span style={{ display:'flex', alignItems:'center', gap:8 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ animation:'spin 1s linear infinite' }}>
@@ -205,18 +277,24 @@ export default function RotatePDF() {
     >
       <ToolSeoHead toolKey="rotate" />
 
-      {!file ? (
-        <DropZone onFiles={loadFile} label="Drop a PDF to rotate" hint="Single PDF · 200 MB Recommended" />
-      ) : (
+      {!files.length ? (
+        <DropZone onFiles={loadFiles} label="Drop PDF(s) to rotate" hint="Multiple PDFs supported · 200 MB Recommended" multiple />
+      ) : files.length === 1 ? (
         <div className="ux-workspace-content">
           <div className="ux-toolbar-inline">
             <div>
               <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Workspace</h2>
               <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>Click pages to select, use buttons below to rotate.</p>
             </div>
-            <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFile(null); setSuccess(''); setError(''); }}>
-              Remove File
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <label className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px', cursor: 'pointer' }}>
+                Add More
+                <input type="file" multiple accept=".pdf" style={{ display: 'none' }} onChange={(e) => loadFiles(e.target.files)} />
+              </label>
+              <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFiles([]); setSuccess(''); setError(''); }}>
+                Remove File
+              </button>
+            </div>
           </div>
 
           <div style={{ display:'flex', gap:24, alignItems:'flex-start' }}>
@@ -239,7 +317,7 @@ export default function RotatePDF() {
               <p className="ux-section-label" style={{ marginBottom:16 }}>Focused Preview (Page {selectedPage})</p>
               <div style={{ transform: rotations[selectedPage - 1] ? `rotate(${rotations[selectedPage - 1]}deg)` : undefined, transition:'transform 0.3s ease' }}>
                 <PdfCanvas
-                  file={file}
+                  file={files[0].file}
                   pageNumber={selectedPage}
                   width={340}
                   onRender={() => setPreviewError('')}
@@ -252,6 +330,32 @@ export default function RotatePDF() {
                  <button className="ux-btn-secondary" onClick={() => rotatePage(selectedPage - 1, 90)}>↻ Right</button>
               </div>
             </div>
+          </div>
+        </div>
+      ) : (
+        <div className="ux-workspace-content">
+          <div className="ux-toolbar-inline">
+            <div>
+              <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Workspace</h2>
+              <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>{files.length} files ready. Global rotation will be applied.</p>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <label className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px', cursor: 'pointer' }}>
+                Add More
+                <input type="file" multiple accept=".pdf" style={{ display: 'none' }} onChange={(e) => loadFiles(e.target.files)} />
+              </label>
+              <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => { setFiles([]); setSuccess(''); setError(''); }}>
+                Clear All
+              </button>
+            </div>
+          </div>
+
+          <div style={{ flex: 1, overflow: 'auto', background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border)' }}>
+            <FileList 
+              files={files} 
+              onRemove={removeFile}
+              onClear={() => setFiles([])}
+            />
           </div>
         </div>
       )}
