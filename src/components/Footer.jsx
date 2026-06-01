@@ -190,7 +190,7 @@ export default function Footer() {
 
         <div className="footer-v2-bottom">
           <div className="bottom-left">
-            <p>© {currentYear} OM PDF. Built with <span style={{ color: '#ef4444' }}>❤</span> by <strong>OM Patil</strong>.</p>
+            <p>© {currentYear} OM PDF. Built by <strong>OM Patil</strong>.</p>
           </div>
           <div className="bottom-right">
             <div className="trust-badges">

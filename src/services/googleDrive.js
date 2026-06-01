@@ -229,3 +229,14 @@ export async function listDriveFiles(loginHint = null, toolFolder = null) {
 export async function deleteFromDrive(fileId, loginHint = null) {
   await driveRequest(`/files/${fileId}`, loginHint, { method: 'DELETE' });
 }
+
+export async function makeFilePublic(fileId, loginHint = null) {
+  return await driveRequest(`/files/${fileId}/permissions`, loginHint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      role: 'reader',
+      type: 'anyone'
+    })
+  });
+}

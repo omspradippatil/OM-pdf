@@ -43,20 +43,22 @@ function hexToRgb(hex) {
 }
 
 const SortableThumbnail = ({ p, i, activePageId, setActivePageId, sourceFiles, addMenuOpenId, setAddMenuOpenId, rotatePage, deletePage, insertSecondaryFile, addBlankPageAfter }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: p.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    zIndex: transform ? 1 : 0,
-    position: 'relative'
+    zIndex: isDragging ? 100 : (transform ? 1 : 0),
+    position: 'relative',
+    opacity: isDragging ? 0.6 : 1,
+    touchAction: 'none'
   };
 
   return (
     <div ref={setNodeRef} style={style} className="edit-pdf-thumbnail-wrap" {...attributes} {...listeners}>
       <div 
         className={`edit-pdf-thumbnail-card ${activePageId === p.id ? 'active' : ''}`}
-        onPointerDown={() => setActivePageId(p.id)}
-        style={{ transform: `rotate(${p.rotation}deg)` }}
+        onClick={(e) => { e.stopPropagation(); setActivePageId(p.id); }}
+        style={{ transform: `rotate(${p.rotation}deg)`, cursor: isDragging ? 'grabbing' : 'grab' }}
       >
         {p.type === 'original' && sourceFiles[p.sourceDocId] ? (
           <PdfCanvas file={sourceFiles[p.sourceDocId]} pageNumber={p.originalIndex + 1} width={136} />
@@ -67,19 +69,19 @@ const SortableThumbnail = ({ p, i, activePageId, setActivePageId, sourceFiles, a
       <div className="edit-pdf-page-label">{i + 1}</div>
       
       <div className="edit-pdf-thumbnail-controls">
-        <button className="edit-pdf-thumbnail-btn" title="Add Page" onPointerDown={(e) => { e.stopPropagation(); setAddMenuOpenId(addMenuOpenId === p.id ? null : p.id); }}>
+        <button className="edit-pdf-thumbnail-btn" title="Add Page" onClick={(e) => { e.stopPropagation(); setAddMenuOpenId(addMenuOpenId === p.id ? null : p.id); }}>
           <IconPlus />
         </button>
-        <button className="edit-pdf-thumbnail-btn" title="Rotate 90°" onPointerDown={(e) => { e.stopPropagation(); rotatePage(p.id); }}>
+        <button className="edit-pdf-thumbnail-btn" title="Rotate 90°" onClick={(e) => { e.stopPropagation(); rotatePage(p.id); }}>
           <IconRotate />
         </button>
-        <button className="edit-pdf-thumbnail-btn" title="Delete page" onPointerDown={(e) => { e.stopPropagation(); deletePage(p.id); }}>
+        <button className="edit-pdf-thumbnail-btn" title="Delete page" onClick={(e) => { e.stopPropagation(); deletePage(p.id); }}>
           <IconTrash />
         </button>
       </div>
 
       {addMenuOpenId === p.id && (
-        <div className="edit-pdf-add-menu" onPointerDown={e => e.stopPropagation()}>
+        <div className="edit-pdf-add-menu" onClick={e => e.stopPropagation()}>
           <button className="edit-pdf-add-menu-btn" onClick={() => addBlankPageAfter(p.id)}>
             Blank Page
           </button>

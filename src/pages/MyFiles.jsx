@@ -2,7 +2,7 @@ import SEO from '../components/SEO';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useExport } from '../context/ExportContext';
-import { listDriveFiles, deleteFromDrive, hasDriveAccess, loadStoredDriveToken } from '../services/googleDrive';
+import { listDriveFiles, deleteFromDrive, hasDriveAccess, loadStoredDriveToken, makeFilePublic } from '../services/googleDrive';
 import DriveConnectButton from '../components/DriveConnectButton';
 import { logUserAction } from '../services/activityLog';
 import ToolPageLayout from '../components/ToolPageLayout';
@@ -32,16 +32,30 @@ const GoogleIcon = () => (
 );
 
 /* ─── File Card ── */
-function FileCard({ name, size, date, downloadHref, onDelete, driveLink }) {
+function FileCard({ id, name, size, date, downloadHref, onDelete, driveLink, user, ensureDriveToken }) {
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleCopyLink = async () => {
     try {
+      setLoading(true);
+      const ok = await ensureDriveToken();
+      if (ok === false) {
+        alert('Complete Google authorization first.');
+        setLoading(false);
+        return;
+      }
+      // Make file public (Anyone with link can view)
+      await makeFilePublic(id, user?.email || null);
+      
       await navigator.clipboard.writeText(driveLink);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      alert("Failed to copy link. Please manually copy it from Drive.");
+      console.error(err);
+      alert("Failed to make file public. " + err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -60,9 +74,10 @@ function FileCard({ name, size, date, downloadHref, onDelete, driveLink }) {
         <button 
           className="mf-btn mf-btn-download" 
           onClick={handleCopyLink}
-          style={{ background: copied ? '#10B981' : '', color: copied ? '#fff' : '', borderColor: copied ? '#10B981' : '' }}
+          disabled={loading}
+          style={{ background: copied ? '#10B981' : '', color: copied ? '#fff' : '', borderColor: copied ? '#10B981' : '', opacity: loading ? 0.7 : 1 }}
         >
-          {copied ? 'Copied!' : 'Copy Link 🔗'}
+          {loading ? 'Updating...' : (copied ? 'Copied!' : 'Copy Link 🔗')}
         </button>
         <a className="mf-btn mf-btn-download" href={driveLink} target="_blank" rel="noopener noreferrer">
           Open ↗
@@ -273,11 +288,14 @@ export default function MyFiles() {
             {driveFiles.map(f => (
               <FileCard
                 key={f.id}
+                id={f.id}
                 name={f.name}
                 size={parseInt(f.size, 10)}
                 date={fmtDate(f.createdTime)}
                 driveLink={f.webViewLink}
                 onDelete={() => deleteDriveFile(f.id)}
+                user={user}
+                ensureDriveToken={ensureDriveToken}
               />
             ))}
           </div>
