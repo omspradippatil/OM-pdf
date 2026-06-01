@@ -3,9 +3,9 @@ import { useExport } from '../context/ExportContext';
 import SEO from '../components/SEO';
 import { Link } from 'react-router-dom';
 import PrivacyDashboard from '../components/PrivacyDashboard';
+import { useFavorites } from '../hooks/useFavorites';
+import { TOOLS } from '../constants/tools';
 import '../styles/Home.css';
-
-
 
 const FEATURES = [
   { icon: '⚡', title: 'Lightning Fast',    desc: 'No upload delays. Processing runs instantly in your browser.' },
@@ -60,6 +60,37 @@ const faqSchema = {
 };
 
 export default function Home() {
+  const { favorites, toggleFavorite } = useFavorites();
+  const favoriteTools = TOOLS.filter(t => favorites.includes(t.key)).sort((a, b) => favorites.indexOf(a.key) - favorites.indexOf(b.key));
+
+  const renderToolCard = (tool, isFavorite) => (
+    <Link
+      key={tool.key}
+      to={tool.path}
+      className="tool-card"
+      style={{ '--card-color': tool.color, position: 'relative' }}
+      aria-label={`Open ${tool.title} tool`}
+    >
+      <button 
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(tool.key); }}
+        className="tool-fav-btn"
+        title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+        style={{
+          position: 'absolute', top: 12, right: 12, background: 'transparent', border: 'none', 
+          cursor: 'pointer', fontSize: '1.2rem', padding: '4px', opacity: isFavorite ? 1 : 0.4,
+          transition: 'all 0.2s', zIndex: 2
+        }}
+      >
+        {isFavorite ? '⭐️' : '☆'}
+      </button>
+      <div className="tool-card-icon" style={{ background: tool.color + '18', color: tool.color }}>
+        {tool.icon}
+      </div>
+      <h3 className="tool-card-title">{tool.title}</h3>
+      <p className="tool-card-desc">{tool.desc}</p>
+      <span className="tool-card-cta">Use tool →</span>
+    </Link>
+  );
 
   return (
     <div className="home-page">
@@ -136,9 +167,17 @@ export default function Home() {
         </div>
       </section>
 
-
-
-
+      {/* ══════════ FAVORITES ══════════ */}
+      {favoriteTools.length > 0 && (
+        <section className="tools-section" style={{ paddingBottom: '0', paddingTop: '40px' }}>
+          <div className="section-header">
+            <h2 className="section-title">Your Favorite Tools</h2>
+          </div>
+          <div className="tools-grid" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
+            {favoriteTools.map(t => renderToolCard(t, true))}
+          </div>
+        </section>
+      )}
 
       {/* ══════════ PRIVACY COMPARISON ══════════ */}
       <section className="privacy-section" aria-label="Privacy comparison">

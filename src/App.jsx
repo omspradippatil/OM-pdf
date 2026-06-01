@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Outlet } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { AuthProvider } from './context/AuthContext';
 import { ExportProvider } from './context/ExportContext';
 import Navbar from './components/Navbar';
@@ -69,12 +70,40 @@ const RemoveLinksPdf = lazy(() => import('./pages/RemoveLinksPdf'));
 const QrPdf = lazy(() => import('./pages/QrPdf'));
 const Profile = lazy(() => import('./pages/Profile'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const SplitBySizePdf = lazy(() => import('./pages/SplitBySizePdf'));
+const FormBuilderPdf = lazy(() => import('./pages/FormBuilderPdf'));
+const PdfToWord = lazy(() => import('./pages/PdfToWord'));
+const PipelinePdf = lazy(() => import('./pages/PipelinePdf'));
 
-export default function App() {
+function AnimatedLayout() {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -15 }}
+        transition={{ duration: 0.25, ease: "easeInOut" }}
+        style={{ display: 'flex', flexDirection: 'column', flex: 1, width: '100%', minHeight: '100%' }}
+      >
+        <Suspense fallback={<div className="page-loader">Loading...</div>}>
+          <Outlet />
+        </Suspense>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+function AppContent() {
   const variantRoutes = getVariantRoutes();
   const toolComponents = {
     merge: <MergePDF />,
     split: <SplitPDF />,
+    split_by_size: <SplitBySizePdf />,
+    form_builder: <FormBuilderPdf />,
+    pdf_to_word: <PdfToWord />,
+    batch_pipeline: <PipelinePdf />,
     compress: <CompressPDF />,
     rotate: <RotatePDF />,
     convert: <ConvertPDF />,
@@ -82,92 +111,102 @@ export default function App() {
   };
 
   return (
+    <>
+      <Navbar />
+      <main className="main-content" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <Routes>
+          <Route element={<AnimatedLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/tools" element={<AllTools />} />
+            <Route path="/merge-pdf"    element={<MergePDF />} />
+            <Route path="/split-pdf"    element={<SplitPDF />} />
+            <Route path="/split-by-size" element={<SplitBySizePdf />} />
+            <Route path="/form-builder" element={<FormBuilderPdf />} />
+            <Route path="/pdf-to-word" element={<PdfToWord />} />
+            <Route path="/batch-pipeline" element={<PipelinePdf />} />
+            <Route path="/rotate-pdf"   element={<RotatePDF />} />
+            <Route path="/compress-pdf" element={<CompressPDF />} />
+            <Route path="/convert-pdf"  element={<ConvertPDF />} />
+            <Route path="/pdf-to-jpg" element={<PdfToJpg />} />
+            <Route path="/pdf-to-long-image" element={<PdfToLongImage />} />
+            <Route path="/extract-images" element={<ExtractImages />} />
+            <Route path="/image-to-pdf" element={<ImageToPDF />} />
+            <Route path="/organize-pdf" element={<OrganizePDF />} />
+            <Route path="/extract-pages" element={<ExtractPages />} />
+            <Route path="/insert-blank-pages" element={<InsertBlankPages />} />
+            <Route path="/remove-empty-pages" element={<RemoveEmptyPages />} />
+            <Route path="/split-by-bookmarks" element={<SplitByBookmarks />} />
+            <Route path="/merge-with-ranges" element={<MergeWithRanges />} />
+            <Route path="/auto-rotate-deskew" element={<AutoRotateDeskew />} />
+            <Route path="/watermark-pdf" element={<WatermarkPDF />} />
+            <Route path="/crop-pdf" element={<CropPDF />} />
+            <Route path="/page-numbers" element={<PageNumbers />} />
+            <Route path="/grayscale-pdf" element={<GrayscalePDF />} />
+            <Route path="/resize-pages" element={<ResizePages />} />
+            <Route path="/add-margins" element={<AddMargins />} />
+            <Route path="/metadata-editor" element={<MetadataEditor />} />
+            <Route path="/sanitize-metadata" element={<SanitizeMetadata />} />
+            <Route path="/flatten-forms" element={<FlattenForms />} />
+            <Route path="/pdf-to-text" element={<PdfToText />} />
+            <Route path="/protect-pdf" element={<ProtectPDF />} />
+            <Route path="/unlock-pdf" element={<UnlockPDF />} />
+            <Route path="/pdf-permissions" element={<PermissionsPDF />} />
+            <Route path="/draw-sign-pdf" element={<DrawSignPdf />} />
+            <Route path="/redact-pdf" element={<RedactPdf />} />
+            <Route path="/compare-pdf" element={<ComparePdf />} />
+            <Route path="/overlay-pdf" element={<OverlayPdf />} />
+            <Route path="/headers-footers-pdf" element={<HeadersFootersPdf />} />
+            <Route path="/bates-numbering-pdf" element={<BatesNumberingPdf />} />
+            <Route path="/ocr-pdf" element={<OcrPdf />} />
+            <Route path="/inspect-pdf" element={<InspectPdf />} />
+            <Route path="/linearize-pdf" element={<LinearizePdf />} />
+            <Route path="/voice-reader-pdf" element={<VoiceReaderPdf />} />
+            <Route path="/edit-pdf" element={<EditPdf />} />
+            <Route path="/pdf-to-pptx" element={<PdfToPptx />} />
+            <Route path="/pdf-to-ppt" element={<PdfToPptx />} />
+            <Route path="/drive-callback" element={<DriveCallback />} />
+            <Route path="/html-to-pdf" element={<HtmlToPdf />} />
+            <Route path="/esign-pdf" element={<EsignPdf />} />
+            <Route path="/excel-pdf" element={<ExcelPdf />} />
+            <Route path="/dark-mode-pdf" element={<DarkModePdf />} />
+            <Route path="/booklet-pdf" element={<BookletPdf />} />
+            <Route path="/markdown-pdf" element={<MarkdownPdf />} />
+            <Route path="/remove-links-pdf" element={<RemoveLinksPdf />} />
+            <Route path="/qr-pdf" element={<QrPdf />} />
+            <Route path="/my-files"     element={<MyFiles />} />
+            <Route path="/profile"      element={<Profile />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/feedback" element={<Feedback />} />
+            {variantRoutes.map((route) => (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={toolComponents[route.toolKey]}
+              />
+            ))}
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </main>
+      <Footer />
+    </>
+  );
+}
+
+export default function App() {
+  return (
     <AuthProvider>
       <ExportProvider>
         <BrowserRouter>
           <ScrollToTop />
           <InstallPWA />
-          <Navbar />
-          <main className="main-content">
-            <Suspense fallback={<div className="page-loader">Loading...</div>}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/tools" element={<AllTools />} />
-                <Route path="/merge-pdf"    element={<MergePDF />} />
-                <Route path="/split-pdf"    element={<SplitPDF />} />
-                <Route path="/rotate-pdf"   element={<RotatePDF />} />
-                <Route path="/compress-pdf" element={<CompressPDF />} />
-                <Route path="/convert-pdf"  element={<ConvertPDF />} />
-                <Route path="/pdf-to-jpg" element={<PdfToJpg />} />
-                <Route path="/pdf-to-long-image" element={<PdfToLongImage />} />
-                <Route path="/extract-images" element={<ExtractImages />} />
-                <Route path="/image-to-pdf" element={<ImageToPDF />} />
-                <Route path="/organize-pdf" element={<OrganizePDF />} />
-                <Route path="/extract-pages" element={<ExtractPages />} />
-                <Route path="/insert-blank-pages" element={<InsertBlankPages />} />
-                <Route path="/remove-empty-pages" element={<RemoveEmptyPages />} />
-                <Route path="/split-by-bookmarks" element={<SplitByBookmarks />} />
-                <Route path="/merge-with-ranges" element={<MergeWithRanges />} />
-                <Route path="/auto-rotate-deskew" element={<AutoRotateDeskew />} />
-                <Route path="/watermark-pdf" element={<WatermarkPDF />} />
-                <Route path="/crop-pdf" element={<CropPDF />} />
-                <Route path="/page-numbers" element={<PageNumbers />} />
-                <Route path="/grayscale-pdf" element={<GrayscalePDF />} />
-                <Route path="/resize-pages" element={<ResizePages />} />
-                <Route path="/add-margins" element={<AddMargins />} />
-                <Route path="/metadata-editor" element={<MetadataEditor />} />
-                <Route path="/sanitize-metadata" element={<SanitizeMetadata />} />
-                <Route path="/flatten-forms" element={<FlattenForms />} />
-                <Route path="/pdf-to-text" element={<PdfToText />} />
-                <Route path="/protect-pdf" element={<ProtectPDF />} />
-                <Route path="/unlock-pdf" element={<UnlockPDF />} />
-                <Route path="/pdf-permissions" element={<PermissionsPDF />} />
-                <Route path="/draw-sign-pdf" element={<DrawSignPdf />} />
-                <Route path="/redact-pdf" element={<RedactPdf />} />
-                <Route path="/compare-pdf" element={<ComparePdf />} />
-                <Route path="/overlay-pdf" element={<OverlayPdf />} />
-                <Route path="/headers-footers-pdf" element={<HeadersFootersPdf />} />
-                <Route path="/bates-numbering-pdf" element={<BatesNumberingPdf />} />
-                <Route path="/ocr-pdf" element={<OcrPdf />} />
-                <Route path="/inspect-pdf" element={<InspectPdf />} />
-                <Route path="/linearize-pdf" element={<LinearizePdf />} />
-                <Route path="/voice-reader-pdf" element={<VoiceReaderPdf />} />
-                <Route path="/edit-pdf" element={<EditPdf />} />
-                <Route path="/pdf-to-pptx" element={<PdfToPptx />} />
-                <Route path="/pdf-to-ppt" element={<PdfToPptx />} />
-                <Route path="/drive-callback" element={<DriveCallback />} />
-                <Route path="/html-to-pdf" element={<HtmlToPdf />} />
-                <Route path="/esign-pdf" element={<EsignPdf />} />
-                <Route path="/excel-pdf" element={<ExcelPdf />} />
-                <Route path="/dark-mode-pdf" element={<DarkModePdf />} />
-                <Route path="/booklet-pdf" element={<BookletPdf />} />
-                <Route path="/markdown-pdf" element={<MarkdownPdf />} />
-                <Route path="/remove-links-pdf" element={<RemoveLinksPdf />} />
-                <Route path="/qr-pdf" element={<QrPdf />} />
-                <Route path="/my-files"     element={<MyFiles />} />
-                <Route path="/profile"      element={<Profile />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/how-it-works" element={<HowItWorks />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:slug" element={<BlogPost />} />
-                <Route path="/feedback" element={<Feedback />} />
-                {variantRoutes.map((route) => (
-                  <Route
-                    key={route.path}
-                    path={route.path}
-                    element={toolComponents[route.toolKey]}
-                  />
-                ))}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </main>
-          <Footer />
+          <AppContent />
         </BrowserRouter>
       </ExportProvider>
     </AuthProvider>
   );
 }
-
-

@@ -71,11 +71,42 @@ self.onmessage = async (e) => {
       
       for (let i = 0; i < images.length; i++) {
         const imgEntry = images[i];
+        
+        // Optimizing image using OffscreenCanvas before embedding
+        let optimizedBuffer = imgEntry.buffer;
+        try {
+          const blob = new Blob([imgEntry.buffer], { type: imgEntry.type === 'jpg' ? 'image/jpeg' : 'image/png' });
+          const bitmap = await createImageBitmap(blob);
+          
+          // Max dimensions (e.g. A4 at 300dpi is ~2480x3508, let's limit to 2000 max side)
+          const MAX_SIDE = 2000;
+          let width = bitmap.width;
+          let height = bitmap.height;
+          
+          if (width > MAX_SIDE || height > MAX_SIDE) {
+            const ratio = Math.min(MAX_SIDE / width, MAX_SIDE / height);
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
+          }
+          
+          const canvas = new OffscreenCanvas(width, height);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(bitmap, 0, 0, width, height);
+          
+          const outBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.75 });
+          optimizedBuffer = await outBlob.arrayBuffer();
+          // Force jpg embedding since we converted to jpeg
+          imgEntry.type = 'jpg';
+        } catch (err) {
+          // Fallback to original buffer if OffscreenCanvas fails
+          console.warn('OffscreenCanvas optimization failed, using original', err);
+        }
+
         let img;
         if (imgEntry.type === 'jpg') {
-          img = await doc.embedJpg(imgEntry.buffer);
+          img = await doc.embedJpg(optimizedBuffer);
         } else {
-          img = await doc.embedPng(imgEntry.buffer);
+          img = await doc.embedPng(optimizedBuffer);
         }
         
         const { width, height } = img.scale(1);

@@ -33,6 +33,18 @@ const GoogleIcon = () => (
 
 /* ─── File Card ── */
 function FileCard({ name, size, date, downloadHref, onDelete, driveLink }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(driveLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      alert("Failed to copy link. Please manually copy it from Drive.");
+    }
+  };
+
   return (
     <div className="mf-card">
       <div className="mf-card-icon">📄</div>
@@ -45,12 +57,18 @@ function FileCard({ name, size, date, downloadHref, onDelete, driveLink }) {
         </div>
       </div>
       <div className="mf-card-actions">
+        <button 
+          className="mf-btn mf-btn-download" 
+          onClick={handleCopyLink}
+          style={{ background: copied ? '#10B981' : '', color: copied ? '#fff' : '', borderColor: copied ? '#10B981' : '' }}
+        >
+          {copied ? 'Copied!' : 'Copy Link 🔗'}
+        </button>
         <a className="mf-btn mf-btn-download" href={driveLink} target="_blank" rel="noopener noreferrer">
-          Open in Drive ↗
+          Open ↗
         </a>
         <button className="mf-btn mf-btn-delete" onClick={onDelete}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
-          Delete
         </button>
       </div>
     </div>

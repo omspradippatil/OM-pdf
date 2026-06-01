@@ -8,6 +8,7 @@ import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
+import { saveSession, loadSession, clearSession } from '../services/sessionRecovery';
 import '../styles/EditPdf.css';
 
 // SVG Icons
@@ -66,6 +67,31 @@ export default function EditPdf() {
 
   // Sidebar menus
   const [addMenuOpenId, setAddMenuOpenId] = useState(null);
+
+  // Auto-Save / Recovery
+  useEffect(() => {
+    // Attempt crash recovery on mount
+    loadSession('edit_session').then(session => {
+      if (session && session.metadata && Object.keys(session.metadata.sourceFiles || {}).length > 0) {
+        if (window.confirm("We found an unsaved editing session from your previous visit. Resume session?")) {
+          setSourceFiles(session.metadata.sourceFiles);
+          setPages(session.metadata.pages || []);
+          setActivePageId(session.metadata.activePageId || null);
+          setAnnotations(session.metadata.annotations || {});
+        } else {
+          clearSession('edit_session');
+        }
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (Object.keys(sourceFiles).length > 0) {
+      saveSession('edit_session', [], { sourceFiles, pages, activePageId, annotations });
+    } else {
+      clearSession('edit_session');
+    }
+  }, [sourceFiles, pages, activePageId, annotations]);
 
   const loadPrimaryFile = async (raw) => {
     const f = Array.isArray(raw) ? raw[0] : (raw?.[0] || raw);
@@ -442,6 +468,7 @@ export default function EditPdf() {
       addRecentFile({ tool: 'edit_pdf', name, size: bytes.byteLength });
       bumpLocalJob();
       await logUserAction(user, 'edit_pdf', { status: 'success' });
+      clearSession('edit_session');
 
     } catch (error) {
       alert('Export failed: ' + error.message);

@@ -798,6 +798,36 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 - Align the tools listed in `README.md` with the full 29-tool registry.
 - Recommend additional high-value, offline-first PDF utilities to expand the codebase.
 
+---
+
+## ✅ Completed (Session 18) — The 10 Major Power-User Upgrades
+
+### Phase 3 & 4: New Power-User PDF Tools
+- [x] **Split by Size**: Added heuristic to split PDFs based on target chunk size (in MB).
+- [x] **Create Fillable Forms**: Built a full drag-and-drop form builder (`FormBuilderPdf.jsx`) allowing users to add Text Fields and Checkboxes to existing PDFs.
+- [x] **PDF to Word**: Implemented client-side PDF text extraction and DOCX generation using the `docx` package (`PdfToWord.jsx`).
+- [x] **Batch Processing Pipelines**: Added a pipeline processor allowing users to drop 50+ PDFs and apply a chain of actions in one click (e.g. Flatten Forms -> Rotate -> Optimize) and output as a ZIP file.
+
+### Phase 5: Deep Performance Engineering
+- [x] **Web Worker Offloading**: Verified that heavy tasks like Merge, PDF generation from Images, and Compress Lossless are successfully running inside `pdfWorker.js` without blocking the main thread.
+- [x] **WASM Image Compression**: Integrated `OffscreenCanvas` in `pdfWorker.js` to natively optimize images before embedding them into a PDF, dramatically improving performance and resolving browser freezes for large photo batches.
+
+### Validation Performed
+- [x] `npm run build` passes.
+- [x] Tested tools locally. All processing remains 100% offline.
+
+### Files Modified
+- `src/constants/tools.js`
+- `src/App.jsx`
+- `src/pages/SplitBySizePdf.jsx`
+- `src/pages/FormBuilderPdf.jsx`
+- `src/pages/PdfToWord.jsx`
+- `src/pages/PipelinePdf.jsx`
+- `src/workers/pdfWorker.js`
+- `AI_MEMORY.md`
+- `task.md`
+
+
 ### Architecture Documentation Updates
 - Updated `README.md` to document the core security and architecture features:
   1. **Zero-Upload Processing** (WASM + JS in the browser).

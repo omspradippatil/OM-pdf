@@ -11,6 +11,7 @@ import SaveToDriveButton from '../components/SaveToDriveButton';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
+import { saveSession, loadSession, clearSession } from '../services/sessionRecovery';
 import ToolPageLayout from '../components/ToolPageLayout';
 import FileList from '../components/FileList';
 import DropZone from '../components/DropZone';
@@ -33,11 +34,6 @@ export default function MergePDF() {
   const lastBytesRef = useRef(null);
   const lastNameRef  = useRef('');
   const fileInputRef = useRef(null);
-
-  React.useEffect(() => {
-    const unsub = subscribe(list => setFiles([...list]));
-    return unsub;
-  }, []);
 
   const handleFiles = useCallback(async (rawFiles) => {
     const { warnings } = addFiles(Array.from(rawFiles));
@@ -71,6 +67,30 @@ export default function MergePDF() {
     });
   }, []);
 
+  React.useEffect(() => {
+    // Attempt crash recovery on mount
+    loadSession('merge_session').then(session => {
+      if (session && session.files && session.files.length > 0) {
+        if (window.confirm("We found an unsaved session from your previous visit. Resume session?")) {
+          handleFiles(session.files);
+        } else {
+          clearSession('merge_session');
+        }
+      }
+    });
+
+    const unsub = subscribe(list => {
+      setFiles([...list]);
+      // Save raw File objects to IDB for recovery
+      if (list.length > 0) {
+        saveSession('merge_session', list.map(f => f.file));
+      } else {
+        clearSession('merge_session');
+      }
+    });
+    return unsub;
+  }, [handleFiles]);
+
   const handleMerge = async () => {
     if (files.length < 2) { setError('Add at least 2 PDF files.'); return; }
     setError(''); setWarning(''); setSuccess('');
@@ -88,6 +108,7 @@ export default function MergePDF() {
       addRecentFile({ tool: 'merge', name, size: bytes?.byteLength || 0, pages });
       bumpLocalJob();
       await logUserAction(user, 'merge', { tool: 'merge', status: 'success', meta: { files: files.length, pages, outputName: name } });
+      clearSession('merge_session');
     } catch (err) {
       setError('Merge failed: ' + (err.message || 'Unexpected error.'));
       await logUserAction(user, 'merge', { tool: 'merge', status: 'error', meta: { error: err?.message } });
