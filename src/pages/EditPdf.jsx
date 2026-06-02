@@ -8,7 +8,8 @@ import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
-import { saveSession, loadSession, clearSession } from '../services/sessionRecovery';
+import { useCrashRecovery } from '../hooks/useCrashRecovery';
+import CrashRecoveryBanner from '../components/CrashRecoveryBanner';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -148,29 +149,32 @@ export default function EditPdf() {
   };
 
   // Auto-Save / Recovery
-  useEffect(() => {
-    // Attempt crash recovery on mount
-    loadSession('edit_session').then(session => {
-      if (session && session.metadata && Object.keys(session.metadata.sourceFiles || {}).length > 0) {
-        if (window.confirm("We found an unsaved editing session from your previous visit. Resume session?")) {
-          setSourceFiles(session.metadata.sourceFiles);
-          setPages(session.metadata.pages || []);
-          setActivePageId(session.metadata.activePageId || null);
-          setAnnotations(session.metadata.annotations || {});
-        } else {
-          clearSession('edit_session');
-        }
-      }
-    });
-  }, []);
+  const {
+    hasRecoveredData,
+    recovering,
+    recoverFiles,
+    discardRecovery,
+    saveFilesToCache,
+    clearCache
+  } = useCrashRecovery('edit_session');
 
   useEffect(() => {
     if (Object.keys(sourceFiles).length > 0) {
-      saveSession('edit_session', [], { sourceFiles, pages, activePageId, annotations });
+      saveFilesToCache([], { sourceFiles, pages, activePageId, annotations });
     } else {
-      clearSession('edit_session');
+      clearCache();
     }
-  }, [sourceFiles, pages, activePageId, annotations]);
+  }, [sourceFiles, pages, activePageId, annotations, saveFilesToCache, clearCache]);
+
+  const handleRestore = async () => {
+    const session = await recoverFiles();
+    if (session && session.metadata && Object.keys(session.metadata.sourceFiles || {}).length > 0) {
+      setSourceFiles(session.metadata.sourceFiles);
+      setPages(session.metadata.pages || []);
+      setActivePageId(session.metadata.activePageId || null);
+      setAnnotations(session.metadata.annotations || {});
+    }
+  };
 
   const loadPrimaryFile = async (raw) => {
     const f = Array.isArray(raw) ? raw[0] : (raw?.[0] || raw);
@@ -606,7 +610,10 @@ export default function EditPdf() {
       <div style={{ padding: 40, height: '100vh', display: 'flex', flexDirection: 'column' }}>
         <ToolSeoHead toolKey="editPdf" />
         <h1 style={{ textAlign: 'center', marginBottom: 20 }}>Annotate & Edit PDF</h1>
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, maxWidth: 800, margin: '0 auto', width: '100%' }}>
+          {hasRecoveredData && (
+            <CrashRecoveryBanner onRestore={handleRestore} onDiscard={discardRecovery} recovering={recovering} />
+          )}
           <DropZone onFiles={loadPrimaryFile} label="Drop a PDF to edit" hint="100% offline. No uploads." />
         </div>
       </div>
