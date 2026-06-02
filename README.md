@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
 
 <img src="https://img.shields.io/badge/OM%20PDF-2563EB?style=for-the-badge&logo=adobeacrobatreader&logoColor=white" alt="OM PDF" />
 
@@ -6,129 +6,129 @@
 
 **Simple. Fast. Free PDF Tools.**
 
-Merge or split PDF files instantly â€” right in your browser. No uploads, no sign-up, completely private.
+Merge or split PDF files instantly  right in your browser. No uploads, no sign-up, completely private.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Netlify-00C7B7?style=flat-square&logo=netlify)](https://om-pdf.netlify.app)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](LICENSE)
 [![Built with Vite](https://img.shields.io/badge/Built%20with-Vite-646CFF?style=flat-square&logo=vite)](https://vitejs.dev)
 
-ðŸŒ **Live:** [https://om-pdf.netlify.app](https://om-pdf.netlify.app)
+ **Live:** [https://om-pdf.netlify.app](https://om-pdf.netlify.app)
 
 </div>
 
 ---
 
-## âœ¨ Features
+##  Features
 
-- ðŸ“‚ **File preview list** â€” name, size, page count, and **live PDF thumbnail** of page 1
-- ðŸ”€ **Drag to reorder** â€” rearrange merge order before combining
-- âœ‚ï¸ **Split PDF** â€” extract page ranges or split every page individually
-- ðŸ“„ **Extract Pages** â€” select pages and export a new PDF instantly
-- ðŸ›¡ï¸ **Security Suite** â€” AES-256 encryption, password removal, and permission control
-- â˜ï¸ **Google Drive** â€” persistent cloud storage integration for all tools
-- ðŸ“Š **Progress bar** â€” real-time step-by-step feedback per file
-- ðŸŒ™ **Dark mode** â€” auto-detects system preference + manual toggle
-- ðŸ“± **Fully responsive** â€” desktop, tablet, and mobile with premium Mega-Menu
-- ðŸ”’ **100% Private** â€” all processing happens in your browser
-- âš¡ **Lightning fast** â€” no upload wait, instant processing using QPDF WASM
-- âš¡ **Batch Processing** â€” parallel worker pool for blazing-fast multi-file operations
-- â­ **Favorite Tools** â€” pin your most-used tools for quick access
-- ðŸ’¾ **Crash Recovery** â€” auto-save via IndexedDB so you never lose your progress
-- ðŸŽ¨ **Smooth Transitions** â€” buttery-smooth page animations powered by Framer Motion
-- ðŸ·ï¸ **Custom output filename** â€” rename before downloading
-- ðŸ“ˆ **SEO optimized** â€” sitemap, structured data, Open Graph
-- ðŸ“¸ **Extract Images** â€” pull embedded images from PDFs (local only)
-- âž• **Insert Blank Pages** â€” add blank pages anywhere in a PDF
-- ðŸ–¼ï¸ **PDF to JPG (Advanced)** â€” control quality, scale, and page ranges
-- ðŸ§¹ **Remove Empty Pages** â€” detect and remove blank pages fast
-- ðŸ”– **Split by Bookmarks** â€” split PDFs using outline sections
-- ðŸ§© **Merge with Ranges** â€” merge PDFs with per-file page ranges
-- ðŸ§­ **Auto Rotate & Deskew** â€” auto-fix orientation for scans
-- âš« **Grayscale PDF** â€” convert PDFs to grayscale
-- ðŸ“ **Resize Pages** â€” normalize page sizes to common presets
-- â¬š **Add Margins** â€” add or trim margins on all pages
-- ðŸ§¼ **Sanitize Metadata** â€” remove hidden metadata fields
-- ðŸ“Œ **Flatten Forms** â€” lock fillable fields into static content
-- ðŸ§µ **PDF to Long Image** â€” export a single tall image
-- ðŸ“Š **Excel & PDF Converter** â€” convert spreadsheets to PDF and extract tables to Excel
-- ðŸŒ™ **Dark Mode PDF** â€” invert PDF page background colors for comfortable night reading
-- ðŸ“– **Booklet Creator** â€” put 2, 4, or 8 PDF pages onto a single sheet of paper
-- ðŸ§‘ðŸ’» **Markdown to PDF** â€” write Markdown with a live styled preview
-- ðŸ”— **Remove Links** â€” strip all clickable hyperlink annotations from PDFs
-- ðŸ“¸ **QR Code Generator** â€” generate bulk QR codes into printable PDF grids
+-  **File preview list**  name, size, page count, and **live PDF thumbnail** of page 1
+-  **Drag to reorder**  rearrange merge order before combining
+-  **Split PDF**  extract page ranges or split every page individually
+-  **Extract Pages**  select pages and export a new PDF instantly
+-  **Security Suite**  AES-256 encryption, password removal, and permission control
+-  **Google Drive**  persistent cloud storage integration for all tools
+-  **Progress bar**  real-time step-by-step feedback per file
+-  **Dark mode**  auto-detects system preference + manual toggle
+-  **Fully responsive**  desktop, tablet, and mobile with premium Mega-Menu
+-  **100% Private**  all processing happens in your browser
+-  **Lightning fast**  no upload wait, instant processing using QPDF WASM
+-  **Batch Processing**  parallel worker pool for blazing-fast multi-file operations
+-  **Favorite Tools**  pin your most-used tools for quick access
+-  **Crash Recovery**  auto-save via IndexedDB so you never lose your progress
+-  **Smooth Transitions**  buttery-smooth page animations powered by Framer Motion
+-  **Custom output filename**  rename before downloading
+-  **SEO optimized**  sitemap, structured data, Open Graph
+-  **Extract Images**  pull embedded images from PDFs (local only)
+-  **Insert Blank Pages**  add blank pages anywhere in a PDF
+-  **PDF to JPG (Advanced)**  control quality, scale, and page ranges
+-  **Remove Empty Pages**  detect and remove blank pages fast
+-  **Split by Bookmarks**  split PDFs using outline sections
+-  **Merge with Ranges**  merge PDFs with per-file page ranges
+-  **Auto Rotate & Deskew**  auto-fix orientation for scans
+-  **Grayscale PDF**  convert PDFs to grayscale
+-  **Resize Pages**  normalize page sizes to common presets
+-  **Add Margins**  add or trim margins on all pages
+-  **Sanitize Metadata**  remove hidden metadata fields
+-  **Flatten Forms**  lock fillable fields into static content
+-  **PDF to Long Image**  export a single tall image
+-  **Excel & PDF Converter**  convert spreadsheets to PDF and extract tables to Excel
+-  **Dark Mode PDF**  invert PDF page background colors for comfortable night reading
+-  **Booklet Creator**  put 2, 4, or 8 PDF pages onto a single sheet of paper
+-  **Markdown to PDF**  write Markdown with a live styled preview
+-  **Remove Links**  strip all clickable hyperlink annotations from PDFs
+-  **QR Code Generator**  generate bulk QR codes into printable PDF grids
 
 ---
 
-## ðŸ› ï¸ Tool Directory (45 Offline-First Tools)
+##  Tool Directory (45 Offline-First Tools)
 
 All tools run **100% locally in the browser** using client-side libraries (such as `pdf-lib`, `pdf.js`, and `qpdf` via WebAssembly). Files never leave your device.
 
-### ðŸ“‚ Organize PDFs
-- âš–ï¸ **Split by Size** â€” Split a large PDF into smaller parts by maximum file size.
-- âš¡ **Batch Pipeline** â€” Apply a sequence of actions to multiple PDFs at once.
-- ðŸ“‚ **Merge PDF** â€” Combine multiple PDFs into a single document with drag-and-drop page/file reordering.
-- âœ‚ï¸ **Split PDF** â€” Extract specific page ranges or split every page into separate files.
-- ðŸ“„ **Extract Pages** â€” Select specific pages visually and export them as a new PDF.
-- ðŸ”„ **Rotate PDF** â€” Rotate individual pages or all pages of a PDF visually.
-- ðŸ“‘ **Organize PDF** â€” Interactively rearrange, delete, or add pages to your PDF.
-- âž• **Insert Blank Pages** â€” Add blank pages before or after any page in the document.
-- ðŸ§¹ **Remove Empty Pages** â€” Automatically detect and delete blank pages from your PDF.
-- ðŸ”– **Split by Bookmarks** â€” Automatically split a PDF into separate files based on outline sections/bookmarks.
-- ðŸ§© **Merge with Ranges** â€” Merge multiple files using specific page range criteria per file.
-- ðŸ§­ **Auto Rotate & Deskew** â€” Automatically fix skewed and misoriented pages.
-- ðŸ“ **Crop PDF** â€” Crop margins and adjust page dimensions.
-- ðŸ“– **Booklet Creator** â€” Arrange multiple PDF pages onto a single sheet (N-up layout) to create printable booklets.
-- âš–ï¸ **Compare PDF** â€” Visually or textually compare two PDFs side-by-side.
-- ðŸ” **Inspect PDF** â€” Developer tool to extract structural elements, tags, and metadata to JSON.
+###  Organize PDFs
+-  **Split by Size**  Split a large PDF into smaller parts by maximum file size.
+-  **Batch Pipeline**  Apply a sequence of actions to multiple PDFs at once.
+-  **Merge PDF**  Combine multiple PDFs into a single document with drag-and-drop page/file reordering.
+-  **Split PDF**  Extract specific page ranges or split every page into separate files.
+-  **Extract Pages**  Select specific pages visually and export them as a new PDF.
+-  **Rotate PDF**  Rotate individual pages or all pages of a PDF visually.
+-  **Organize PDF**  Interactively rearrange, delete, or add pages to your PDF.
+-  **Insert Blank Pages**  Add blank pages before or after any page in the document.
+-  **Remove Empty Pages**  Automatically detect and delete blank pages from your PDF.
+-  **Split by Bookmarks**  Automatically split a PDF into separate files based on outline sections/bookmarks.
+-  **Merge with Ranges**  Merge multiple files using specific page range criteria per file.
+-  **Auto Rotate & Deskew**  Automatically fix skewed and misoriented pages.
+-  **Crop PDF**  Crop margins and adjust page dimensions.
+-  **Booklet Creator**  Arrange multiple PDF pages onto a single sheet (N-up layout) to create printable booklets.
+-  **Compare PDF**  Visually or textually compare two PDFs side-by-side.
+-  **Inspect PDF**  Developer tool to extract structural elements, tags, and metadata to JSON.
 
-### ðŸ”„ Convert & Compress
-- ðŸ“ **PDF to Word** â€” Extract text from PDF to a Microsoft Word (DOCX) document.
-- ðŸ“‰ **Compress PDF** â€” Reduce file size while preserving high rendering quality.
-- ðŸ”„ **PDF Converter** â€” General converter to switch between PDFs and images.
-- ðŸ–¼ï¸ **PDF to JPG (Advanced)** â€” Export PDF pages as high-quality JPGs with custom scale and quality sliders.
-- ðŸ§µ **PDF to Long Image** â€” Merge and export selected pages into a single continuous tall image.
-- ðŸ“¸ **Extract Images** â€” Extract all embedded raster images from within a PDF file.
-- ðŸ–¼ï¸ **Image to PDF** â€” Convert a batch of images (PNG, JPG, WebP) into a single PDF.
-- ðŸ” **PDF to Text** â€” Extract all selectable text content from a PDF instantly.
-- ðŸ¤– **OCR PDF** â€” Convert scanned images to searchable text documents locally.
-- âš¡ **Linearize PDF** â€” Optimize byte layout for Fast Web View in browsers.
-- ðŸ“Š **Excel & PDF Converter** â€” Convert Excel spreadsheets to PDF or extract tabular data to spreadsheet files.
-- ðŸ“¸ **QR Code Generator** â€” Generate bulk QR codes from custom text and arrange them on a printable PDF grid.
+###  Convert & Compress
+-  **PDF to Word**  Extract text from PDF to a Microsoft Word (DOCX) document.
+-  **Compress PDF**  Reduce file size while preserving high rendering quality.
+-  **PDF Converter**  General converter to switch between PDFs and images.
+-  **PDF to JPG (Advanced)**  Export PDF pages as high-quality JPGs with custom scale and quality sliders.
+-  **PDF to Long Image**  Merge and export selected pages into a single continuous tall image.
+-  **Extract Images**  Extract all embedded raster images from within a PDF file.
+-  **Image to PDF**  Convert a batch of images (PNG, JPG, WebP) into a single PDF.
+-  **PDF to Text**  Extract all selectable text content from a PDF instantly.
+-  **OCR PDF**  Convert scanned images to searchable text documents locally.
+-  **Linearize PDF**  Optimize byte layout for Fast Web View in browsers.
+-  **Excel & PDF Converter**  Convert Excel spreadsheets to PDF or extract tabular data to spreadsheet files.
+-  **QR Code Generator**  Generate bulk QR codes from custom text and arrange them on a printable PDF grid.
 
-### ðŸ“ View & Edit
-- ðŸ“‹ **Form Builder** â€” Create interactive, fillable PDF forms from any document.
-- ðŸ·ï¸ **Watermark PDF** â€” Add text or image watermarks with position, opacity, and angle controls.
-- âœï¸ **Draw & Sign PDF** â€” Electronically sign documents with a drawn, typed, or uploaded signature.
-- âœï¸ **Edit PDF** â€” Draw, annotate, delete pages, rotate, and add content directly.
-- ðŸ”¢ **Page Numbers** â€” Add customizable page numbers (position, style, font, size).
-- âš« **Grayscale PDF** â€” Convert colored PDF pages to clean black-and-white grayscale.
-- ðŸŒ™ **Dark Mode PDF** â€” Invert PDF page colors to a high-contrast dark layout for night reading.
-- ðŸ§‘ðŸ’» **Markdown to PDF** â€” Write Markdown in a live editor and compile to a styled PDF.
-- ðŸ“ **Resize Pages** â€” Standardize page sizes to common presets (A4, Letter, A3, etc.).
-- â¬š **Add Margins** â€” Add or trim custom margins on all pages.
-- âš–ï¸ **Compare PDF** â€” Compare two PDFs side-by-side with visual and text diffs.
-- ðŸ“„ **Overlay PDF** â€” Add a background template or letterhead to your document.
-- ðŸ“ **Custom Headers & Footers** â€” Add dynamic text labels and page numbers to margins.
-- ðŸ”¢ **Bates Numbering** â€” Assign sequential numbering for legal and medical indexing.
-- ðŸ”Š **Voice Reader PDF** â€” Read document text aloud using a local text-to-speech engine.
-- ðŸ“Š **PDF to PowerPoint** â€” Convert each PDF page into a PowerPoint slide. Fully offline, exports `.pptx`.
-- ðŸŒ **HTML to PDF** â€” Write HTML & CSS in a live editor and export a pixel-perfect PDF instantly.
-- âœï¸ **E-Sign PDF** â€” Place signature, name, date and initial fields on any page and download the signed PDF.
+###  View & Edit
+-  **Form Builder**  Create interactive, fillable PDF forms from any document.
+-  **Watermark PDF**  Add text or image watermarks with position, opacity, and angle controls.
+-  **Draw & Sign PDF**  Electronically sign documents with a drawn, typed, or uploaded signature.
+-  **Edit PDF**  Draw, annotate, delete pages, rotate, and add content directly.
+-  **Page Numbers**  Add customizable page numbers (position, style, font, size).
+-  **Grayscale PDF**  Convert colored PDF pages to clean black-and-white grayscale.
+-  **Dark Mode PDF**  Invert PDF page colors to a high-contrast dark layout for night reading.
+-  **Markdown to PDF**  Write Markdown in a live editor and compile to a styled PDF.
+-  **Resize Pages**  Standardize page sizes to common presets (A4, Letter, A3, etc.).
+-  **Add Margins**  Add or trim custom margins on all pages.
+-  **Compare PDF**  Compare two PDFs side-by-side with visual and text diffs.
+-  **Overlay PDF**  Add a background template or letterhead to your document.
+-  **Custom Headers & Footers**  Add dynamic text labels and page numbers to margins.
+-  **Bates Numbering**  Assign sequential numbering for legal and medical indexing.
+-  **Voice Reader PDF**  Read document text aloud using a local text-to-speech engine.
+-  **PDF to PowerPoint**  Convert each PDF page into a PowerPoint slide. Fully offline, exports `.pptx`.
+-  **HTML to PDF**  Write HTML & CSS in a live editor and export a pixel-perfect PDF instantly.
+-  **E-Sign PDF**  Place signature, name, date and initial fields on any page and download the signed PDF.
 
-### ðŸ›¡ï¸ Security & Metadata
-- ðŸ“ **Metadata Editor** â€” View and edit standard properties (Title, Author, Subject, Keywords).
-- ðŸ›¡ï¸ **Protect PDF** â€” Secure documents with password encryption (AES-256).
-- ðŸ”“ **Unlock PDF** â€” Decrypt and remove passwords from locked PDFs.
-- ðŸ” **PDF Permissions** â€” Fine-tune restrictions on printing, copying, and modifications.
-- ðŸ§¼ **Sanitize Metadata** â€” Deep clean hidden metadata and structural tags.
-- ðŸ“Œ **Flatten Forms** â€” Flatten interactive form fields to prevent further editing.
-- â¬› **Redact PDF** â€” Mask and sanitize sensitive data permanently from pages.
-- ðŸ”— **Remove Links** â€” Strip all clickable web reference hyperlink annotations from your PDF.
+###  Security & Metadata
+-  **Metadata Editor**  View and edit standard properties (Title, Author, Subject, Keywords).
+-  **Protect PDF**  Secure documents with password encryption (AES-256).
+-  **Unlock PDF**  Decrypt and remove passwords from locked PDFs.
+-  **PDF Permissions**  Fine-tune restrictions on printing, copying, and modifications.
+-  **Sanitize Metadata**  Deep clean hidden metadata and structural tags.
+-  **Flatten Forms**  Flatten interactive form fields to prevent further editing.
+-  **Redact PDF**  Mask and sanitize sensitive data permanently from pages.
+-  **Remove Links**  Strip all clickable web reference hyperlink annotations from your PDF.
 
 ---
 
-## ðŸ¤ Contributing
+##  Contributing
 
 Contributions are welcomed! Bug fixes, features, and improvements are appreciated.
 
@@ -136,12 +136,12 @@ Contributions are welcomed! Bug fixes, features, and improvements are appreciate
 > **full ownership of your contribution is assigned to the project Owner (OM Patil)**.
 > You retain no co-ownership or IP rights. See [LICENSE](LICENSE) for full terms.
 
-> âš ï¸ Do **not** copy or reuse the UI design, layout, or branding in other projects.
+>  Do **not** copy or reuse the UI design, layout, or branding in other projects.
 > This is explicitly prohibited by the [LICENSE](LICENSE).
 
 ---
 
-## ðŸ› Bug Reports
+##  Bug Reports
 
 Found a bug? Please [open an issue](https://github.com/omspradippatil/OM-pdf/issues) with:
 
@@ -152,28 +152,28 @@ Found a bug? Please [open an issue](https://github.com/omspradippatil/OM-pdf/iss
 
 ---
 
-## ðŸ“œ License
+##  License
 
-This project uses a **Proprietary License** â€” see [LICENSE](LICENSE) for full terms.
+This project uses a **Proprietary License**  see [LICENSE](LICENSE) for full terms.
 
-- âœ… You may view and study the code
-- âœ… You may contribute (rights assigned to the Owner)
-- âœ… You may run it locally for personal use
-- âŒ You may not copy, redistribute, or reuse the design
-- âŒ You may not deploy a public instance without permission
-- âŒ You may not use the "OM PDF" name or branding
+-  You may view and study the code
+-  You may contribute (rights assigned to the Owner)
+-  You may run it locally for personal use
+-  You may not copy, redistribute, or reuse the design
+-  You may not deploy a public instance without permission
+-  You may not use the "OM PDF" name or branding
 
 **All rights reserved. Owner: OM Patil**
 
 ---
 
-## â­ Show Your Support
+##  Show Your Support
 
-If you found this project helpful, please give it a **â­ star** on GitHub or consider [supporting the project](https://ompradippatil.netlify.app/donate)!
+If you found this project helpful, please give it a ** star** on GitHub or consider [supporting the project](https://ompradippatil.netlify.app/donate)!
 
 ---
 
-## ðŸ‘¤ Contact the Developer
+##  Contact the Developer
 
 **Developed by OM Patil**
 
@@ -186,13 +186,13 @@ If you found this project helpful, please give it a **â­ star** on GitHub or
 
 <div align="center">
 
-Built with â¤ï¸ by **OM Patil** â€” All Rights Reserved.
+Built with  by **OM Patil**  All Rights Reserved.
 
 </div>
 
 ---
 
-## 👤 Contact the Developer
+##  Contact the Developer
 
 **Developed by OM Patil**
 
