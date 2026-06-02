@@ -113,10 +113,26 @@ export default function RotatePDF() {
   const handleRotate = async () => {
     if (!files.length) return;
     setError(''); setSuccess(''); setRotating(true); setProgress(0);
+    
+    // Initialize file states
+    setFiles(prev => prev.map(f => ({ ...f, status: 'queued', progress: 0 })));
+    
+    const updateFileState = (id, updates) => {
+      setFiles(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
+    };
+
     try {
       if (files.length === 1) {
-        const fileObj = files[0].file;
-        const bytes = await rotatePDF(fileObj, rotations, setProgress, null);
+        const { id, file: fileObj } = files[0];
+        updateFileState(id, { status: 'processing', progress: 10 });
+        
+        const bytes = await rotatePDF(fileObj, rotations, (p) => {
+          updateFileState(id, { progress: p });
+          setProgress(p);
+        }, null);
+        
+        updateFileState(id, { status: 'success', progress: 100 });
+        
         const name  = fileObj.name.replace(/\.pdf$/i, '_rotated.pdf');
         
         const blob = new Blob([bytes], { type: 'application/pdf' });
@@ -134,17 +150,41 @@ export default function RotatePDF() {
       } else {
         const zip = new JSZip();
         const folder = zip.folder('Rotated_PDFs');
+        let completed = 0;
         
-        for (let i = 0; i < files.length; i++) {
-          const fileObj = files[i].file;
-          
-          setProgress(Math.round(((i + 0.5) / files.length) * 90));
-          const bytes = await rotatePDF(fileObj, null, null, globalRotation);
-          
-          folder.file(fileObj.name.replace(/\.pdf$/i, '_rotated.pdf'), bytes);
-          setProgress(Math.round(((i + 1) / files.length) * 90));
+        const tasks = files.map(async (fileData, i) => {
+          const { id, file: fileObj } = fileData;
+          updateFileState(id, { status: 'processing', progress: 0 });
+          try {
+            await new Promise(r => setTimeout(r, 50 * i)); // Stagger execution
+            
+            const bytes = await rotatePDF(fileObj, null, (p) => {
+              updateFileState(id, { progress: p });
+            }, globalRotation);
+            
+            updateFileState(id, { status: 'success', progress: 100 });
+            completed++;
+            setProgress(Math.round((completed / files.length) * 90));
+            return { out: bytes, fileObj };
+          } catch (err) {
+            updateFileState(id, { status: 'error', progress: 0 });
+            throw err;
+          }
+        });
+        
+        const results = await Promise.allSettled(tasks);
+        let successCount = 0;
+        
+        for (const res of results) {
+          if (res.status === 'fulfilled') {
+            const { out, fileObj } = res.value;
+            folder.file(fileObj.name.replace(/\.pdf$/i, '_rotated.pdf'), out);
+            successCount++;
+          }
         }
         
+        if (successCount === 0) throw new Error("All files failed to process.");
+
         setProgress(95);
         const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
         setProgress(100);
@@ -155,11 +195,11 @@ export default function RotatePDF() {
         a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
         
         lastBytesRef.current = zipBlob; lastNameRef.current = zipName; isZipRef.current = true;
-        setSuccess(`Successfully rotated ${files.length} files!`);
+        setSuccess(`Successfully rotated ${successCount} files!`);
         
         addRecentFile({ tool: 'rotate_batch', name: zipName, size: zipBlob.size });
         bumpLocalJob();
-        await logUserAction(user, 'rotate', { tool: 'rotate', status: 'success', meta: { batch: true, count: files.length } });
+        await logUserAction(user, 'rotate', { tool: 'rotate', status: 'success', meta: { batch: true, count: successCount } });
       }
     } catch (err) {
       setError('Rotation failed: ' + (err.message || 'Unexpected error.'));

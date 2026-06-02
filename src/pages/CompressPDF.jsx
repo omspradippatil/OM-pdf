@@ -54,13 +54,29 @@ export default function CompressPDF() {
   const handleCompress = async () => {
     if (!files.length) return;
     setError(''); setResult(null); setCompressing(true); setProgress(0);
+    
+    // Initialize file states
+    setFiles(prev => prev.map(f => ({ ...f, status: 'queued', progress: 0 })));
+    
+    const updateFileState = (id, updates) => {
+      setFiles(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
+    };
+
     try {
       if (files.length === 1) {
         // Single file processing
-        const fileObj = files[0].file;
+        const { id, file: fileObj } = files[0];
+        updateFileState(id, { status: 'processing', progress: 0 });
+        
         const buffer = await fileObj.arrayBuffer();
-        const { bytes: out } = await runPdfWorkerTask('compress_lossless', { buffer, level }, [buffer], setProgress);
+        const { bytes: out } = await runPdfWorkerTask('compress_lossless', { buffer, level }, [buffer], (p) => {
+          updateFileState(id, { progress: p });
+          setProgress(p);
+        });
+        
+        updateFileState(id, { status: 'success', progress: 100 });
         setProgress(100);
+        
         const name = fileObj.name.replace(/\.pdf$/i, '_compressed.pdf');
         const blob = new Blob([out], { type: 'application/pdf' });
         const url  = URL.createObjectURL(blob);
@@ -76,28 +92,45 @@ export default function CompressPDF() {
         bumpLocalJob();
         await logUserAction(user, 'compress', { tool: 'compress', status: 'success', meta: { outputName: name, level, pct, batch: false } });
       } else {
-        // Batch processing
+        // Parallel Batch processing
         const zip = new JSZip();
         const folder = zip.folder('Compressed_PDFs');
         let totalOriginal = 0;
         let totalCompressed = 0;
+        let completed = 0;
 
-        for (let i = 0; i < files.length; i++) {
-          const fileObj = files[i].file;
-          const buffer = await fileObj.arrayBuffer();
-          
-          const progressCallback = (p) => {
-            const base = (i / files.length) * 100;
-            const current = (p / 100) * (100 / files.length);
-            setProgress(Math.round(base + current));
-          };
-          
-          const { bytes: out } = await runPdfWorkerTask('compress_lossless', { buffer, level }, [buffer], progressCallback);
-          
-          totalOriginal += fileObj.size;
-          totalCompressed += out.byteLength;
-          folder.file(fileObj.name.replace(/\.pdf$/i, '_compressed.pdf'), out);
+        const tasks = files.map(async (fileData) => {
+          const { id, file: fileObj } = fileData;
+          updateFileState(id, { status: 'processing', progress: 0 });
+          try {
+            const buffer = await fileObj.arrayBuffer();
+            const { bytes: out } = await runPdfWorkerTask('compress_lossless', { buffer, level }, [buffer], (p) => {
+              updateFileState(id, { progress: p });
+            });
+            updateFileState(id, { status: 'success', progress: 100 });
+            completed++;
+            setProgress(Math.round((completed / files.length) * 95));
+            return { out, fileObj };
+          } catch (err) {
+            updateFileState(id, { status: 'error', progress: 0 });
+            throw err;
+          }
+        });
+
+        const results = await Promise.allSettled(tasks);
+        let successCount = 0;
+        
+        for (const res of results) {
+          if (res.status === 'fulfilled') {
+            const { out, fileObj } = res.value;
+            totalOriginal += fileObj.size;
+            totalCompressed += out.byteLength;
+            folder.file(fileObj.name.replace(/\.pdf$/i, '_compressed.pdf'), out);
+            successCount++;
+          }
         }
+
+        if (successCount === 0) throw new Error("All files failed to process.");
 
         setProgress(95);
         const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
@@ -111,11 +144,11 @@ export default function CompressPDF() {
         const saved = Math.max(0, totalOriginal - totalCompressed);
         const pct = totalOriginal ? Math.round((saved / totalOriginal) * 100) : 0;
         
-        setResult({ bytes: zipBlob, name: zipName, originalSize: totalOriginal, compressedSize: totalCompressed, saved, pct, isZip: true, count: files.length });
+        setResult({ bytes: zipBlob, name: zipName, originalSize: totalOriginal, compressedSize: totalCompressed, saved, pct, isZip: true, count: successCount });
         
         addRecentFile({ tool: 'compress_batch', name: zipName, size: zipBlob.size });
         bumpLocalJob();
-        await logUserAction(user, 'compress', { tool: 'compress', status: 'success', meta: { outputName: zipName, level, pct, batch: true, count: files.length } });
+        await logUserAction(user, 'compress', { tool: 'compress', status: 'success', meta: { outputName: zipName, level, pct, batch: true, count: successCount } });
       }
     } catch (err) {
       setError('Compression failed: ' + (err.message || 'Unexpected error.'));

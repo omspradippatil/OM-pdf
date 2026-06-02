@@ -54,17 +54,32 @@ export default function FlattenForms() {
     setWorking(true);
     setProgress(0);
 
+    // Initialize file states
+    setFiles(prev => prev.map(f => ({ ...f, status: 'queued', progress: 0 })));
+    
+    const updateFileState = (id, updates) => {
+      setFiles(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
+    };
+
     try {
       if (files.length === 1) {
+        const { id, file: fileObj } = files[0];
+        updateFileState(id, { status: 'processing', progress: 20 });
         setProgress(20);
-        const fileObj = files[0].file;
+        
         const buf = await fileObj.arrayBuffer();
         const pdfDoc = await PDFDocument.load(buf, { ignoreEncryption: true });
+        
+        updateFileState(id, { progress: 50 });
         setProgress(50);
+        
         const form = pdfDoc.getForm();
         const fields = form.getFields();
         if (fields.length) form.flatten();
+        
         const bytes = await pdfDoc.save();
+        
+        updateFileState(id, { status: 'success', progress: 100 });
         setProgress(90);
 
         const name = fileObj.name.replace(/\.pdf$/i, '_flattened.pdf');
@@ -87,28 +102,50 @@ export default function FlattenForms() {
         const zip = new JSZip();
         const folder = zip.folder('Flattened_PDFs');
         let totalFieldsFlattened = 0;
+        let completed = 0;
         
-        for (let i = 0; i < files.length; i++) {
-          const fileObj = files[i].file;
-          
-          setProgress(Math.round(((i + 0.2) / files.length) * 90));
-          const buf = await fileObj.arrayBuffer();
-          const pdfDoc = await PDFDocument.load(buf, { ignoreEncryption: true });
-          
-          setProgress(Math.round(((i + 0.5) / files.length) * 90));
-          const form = pdfDoc.getForm();
-          const fields = form.getFields();
-          if (fields.length) {
-            form.flatten();
-            totalFieldsFlattened += fields.length;
+        const tasks = files.map(async (fileData, i) => {
+          const { id, file: fileObj } = fileData;
+          updateFileState(id, { status: 'processing', progress: 10 });
+          try {
+            await new Promise(r => setTimeout(r, 50 * i)); // Stagger execution
+            const buf = await fileObj.arrayBuffer();
+            const pdfDoc = await PDFDocument.load(buf, { ignoreEncryption: true });
+            
+            updateFileState(id, { progress: 50 });
+            
+            const form = pdfDoc.getForm();
+            const fields = form.getFields();
+            if (fields.length) {
+              form.flatten();
+              totalFieldsFlattened += fields.length;
+            }
+            
+            const bytes = await pdfDoc.save();
+            
+            updateFileState(id, { status: 'success', progress: 100 });
+            completed++;
+            setProgress(Math.round((completed / files.length) * 90));
+            return { out: bytes, fileObj };
+          } catch (err) {
+            updateFileState(id, { status: 'error', progress: 0 });
+            throw err;
           }
-          
-          const bytes = await pdfDoc.save();
-          
-          folder.file(fileObj.name.replace(/\.pdf$/i, '_flattened.pdf'), bytes);
-          setProgress(Math.round(((i + 1) / files.length) * 90));
+        });
+        
+        const results = await Promise.allSettled(tasks);
+        let successCount = 0;
+        
+        for (const res of results) {
+          if (res.status === 'fulfilled') {
+            const { out, fileObj } = res.value;
+            folder.file(fileObj.name.replace(/\.pdf$/i, '_flattened.pdf'), out);
+            successCount++;
+          }
         }
         
+        if (successCount === 0) throw new Error("All files failed to process.");
+
         setProgress(95);
         const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
         setProgress(100);
@@ -119,11 +156,11 @@ export default function FlattenForms() {
         a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
         
         lastBytesRef.current = zipBlob; lastNameRef.current = zipName; isZipRef.current = true;
-        setSuccess(`Successfully flattened ${files.length} files (${totalFieldsFlattened} total fields).`);
+        setSuccess(`Successfully flattened ${successCount} files (${totalFieldsFlattened} total fields).`);
         
         addRecentFile({ tool: 'flatten_batch', name: zipName, size: zipBlob.size });
         bumpLocalJob();
-        await logUserAction(user, 'flatten_forms', { tool: 'flatten_forms', status: 'success', meta: { batch: true, count: files.length, totalFields: totalFieldsFlattened } });
+        await logUserAction(user, 'flatten_forms', { tool: 'flatten_forms', status: 'success', meta: { batch: true, count: successCount, totalFields: totalFieldsFlattened } });
       }
     } catch (err) {
       setError('Flatten failed: ' + (err?.message || 'Unexpected error.'));

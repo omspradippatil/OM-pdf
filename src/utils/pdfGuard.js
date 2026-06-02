@@ -54,8 +54,9 @@ async function getQpdf() {
 async function runQpdf(inputBytes, args) {
   const qpdf = await getQpdf();
   
-  const inputName = `input_${Date.now()}.pdf`;
-  const outputName = `output_${Date.now()}.pdf`;
+  const id = Math.random().toString(36).substring(2, 9);
+  const inputName = `input_${Date.now()}_${id}.pdf`;
+  const outputName = `output_${Date.now()}_${id}.pdf`;
   
   try {
     // Write to virtual filesystem

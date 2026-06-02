@@ -169,12 +169,12 @@ export default function PipelinePdf() {
           {pipeline.map((step, idx) => {
             const action = AVAILABLE_ACTIONS.find(a => a.id === step);
             return (
-              <div key={idx} style={{ display: 'flex', alignItems: 'center', background: 'var(--primary-light)', color: 'var(--primary)', padding: '8px 12px', borderRadius: 8 }}>
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', background: 'var(--primary)', color: '#fff', padding: '8px 12px', borderRadius: 8 }}>
                 <span style={{ fontSize: '1rem', marginRight: 8 }}>{action?.icon}</span>
                 <span style={{ flex: 1, fontSize: '0.85rem', fontWeight: 600 }}>{idx + 1}. {action?.label}</span>
                 <button 
                   onClick={() => removeAction(idx)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', fontSize: '1rem', padding: 4 }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#fff', fontSize: '1rem', padding: 4 }}
                 >✕</button>
               </div>
             );

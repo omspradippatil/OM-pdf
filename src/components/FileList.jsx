@@ -102,10 +102,18 @@ export default function FileList({ files, onRemove, onClear, onReorder }) {
                 ? <img src={f.thumbnail} alt="" className="file-thumb" />
                 : <div className="file-icon" aria-hidden="true">📄</div>
               }
-              <div className="file-info">
+              <div className="file-info" style={{ flex: 1, minWidth: 0, paddingRight: 10 }}>
                 <div className="file-name" title={f.file.name}>{f.file.name}</div>
-                <div className="file-meta">
+                {f.status === 'processing' && (
+                  <div style={{ width: '100%', background: 'var(--border)', height: 4, borderRadius: 2, marginTop: 4, marginBottom: 2, overflow: 'hidden' }}>
+                    <div style={{ width: `${f.progress || 0}%`, background: 'var(--primary)', height: '100%', transition: 'width 0.2s' }} />
+                  </div>
+                )}
+                <div className="file-meta" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <span className="file-size">{formatBytes(f.file.size)}</span>
+                  {f.status === 'success' && <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 2 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg> Done</span>}
+                  {f.status === 'error' && <span style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 600 }}>❌ Error</span>}
+                  {f.status === 'queued' && <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>⏳ Queued</span>}
                   {f.pages === null
                     ? <span className="file-pages file-pages-loading">Loading…</span>
                     : (

@@ -53,43 +53,84 @@ export default function ProtectPDF() {
     if (!files.length) return;
     if (!password) { setError('Please enter a password.'); return; }
     setError(''); setSuccess(''); setWorking(true); setProgress(0);
+
+    // Initialize file states
+    setFiles(prev => prev.map(f => ({ ...f, status: 'queued', progress: 0 })));
+    
+    const updateFileState = (id, updates) => {
+      setFiles(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
+    };
+
     try {
       if (files.length === 1) {
+        const { id, file: fileObj } = files[0];
+        updateFileState(id, { status: 'processing', progress: 30 });
         setProgress(30);
-        const fileObj = files[0].file;
+        
         const buffer = await fileObj.arrayBuffer();
+        updateFileState(id, { progress: 60 });
         setProgress(60);
+        
         const inputData = new Uint8Array(buffer);
-        const outputData = await protectPdf(inputData, password);
-        setProgress(90);
+        const outputData = await protectPdf(inputData, { userPassword: password });
+        
+        updateFileState(id, { status: 'success', progress: 100 });
+        setProgress(100);
+        
         const name = fileObj.name.replace(/\.pdf$/i, '_protected.pdf');
         const blob = new Blob([outputData], { type: 'application/pdf' });
         const url  = URL.createObjectURL(blob);
         const a    = document.body.appendChild(document.createElement('a'));
         a.href = url; a.download = name; a.click();
         setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
+        
         lastBytesRef.current = outputData; lastNameRef.current = name; isZipRef.current = false;
         setSuccess('Successfully encrypted!');
-        setProgress(100);
+        
         addRecentFile({ tool: 'protect', name, size: outputData.byteLength || 0 });
         bumpLocalJob();
         await logUserAction(user, 'protect', { tool: 'protect', status: 'success', meta: { outputName: name, batch: false } });
       } else {
         const zip = new JSZip();
         const folder = zip.folder('Protected_PDFs');
+        let completed = 0;
         
-        for (let i = 0; i < files.length; i++) {
-          const fileObj = files[i].file;
-          const buffer = await fileObj.arrayBuffer();
-          const inputData = new Uint8Array(buffer);
-          
-          setProgress(Math.round(((i + 0.5) / files.length) * 90));
-          const outputData = await protectPdf(inputData, password);
-          
-          folder.file(fileObj.name.replace(/\.pdf$/i, '_protected.pdf'), outputData);
-          setProgress(Math.round(((i + 1) / files.length) * 90));
+        // We use a simple loop with setTimeout to yield to the UI thread 
+        // since QPDF runs synchronously on the main thread currently.
+        const tasks = files.map(async (fileData, i) => {
+          const { id, file: fileObj } = fileData;
+          updateFileState(id, { status: 'processing', progress: 10 });
+          try {
+            await new Promise(r => setTimeout(r, 50 * i)); // Stagger execution to yield UI
+            const buffer = await fileObj.arrayBuffer();
+            const inputData = new Uint8Array(buffer);
+            updateFileState(id, { progress: 50 });
+            
+            const outputData = await protectPdf(inputData, { userPassword: password });
+            
+            updateFileState(id, { status: 'success', progress: 100 });
+            completed++;
+            setProgress(Math.round((completed / files.length) * 90));
+            return { out: outputData, fileObj };
+          } catch (err) {
+            updateFileState(id, { status: 'error', progress: 0 });
+            throw err;
+          }
+        });
+        
+        const results = await Promise.allSettled(tasks);
+        let successCount = 0;
+        
+        for (const res of results) {
+          if (res.status === 'fulfilled') {
+            const { out, fileObj } = res.value;
+            folder.file(fileObj.name.replace(/\.pdf$/i, '_protected.pdf'), out);
+            successCount++;
+          }
         }
         
+        if (successCount === 0) throw new Error("All files failed to encrypt.");
+
         setProgress(95);
         const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
         setProgress(100);
@@ -100,11 +141,11 @@ export default function ProtectPDF() {
         a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
         
         lastBytesRef.current = zipBlob; lastNameRef.current = zipName; isZipRef.current = true;
-        setSuccess(`Successfully encrypted ${files.length} files!`);
+        setSuccess(`Successfully encrypted ${successCount} files!`);
         
         addRecentFile({ tool: 'protect_batch', name: zipName, size: zipBlob.size });
         bumpLocalJob();
-        await logUserAction(user, 'protect', { tool: 'protect', status: 'success', meta: { outputName: zipName, batch: true, count: files.length } });
+        await logUserAction(user, 'protect', { tool: 'protect', status: 'success', meta: { outputName: zipName, batch: true, count: successCount } });
       }
     } catch (err) {
       setError('Failed to protect PDF. ' + err.message);

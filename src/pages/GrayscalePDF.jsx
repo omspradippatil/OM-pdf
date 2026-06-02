@@ -99,15 +99,29 @@ export default function GrayscalePDF() {
     if (!files.length) return;
     setError(''); setSuccess(''); setWorking(true); setProgress(0);
 
+    // Initialize file states
+    setFiles(prev => prev.map(f => ({ ...f, status: 'queued', progress: 0 })));
+    
+    const updateFileState = (id, updates) => {
+      setFiles(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
+    };
+
     try {
       const safeScale = clamp(parseFloat(scale) || 2, 1, 3);
       const safeQuality = clamp(parseFloat(quality) || 0.9, 0.7, 0.98);
       
       if (files.length === 1) {
-        const fileObj = files[0].file;
-        const bytes = await buildGrayscalePdf(fileObj, { scale: safeScale, quality: safeQuality }, setProgress);
-        const name = fileObj.name.replace(/\.pdf$/i, '_grayscale.pdf');
+        const { id, file: fileObj } = files[0];
+        updateFileState(id, { status: 'processing', progress: 10 });
         
+        const bytes = await buildGrayscalePdf(fileObj, { scale: safeScale, quality: safeQuality }, (p) => {
+           updateFileState(id, { progress: p });
+           setProgress(p);
+        });
+        
+        updateFileState(id, { status: 'success', progress: 100 });
+        
+        const name = fileObj.name.replace(/\.pdf$/i, '_grayscale.pdf');
         const blob = new Blob([bytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = name;
@@ -123,19 +137,41 @@ export default function GrayscalePDF() {
       } else {
         const zip = new JSZip();
         const folder = zip.folder('Grayscale_PDFs');
+        let completed = 0;
         
-        for (let i = 0; i < files.length; i++) {
-          const fileObj = files[i].file;
-          
-          setProgress(Math.round((i / files.length) * 90));
-          const bytes = await buildGrayscalePdf(fileObj, { scale: safeScale, quality: safeQuality }, (p) => {
-             // scale the 0-90 progress from buildGrayscalePdf into our 0-90 overall progress window
-             setProgress(Math.round(((i + (p/90)) / files.length) * 90));
-          });
-          
-          folder.file(fileObj.name.replace(/\.pdf$/i, '_grayscale.pdf'), bytes);
+        const tasks = files.map(async (fileData, i) => {
+          const { id, file: fileObj } = fileData;
+          updateFileState(id, { status: 'processing', progress: 0 });
+          try {
+            await new Promise(r => setTimeout(r, 50 * i)); // Stagger execution
+            
+            const bytes = await buildGrayscalePdf(fileObj, { scale: safeScale, quality: safeQuality }, (p) => {
+               updateFileState(id, { progress: p });
+            });
+            
+            updateFileState(id, { status: 'success', progress: 100 });
+            completed++;
+            setProgress(Math.round((completed / files.length) * 90));
+            return { out: bytes, fileObj };
+          } catch (err) {
+            updateFileState(id, { status: 'error', progress: 0 });
+            throw err;
+          }
+        });
+        
+        const results = await Promise.allSettled(tasks);
+        let successCount = 0;
+        
+        for (const res of results) {
+          if (res.status === 'fulfilled') {
+            const { out, fileObj } = res.value;
+            folder.file(fileObj.name.replace(/\.pdf$/i, '_grayscale.pdf'), out);
+            successCount++;
+          }
         }
         
+        if (successCount === 0) throw new Error("All files failed to process.");
+
         setProgress(95);
         const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
         setProgress(100);
@@ -146,11 +182,11 @@ export default function GrayscalePDF() {
         a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
         
         lastBytesRef.current = zipBlob; lastNameRef.current = zipName; isZipRef.current = true;
-        setSuccess(`Successfully grayscaled ${files.length} files!`);
+        setSuccess(`Successfully grayscaled ${successCount} files!`);
         
         addRecentFile({ tool: 'grayscale_batch', name: zipName, size: zipBlob.size });
         bumpLocalJob();
-        await logUserAction(user, 'grayscale', { tool: 'grayscale', status: 'success', meta: { scale: safeScale, quality: safeQuality, batch: true, count: files.length } });
+        await logUserAction(user, 'grayscale', { tool: 'grayscale', status: 'success', meta: { scale: safeScale, quality: safeQuality, batch: true, count: successCount } });
       }
     } catch (err) {
       setError('Conversion failed: ' + (err?.message || 'Unexpected error.'));
