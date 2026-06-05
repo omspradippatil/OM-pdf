@@ -22,7 +22,7 @@ async function run() {
   for (const [key, meta] of Object.entries(SEO_METADATA)) {
     if (key === 'home') continue;
     
-    // e.g. "https://om-pdf.netlify.app/merge-pdf"
+    // e.g. "https://om-pdf.pages.dev/merge-pdf"
     let routeName = meta.url.split('/').pop();
     if (!routeName) continue;
     

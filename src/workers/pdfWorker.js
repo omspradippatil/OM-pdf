@@ -10,7 +10,7 @@ self.onmessage = async (e) => {
       const warnings = [];
 
       merged.setTitle('Merged PDF - OM PDF');
-      merged.setCreator('OM PDF (https://om-pdf.netlify.app)');
+      merged.setCreator('OM PDF (https://om-pdf.pages.dev)');
       merged.setProducer('OM PDF');
       merged.setCreationDate(new Date());
       merged.setModificationDate(new Date());

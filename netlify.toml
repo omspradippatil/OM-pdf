@@ -7,6 +7,13 @@
     # These values are public but Netlify scanner blocks them because they match env vars.
     SECRETS_SCAN_OMIT_KEYS = "VITE_FIREBASE_PROJECT_ID,VITE_FIREBASE_AUTH_DOMAIN"
 
+# Redirect all traffic to Cloudflare Pages
+[[redirects]]
+  from   = "/*"
+  to     = "https://om-pdf.pages.dev/:splat"
+  status = 301
+  force  = true
+
 # Proxy Firebase Auth (Forced to override React Router)
 [[redirects]]
   from   = "/__/auth/*"

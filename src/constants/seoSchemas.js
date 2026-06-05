@@ -1,4 +1,4 @@
-const BASE_URL = "https://om-pdf.netlify.app";
+const BASE_URL = "https://om-pdf.pages.dev";
 
 export function buildToolSchemas({ toolName, url, description, faqs }) {
   const webPage = {

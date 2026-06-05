@@ -74,7 +74,7 @@ export default function Home() {
         keywords="pdf to jpg, convert pdf to image, extract images from pdf, pdf to jpeg, high quality pdf conversion"
         title="Free PDF Tools Online | Merge, Split, Compress, Convert"
         description="Merge PDF, split PDF, compress PDF, convert PDF to JPG and add page numbers — all free, private and instant in your browser. No upload. No sign-up."
-        url="https://om-pdf.netlify.app/"
+        url="https://om-pdf.pages.dev/"
         schema={faqSchema}
       />
 

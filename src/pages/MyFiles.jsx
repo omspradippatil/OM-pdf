@@ -193,7 +193,7 @@ export default function MyFiles() {
       <SEO
         title="My Files"
         description="View and manage your saved Drive files in OM PDF."
-        url="https://om-pdf.netlify.app/my-files"
+        url="https://om-pdf.pages.dev/my-files"
         noindex
       />
       <ToolPageLayout title="My Files" subtitle="View and manage your saved Drive files." icon="📁">
@@ -214,7 +214,7 @@ export default function MyFiles() {
     <SEO
       title="My Files"
       description="View and manage your saved Drive files in OM PDF."
-      url="https://om-pdf.netlify.app/my-files"
+      url="https://om-pdf.pages.dev/my-files"
       noindex
     />
     <ToolPageLayout title="My Files" subtitle="Files saved to your Google Drive 'OM PDF' folder." icon="📁">

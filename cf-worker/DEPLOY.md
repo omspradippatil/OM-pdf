@@ -16,7 +16,7 @@ Since standard Firebase Auth popup logins do not return a `refresh_token` (a Goo
 6. Set the **Name** to `OM PDF - Drive Offline Access`.
 7. Under **Authorized redirect URIs**, add:
    * `http://localhost:5173/drive-callback` (for local development)
-   * `https://om-pdf.netlify.app/drive-callback` (for production Netlify app)
+   * `https://om-pdf.pages.dev/drive-callback` (for production Netlify app)
 8. Click **Create**.
 9. Copy the **Client ID** and **Client Secret**.
 

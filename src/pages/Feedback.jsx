@@ -66,7 +66,7 @@ export default function Feedback() {
       <SEO
         title="Send Feedback — OM PDF"
         description="Share your thoughts, report bugs, or suggest features for OM PDF."
-        url="https://om-pdf.netlify.app/feedback"
+        url="https://om-pdf.pages.dev/feedback"
         noindex
       />
 

@@ -13,12 +13,12 @@ import { exchangeCode, refreshAccessToken, revokeToken } from './token.js';
 // ── CORS headers (allow only your Netlify domain + localhost dev) ──────────
 function corsHeaders(request) {
   const origin = request.headers.get('Origin') || '';
-  let allowOrigin = 'https://om-pdf.netlify.app';
+  let allowOrigin = 'https://om-pdf.pages.dev';
 
   try {
     const parsed = new URL(origin);
     const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname);
-    const isProdApp = parsed.origin === 'https://om-pdf.netlify.app';
+    const isProdApp = parsed.origin === 'https://om-pdf.pages.dev';
 
     if (isLocalhost || isProdApp) {
       allowOrigin = parsed.origin;

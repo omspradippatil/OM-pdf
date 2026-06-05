@@ -203,7 +203,7 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 
 ### Next Steps for SEO Success (Outside Codebase)
 1. **Google Search Console**:
-   - Add property: om-pdf.netlify.app
+   - Add property: om-pdf.pages.dev
    - Verify ownership (via index.html meta tag)
    - Submit sitemap.xml
    - Monitor impressions, clicks, CTR by tool page
@@ -231,7 +231,7 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
    - Tech news sites: Contact and pitch as "privacy-first alternative to Smallpdf"
 
 5. **Custom Domain (Critical)**:
-   - Current: om-pdf.netlify.app (feels temporary, hurts perception)
+   - Current: om-pdf.pages.dev (feels temporary, hurts perception)
    - Target: ompdf.app, ompdf.tools, ompdf.io
    - Cheap registrars: Namecheap ($8-12/year), Domain.com
    - Connect to Netlify (5 min setup via DNS records)
@@ -688,7 +688,7 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 
 **Issue 1: "Alternate page with proper canonical tag" — 6 pages**
 - Affected: `/grayscale-pdf`, `/merge-with-ranges`, `/extract-pages`, `/resize-pages`, `/pdf-to-jpg`, `/split-by-bookmarks`
-- Cause: `index.html` had a **static** `<link rel="canonical" href="https://om-pdf.netlify.app/" />` tag. Google's crawler (which partially executes JS) read this before React hydrated, treating every tool page as an alternate of the homepage.
+- Cause: `index.html` had a **static** `<link rel="canonical" href="https://om-pdf.pages.dev/" />` tag. Google's crawler (which partially executes JS) read this before React hydrated, treating every tool page as an alternate of the homepage.
 
 **Issue 2: "Discovered - currently not indexed" — 30 pages**
 - Affected: `/about`, `/blog`, `/blog/*`, `/compress-pdf`, `/crop-pdf`, etc.
@@ -701,7 +701,7 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 ### Fix Applied
 
 **`index.html`:**
-- [x] Removed `<link rel="canonical" href="https://om-pdf.netlify.app/" />` from the static HTML.
+- [x] Removed `<link rel="canonical" href="https://om-pdf.pages.dev/" />` from the static HTML.
 - [x] Added comment: `<!-- Canonical URL is injected per-page by react-helmet-async (SEO.jsx) -->`
 - [x] Added comment clarifying fallback OG tags are home-only.
 - react-helmet-async's `SEO.jsx` already injects correct per-page canonicals via `ToolSeoHead.jsx` (`canonicalUrl={baseMeta.url}`) and plain `SEO` components on blog/about pages.
@@ -714,7 +714,7 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 
 ### Post-Deployment Actions Required (Google Search Console)
 1. Deploy to Netlify (git push).
-2. In Google Search Console → **Sitemaps** → resubmit `https://om-pdf.netlify.app/sitemap.xml`.
+2. In Google Search Console → **Sitemaps** → resubmit `https://om-pdf.pages.dev/sitemap.xml`.
 3. For the 6 "Alternate" pages: click **"Validate Fix"** button in GSC after deploy.
 4. Use **URL Inspection → Test Live URL** on a few affected pages to confirm per-page canonical appears correctly.
 5. Expect full clearance in 1–4 weeks as Googlebot recrawls.
@@ -751,7 +751,7 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 - **Status**: The static canonical removal (Session 15) is the primary fix. Sitemap `lastmod` bumped to `2026-05-21` to force recrawl.
 - **Post-deployment actions**:
   1. `git push` to Netlify to deploy Session 15 changes.
-  2. GSC → Sitemaps → Resubmit `https://om-pdf.netlify.app/sitemap.xml`.
+  2. GSC → Sitemaps → Resubmit `https://om-pdf.pages.dev/sitemap.xml`.
   3. GSC → URL Inspection → Test Live URL on affected pages (verify per-page canonical appears).
   4. GSC → Alternate page issue → Click **"Validate Fix"** for the 6 affected pages.
   5. Allow 1–4 weeks for Googlebot to recrawl and re-evaluate indexability.
@@ -774,7 +774,7 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 - Google Search Console HTML file verification was failing: "Your verification file has the wrong content."
 - Root cause: `google3abb376b0c48cfa0.html` was placed in the **project root**, not in `public/`.
 - Vite only copies the `public/` directory into `dist/` during build. Files in the project root are **not** served by Netlify.
-- Result: `https://om-pdf.netlify.app/google3abb376b0c48cfa0.html` returned 404 (or the SPA fallback `index.html`), not the verification content.
+- Result: `https://om-pdf.pages.dev/google3abb376b0c48cfa0.html` returned 404 (or the SPA fallback `index.html`), not the verification content.
 
 ### Fix
 - [x] Copied `google3abb376b0c48cfa0.html` to `public/google3abb376b0c48cfa0.html`.
