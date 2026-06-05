@@ -3,7 +3,7 @@
 ## Objective
 Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system while preserving ALL existing functionality.
 
----
+--------
 
 ## ✅ Completed (Session 2)
 
