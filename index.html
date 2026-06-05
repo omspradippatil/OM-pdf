@@ -18,6 +18,13 @@
 
   <!-- Canonical and OG tags are injected dynamically per-page by react-helmet-async (SEO.jsx) -->
 
+  <script>
+    // Force redirect from Netlify to Cloudflare Pages (bypasses Service Worker cache)
+    if (window.location.hostname.includes('netlify.app')) {
+      window.location.replace('https://om-pdf.pages.dev' + window.location.pathname + window.location.search);
+    }
+  </script>
+
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📄</text></svg>">
   <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
 
