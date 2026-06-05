@@ -65,7 +65,7 @@ export default function DynamicToolPage() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// seoMetadata.js STRUCTURE (what each entry contains)
+// seoMetadata.js STRUCTURE 
 // ═══════════════════════════════════════════════════════════════
 
 /*
