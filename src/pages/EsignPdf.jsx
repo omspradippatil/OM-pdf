@@ -114,15 +114,24 @@ export default function EsignPdf() {
     if (selected === id) setSelected(null);
   };
 
+  const [signatureHash, setSignatureHash] = useState('');
+
   const handleApply = async () => {
     if (!file) return;
     const filled = fields.filter(f => f.value?.trim());
     if (!filled.length) { setError('Add at least one field with a value before applying.'); return; }
 
-    setError(''); setSuccess(''); setWorking(true); setProgress(10);
+    setError(''); setSuccess(''); setSignatureHash(''); setWorking(true); setProgress(10);
     try {
       const bytes = await applyFieldsToPdf(file, filled);
       setProgress(90);
+      
+      // Calculate SHA-256 hash of final bytes
+      const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      setSignatureHash(hashHex);
+
       const name = file.name.replace(/\.pdf$/i, '_signed.pdf');
       triggerExport(bytes, name, 'application/pdf', "Signed");
       setLastBytes(bytes); setLastName(name);
@@ -254,6 +263,19 @@ export default function EsignPdf() {
             <div className="ux-result-check">✓</div>
             <p className="ux-result-success-title">Signed!</p>
           </div>
+          
+          {signatureHash && (
+            <div style={{ padding: '12px 16px', background: 'var(--bg-muted)', borderBottom: '1px solid var(--border)', fontSize: '0.8rem' }}>
+              <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Document Integrity Hash (SHA-256):</div>
+              <div style={{ fontFamily: 'monospace', color: 'var(--text-muted)', wordBreak: 'break-all', background: 'var(--bg-card)', padding: '6px', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                {signatureHash}
+              </div>
+              <div style={{ marginTop: 8, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                Save this hash. Anyone can verify this document hasn't been altered by checking its hash in the Verify tool.
+              </div>
+            </div>
+          )}
+
           <div className="ux-result-body">
             <button className="ux-btn-primary" onClick={() => triggerExport(lastBytes, lastName, 'application/pdf', "Signed")}>↓ Download Again</button>
             <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Signed" />

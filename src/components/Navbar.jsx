@@ -107,6 +107,7 @@ export default function Navbar() {
 
           {/* Quick Links */}
           <div className="nav-desktop-links">
+            <NavLink to="/chat-pdf" className={({isActive}) => `nav-link${isActive ? ' active' : ''}`}>AI Chat</NavLink>
             <NavLink to="/edit-pdf" className={({isActive}) => `nav-link${isActive ? ' active' : ''}`}>Edit</NavLink>
             <NavLink to="/draw-sign-pdf" className={({isActive}) => `nav-link${isActive ? ' active' : ''}`}>Sign</NavLink>
             <NavLink to="/merge-pdf"    className={({isActive}) => `nav-link${isActive ? ' active' : ''}`}>Merge</NavLink>

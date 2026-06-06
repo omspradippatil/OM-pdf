@@ -39,13 +39,14 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,xml,txt,wasm}'],
-        navigateFallbackDenylist: [/^\/__\/auth/, /^\/sitemap\.xml/, /^\/robots\.txt/, /^\/google.*\.html/]
+        navigateFallbackDenylist: [/^\/__\/auth/, /^\/sitemap\.xml/, /^\/robots\.txt/, /^\/google.*\.html/],
+        maximumFileSizeToCacheInBytes: 10485760 // 10MB
       }
     })
   ],
   build: {
     outDir: 'dist',
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 10000,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -53,6 +54,7 @@ export default defineConfig({
           pdfjs:   ['pdfjs-dist'],
           firebase:['firebase/app','firebase/auth','firebase/storage','firebase/firestore'],
           react:   ['react','react-dom','react-router-dom'],
+          mlc:     ['@mlc-ai/web-llm']
         },
       },
     },

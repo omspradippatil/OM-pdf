@@ -60,6 +60,8 @@ const EditPdf = lazy(() => import('./pages/EditPdf'));
 const PdfToPptx = lazy(() => import('./pages/PdfToPptx'));
 const HtmlToPdf = lazy(() => import('./pages/HtmlToPdf'));
 const EsignPdf = lazy(() => import('./pages/EsignPdf'));
+const VerifyPdf = lazy(() => import('./pages/VerifyPdf'));
+const ChatPdf = lazy(() => import('./pages/ChatPdf'));
 const DriveCallback = lazy(() => import('./pages/DriveCallback'));
 const AllTools = lazy(() => import('./pages/AllTools'));
 const ExcelPdf = lazy(() => import('./pages/ExcelPdf'));
@@ -167,6 +169,8 @@ function AppContent() {
             <Route path="/drive-callback" element={<DriveCallback />} />
             <Route path="/html-to-pdf" element={<HtmlToPdf />} />
             <Route path="/esign-pdf" element={<EsignPdf />} />
+            <Route path="/verify-pdf" element={<VerifyPdf />} />
+            <Route path="/chat-pdf" element={<ChatPdf />} />
             <Route path="/excel-pdf" element={<ExcelPdf />} />
             <Route path="/dark-mode-pdf" element={<DarkModePdf />} />
             <Route path="/booklet-pdf" element={<BookletPdf />} />

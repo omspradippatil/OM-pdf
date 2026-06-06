@@ -31,6 +31,15 @@ export default function PipelinePdf() {
   // Pipeline: Array of action IDs
   const [pipeline, setPipeline] = useState([]);
   
+  // Recipes
+  const [recipes, setRecipes] = useState(() => {
+    try {
+      const stored = localStorage.getItem('ompdf_pipeline_recipes');
+      return stored ? JSON.parse(stored) : [];
+    } catch { return []; }
+  });
+  const [recipeName, setRecipeName] = useState('');
+  
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
@@ -66,6 +75,25 @@ export default function PipelinePdf() {
       next.splice(index, 1);
       return next;
     });
+  };
+
+  const handleSaveRecipe = () => {
+    if (!recipeName.trim() || pipeline.length === 0) return;
+    const newRecipe = { id: Math.random().toString(36).substr(2, 9), name: recipeName.trim(), actions: [...pipeline] };
+    const nextRecipes = [...recipes, newRecipe];
+    setRecipes(nextRecipes);
+    localStorage.setItem('ompdf_pipeline_recipes', JSON.stringify(nextRecipes));
+    setRecipeName('');
+  };
+
+  const handleDeleteRecipe = (id) => {
+    const nextRecipes = recipes.filter(r => r.id !== id);
+    setRecipes(nextRecipes);
+    localStorage.setItem('ompdf_pipeline_recipes', JSON.stringify(nextRecipes));
+  };
+
+  const loadRecipe = (actions) => {
+    setPipeline(actions);
   };
 
   const handleProcess = async () => {
@@ -179,7 +207,37 @@ export default function PipelinePdf() {
               </div>
             );
           })}
+          
+          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+            <input 
+              type="text" 
+              className="ux-text-input" 
+              placeholder="Recipe Name..." 
+              value={recipeName} 
+              onChange={e => setRecipeName(e.target.value)} 
+              style={{ flex: 1, padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)' }}
+            />
+            <button className="ux-btn-secondary" onClick={handleSaveRecipe} disabled={!recipeName.trim()}>Save Recipe</button>
+          </div>
         </div>
+      )}
+
+      {recipes.length > 0 && (
+        <>
+          <p className="ux-section-label" style={{ marginTop: 24 }}>Saved Recipes</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {recipes.map(r => (
+              <div key={r.id} style={{ display: 'flex', alignItems: 'center', background: 'var(--bg-card)', border: '1px solid var(--border)', padding: '8px 12px', borderRadius: 8 }}>
+                <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => loadRecipe(r.actions)}>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{r.name}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{r.actions.length} actions</div>
+                </div>
+                <button className="ux-btn-primary" style={{ padding: '6px 12px', fontSize: '0.8rem', marginRight: 8 }} onClick={() => loadRecipe(r.actions)}>Load</button>
+                <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }} onClick={() => handleDeleteRecipe(r.id)}>✕</button>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {error && <div className="alert alert-error" style={{ marginTop: 12 }}><span>❌ {error}</span></div>}

@@ -29,6 +29,7 @@ const IconUndo = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="non
 const IconTrash = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>;
 const IconRotate = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2v6h-6"></path><path d="M21 13a9 9 0 1 1-3-7.7L21 8"></path></svg>;
 const IconPlus = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
+const IconWhiteout = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4C13.5 3.5 14.5 3.5 15 4L20 9C20.5 9.5 20.5 10.5 20 11L11 20H20V20Z"></path></svg>;
 
 function generateId() {
   return Math.random().toString(36).substr(2, 9);
@@ -302,7 +303,7 @@ export default function EditPdf() {
       return;
     }
     
-    if (tool === 'draw' || tool === 'highlight') {
+    if (tool === 'draw' || tool === 'highlight' || tool === 'whiteout') {
       setIsDrawing(true);
       setCurrentPath([coords]);
       e.target.setPointerCapture(e.pointerId);
@@ -325,8 +326,8 @@ export default function EditPdf() {
         id: generateId(),
         type: tool,
         path: currentPath,
-        color,
-        thickness: tool === 'highlight' ? 20 : 3
+        color: tool === 'whiteout' ? '#ffffff' : color,
+        thickness: tool === 'whiteout' ? 24 : (tool === 'highlight' ? 20 : 3)
       });
     }
     setCurrentPath([]);
@@ -481,7 +482,7 @@ export default function EditPdf() {
                 color: pdfColor
               });
             }
-          } else if (ann.type === 'draw') {
+          } else if (ann.type === 'draw' || ann.type === 'whiteout') {
             for (let j = 1; j < ann.path.length; j++) {
               const p1 = ann.path[j-1];
               const p2 = ann.path[j];
@@ -569,9 +570,9 @@ export default function EditPdf() {
     // Draw committed annotations (paths only)
     const pageAnns = annotations[activePageId] || [];
     pageAnns.forEach(ann => {
-      if (ann.type === 'draw' || ann.type === 'highlight') {
+      if (ann.type === 'draw' || ann.type === 'highlight' || ann.type === 'whiteout') {
         ctx.beginPath();
-        ctx.strokeStyle = ann.color;
+        ctx.strokeStyle = ann.type === 'whiteout' ? '#ffffff' : ann.color;
         ctx.lineWidth = ann.thickness;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
@@ -589,8 +590,8 @@ export default function EditPdf() {
     // Draw current active path
     if (isDrawing && currentPath.length > 0) {
       ctx.beginPath();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = tool === 'highlight' ? 20 : 3;
+      ctx.strokeStyle = tool === 'whiteout' ? '#ffffff' : color;
+      ctx.lineWidth = tool === 'whiteout' ? 24 : (tool === 'highlight' ? 20 : 3);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       if (tool === 'highlight') ctx.globalAlpha = 0.3;
@@ -651,6 +652,9 @@ export default function EditPdf() {
             </button>
             <button className={`edit-pdf-tool-btn ${tool === 'highlight' ? 'active' : ''}`} onClick={() => setTool('highlight')} title="Highlight">
               <IconHighlight />
+            </button>
+            <button className={`edit-pdf-tool-btn ${tool === 'whiteout' ? 'active' : ''}`} onClick={() => setTool('whiteout')} title="Erase/Whiteout">
+              <IconWhiteout />
             </button>
             
             <button className={`edit-pdf-tool-btn ${tool === 'shape_rect' ? 'active' : ''}`} onClick={() => setTool('shape_rect')} title="Rectangle">
@@ -777,7 +781,7 @@ export default function EditPdf() {
                 {/* DOM Layer for Draggable Elements */}
                 <div className="edit-pdf-interactive-layer">
                   {(annotations[activePageId] || []).map(ann => {
-                    if (ann.type === 'draw' || ann.type === 'highlight') return null; // paths rendered in canvas
+                    if (ann.type === 'draw' || ann.type === 'highlight' || ann.type === 'whiteout') return null; // paths rendered in canvas
                     
                     const isSelected = selectedAnnId === ann.id;
                     return (

@@ -31,25 +31,40 @@ async function extractTextToWord(file, onProgress) {
     // Group text items by y-coordinate to form lines roughly
     const items = content.items;
     let currentY = null;
-    let currentLine = '';
+    let currentLineRuns = [];
 
     for (let j = 0; j < items.length; j++) {
       const item = items[j];
+      if (!item.str || !item.str.trim() && item.str !== ' ') continue;
+
       const y = Math.round(item.transform[5]);
+      // The scale vector is [0] and [3]. Approximating font size:
+      const fontSize = Math.max(10, Math.round(Math.sqrt(item.transform[0]*item.transform[0] + item.transform[1]*item.transform[1])));
+      const isBold = item.fontName ? item.fontName.toLowerCase().includes('bold') : false;
+      const isItalic = item.fontName ? item.fontName.toLowerCase().includes('italic') : false;
       
+      const run = new TextRun({
+        text: item.str,
+        size: fontSize * 2, // docx uses half-points
+        bold: isBold,
+        italics: isItalic
+      });
+
       if (currentY === null) {
         currentY = y;
-        currentLine = item.str;
-      } else if (Math.abs(y - currentY) < 5) { // Same line
-        currentLine += ' ' + item.str;
+        currentLineRuns.push(run);
+      } else if (Math.abs(y - currentY) < 6) { // Same line
+        currentLineRuns.push(run);
       } else { // New line
-        children.push(new Paragraph({ children: [new TextRun(currentLine.trim())] }));
+        if (currentLineRuns.length > 0) {
+          children.push(new Paragraph({ children: currentLineRuns, spacing: { after: 120 } }));
+        }
         currentY = y;
-        currentLine = item.str;
+        currentLineRuns = [run];
       }
     }
-    if (currentLine) {
-      children.push(new Paragraph({ children: [new TextRun(currentLine.trim())] }));
+    if (currentLineRuns.length > 0) {
+      children.push(new Paragraph({ children: currentLineRuns, spacing: { after: 120 } }));
     }
 
     if (i < total) {
