@@ -2,7 +2,5 @@ name = "om-pdf"
 pages_build_output_dir = "dist"
 compatibility_date = "2024-06-06"
 
-[build]
-command = "npm run build"
 
 
