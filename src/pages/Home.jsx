@@ -51,10 +51,10 @@ const faqSchema = {
     },
     {
       "@type": "Question",
-      "name": "Can I use OM PDF on my mobile phone?",
+      "name": "Does OM PDF work offline?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes! OM PDF is a Progressive Web App (PWA) that is fully optimized for mobile devices. You can even install it to your home screen for offline use."
+        "text": "Yes! You can install OM PDF as a Progressive Web App (PWA) on your desktop or mobile device to merge and split PDFs without an internet connection."
       }
     }
   ]
@@ -220,19 +220,19 @@ export default function Home() {
             <h2>Frequently Asked Questions</h2>
             <div className="faq-grid">
               <div className="faq-item">
-                <h4>Is OM PDF free?</h4>
+                <h3>Is OM PDF free?</h3>
                 <p>Yes, OM PDF is completely free to use. There are no hidden fees, no subscriptions, and no sign-up required.</p>
               </div>
               <div className="faq-item">
-                <h4>Are my PDF files uploaded to a server?</h4>
+                <h3>Are my PDF files uploaded to a server?</h3>
                 <p>No. OM PDF processes all your files entirely locally inside your browser. Your files never leave your device.</p>
               </div>
               <div className="faq-item">
-                <h4>Is OM PDF secure?</h4>
+                <h3>Is OM PDF secure?</h3>
                 <p>Absolutely. Because of our zero-upload architecture, there is no risk of your sensitive documents being stored on remote servers.</p>
               </div>
               <div className="faq-item">
-                <h4>Does OM PDF work offline?</h4>
+                <h3>Does OM PDF work offline?</h3>
                 <p>Yes! You can install OM PDF as a Progressive Web App (PWA) on your desktop or mobile device to merge and split PDFs without an internet connection.</p>
               </div>
             </div>

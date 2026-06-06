@@ -49,9 +49,11 @@ export default function SEO({ title, description, keywords, url, canonicalUrl, s
 
       {/* Structured Data (JSON-LD) */}
       {schemaItems.map((item, index) => (
-        <script key={`schema-${index}`} type="application/ld+json">
-          {JSON.stringify(item)}
-        </script>
+        <script 
+          key={`schema-${index}`} 
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
+        />
       ))}
     </Helmet>
   );

@@ -1581,7 +1581,7 @@ body {
   margin-bottom: 20px; max-width: 340px;
 }
 .creator-badge { display: flex; flex-direction: column; gap: 3px; }
-.creator-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+.creator-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); }
 .creator-name { font-size: 0.875rem; font-weight: 700; color: var(--primary); text-decoration: none; transition: color var(--transition); }
 .creator-name:hover { color: var(--primary-dark); text-decoration: underline; }
 
@@ -1617,11 +1617,11 @@ body {
   padding-top: 24px;
   display: flex; justify-content: space-between; align-items: center;
 }
-.bottom-left p { font-size: 0.82rem; color: var(--text-muted); }
+.bottom-left p { font-size: 0.82rem; color: var(--text-secondary); }
 .trust-badges { display: flex; gap: 16px; }
 .trust-badge {
   display: flex; align-items: center; gap: 6px;
-  font-size: 0.78rem; font-weight: 600; color: var(--text-muted);
+  font-size: 0.78rem; font-weight: 600; color: var(--text-secondary);
 }
 .trust-badge svg { color: var(--primary); opacity: 0.8; }
 

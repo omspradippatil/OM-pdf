@@ -186,7 +186,7 @@ If you found this project helpful, please give it a ** star** on GitHub or consi
 
 <div align="center">
 
-Built with  by **OM Patil**  All Rights Reserved.
+Built by **OM Patil**  All Rights Reserved.
 
 </div>
 

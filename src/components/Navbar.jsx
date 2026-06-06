@@ -176,7 +176,7 @@ export default function Navbar() {
             </div>
           )}
 
-          <button className="hamburger" onClick={() => setMenuOpen(o => !o)}>
+          <button className="hamburger" aria-label="Toggle mobile menu" onClick={() => setMenuOpen(o => !o)}>
             <span /><span /><span />
           </button>
         </div>

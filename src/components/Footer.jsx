@@ -99,7 +99,7 @@ export default function Footer() {
         }
         .support-badge-v2 {
           background: rgba(236, 72, 153, 0.1) !important;
-          color: #ec4899 !important;
+          color: #be185d !important;
         }
         .support-badge-v2:hover {
           background: #ec4899 !important;
@@ -136,7 +136,7 @@ export default function Footer() {
           </div>
 
           <div className="footer-v2-links">
-            <h4 className="footer-v2-title">Popular Tools</h4>
+            <h3 className="footer-v2-title">Popular Tools</h3>
             <div className="footer-tools-grid">
               {TOOLS.slice(0, 8).map(tool => (
                 <Link key={tool.key} to={tool.path} className="footer-tool-link">
@@ -148,17 +148,18 @@ export default function Footer() {
 
           <div className="footer-v2-links">
             <div style={{ marginBottom: 40 }}>
-              <h4 className="footer-v2-title">Company</h4>
+              <h3 className="footer-v2-title">Company</h3>
               <div className="footer-tools-grid">
                 <Link to="/about" className="footer-tool-link">About</Link>
                 <Link to="/privacy" className="footer-tool-link">Privacy</Link>
                 <Link to="/how-it-works" className="footer-tool-link">How It Works</Link>
                 <Link to="/blog" className="footer-tool-link">Blog</Link>
+                <a href="/sitemap.xml" className="footer-tool-link" target="_blank" rel="noopener noreferrer">Sitemap</a>
                 <Link to="/feedback" className="footer-tool-link" style={{ fontWeight: 700, color: 'var(--primary)' }}>Feedback</Link>
               </div>
             </div>
 
-            <h4 className="footer-v2-title">Connect</h4>
+            <h3 className="footer-v2-title">Connect</h3>
             <div className="social-grid-v2">
               <a href="https://github.com/omspradippatil" target="_blank" rel="noopener noreferrer" className="social-card">
                 <div className="social-icon-box">

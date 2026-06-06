@@ -67,10 +67,10 @@
 
 .privacy-note {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   line-height: 1.4;
 }
 
 /* Value color overrides */
-.bad-stat .stat-value  { color: #10b981; }
+.bad-stat .stat-value  { color: #059669; }
 .info-stat .stat-value { color: var(--primary); }

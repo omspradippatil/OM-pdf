@@ -21,7 +21,7 @@ import React, { useState } from 'react';
 import SEO from '../components/SEO';
 import { getSeoMetadata } from '../constants/seoMetadata'; // ← ADD THIS
 
-export default function SplitPDF() {
+// export default function SplitPDF() {
   // ... rest of component
   
   return (
@@ -41,7 +41,7 @@ export default function SplitPDF() {
       {/* ... rest of page */}
     </ToolPageLayout>
   );
-}
+
 
 // ═══════════════════════════════════════════════════════════════
 // EXAMPLE 2: Advanced Pattern (Dynamic Tool Routing - if needed)
@@ -52,7 +52,7 @@ export default function SplitPDF() {
 
 import { useParams } from 'react-router-dom';
 
-export default function DynamicToolPage() {
+// export default function DynamicToolPage() {
   const { toolId } = useParams();
   const metadata = getSeoMetadata(toolId);
   
@@ -62,7 +62,7 @@ export default function DynamicToolPage() {
       {/* page content */}
     </div>
   );
-}
+
 
 // ═══════════════════════════════════════════════════════════════
 // seoMetadata.js STRUCTURE 
@@ -171,4 +171,4 @@ Currently: 1-7 are ✅ Done
 Missing: 8 (quality content sections on tool pages)
 */
 
-export default `IMPLEMENTATION GUIDE — DO NOT EXECUTE THIS FILE`;
+// export default `IMPLEMENTATION GUIDE — DO NOT EXECUTE THIS FILE`;
