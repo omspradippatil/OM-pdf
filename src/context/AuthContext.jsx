@@ -277,6 +277,10 @@ export function AuthProvider({ children }) {
     if (!currentUser) return undefined;
 
     const refreshIfNeeded = () => {
+      // Respect user's profile setting to disable background refresh
+      const disableBgRefresh = window.localStorage.getItem('om_pdf_disable_bg_refresh') === 'true';
+      if (disableBgRefresh) return;
+
       loadStoredDriveToken(currentUser.uid);
       if (isTokenExpiringSoon()) {
         void refreshDriveFromWorker(currentUser, { force: true });

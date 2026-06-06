@@ -240,3 +240,22 @@ export async function makeFilePublic(fileId, loginHint = null) {
     })
   });
 }
+
+export async function deleteAppDriveData(loginHint = null) {
+  try {
+    const q = encodeURIComponent(
+      `name='${ROOT_FOLDER}' and mimeType='application/vnd.google-apps.folder' and trashed=false`
+    );
+    const data = await driveRequest(`/files?q=${q}&fields=files(id,name)&spaces=drive`, loginHint);
+    if (data?.files?.length > 0) {
+      const rootId = data.files[0].id;
+      await driveRequest(`/files/${rootId}`, loginHint, { method: 'DELETE' });
+      resetFolderCache();
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.error('Failed to delete app drive data:', err);
+    throw err;
+  }
+}
