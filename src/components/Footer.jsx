@@ -154,7 +154,6 @@ export default function Footer() {
                 <Link to="/privacy" className="footer-tool-link">Privacy</Link>
                 <Link to="/how-it-works" className="footer-tool-link">How It Works</Link>
                 <Link to="/blog" className="footer-tool-link">Blog</Link>
-                <a href="/sitemap.xml" className="footer-tool-link" target="_blank" rel="noopener noreferrer">Sitemap</a>
                 <Link to="/feedback" className="footer-tool-link" style={{ fontWeight: 700, color: 'var(--primary)' }}>Feedback</Link>
               </div>
             </div>
