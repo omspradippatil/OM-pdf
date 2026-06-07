@@ -21,45 +21,6 @@ const FloatIcon = ({ icon, style }) => (
   <div className="float-icon" style={style} aria-hidden="true">{icon}</div>
 );
 
-const faqSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "Is OM PDF free?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Yes, OM PDF is completely free to use. There are no hidden fees, no subscriptions, and no sign-up required."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Are my PDF files uploaded to a server?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "No. OM PDF uses modern WebAssembly and Web Workers to process all your PDF files entirely locally inside your browser. Your files never leave your device."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Is OM PDF secure?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Yes, OM PDF is extremely secure because of its zero-upload architecture. Since processing happens locally, there is no risk of your sensitive documents being intercepted or stored on remote servers."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Does OM PDF work offline?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Yes! You can install OM PDF as a Progressive Web App (PWA) on your desktop or mobile device to merge and split PDFs without an internet connection."
-      }
-    }
-  ]
-};
-
 export default function Home() {
   const { favorites, toggleFavorite } = useFavorites();
   const favoriteTools = TOOLS.filter(t => favorites.includes(t.key)).sort((a, b) => favorites.indexOf(a.key) - favorites.indexOf(b.key));
@@ -75,7 +36,6 @@ export default function Home() {
         title="Free PDF Tools Online | Merge, Split, Compress, Convert"
         description="Merge PDF, split PDF, compress PDF, convert PDF to JPG and add page numbers — all free, private and instant in your browser. No upload. No sign-up."
         url="https://om-pdf.pages.dev/"
-        schema={faqSchema}
       />
 
       {/* ══════════ HERO ══════════ */}

@@ -1163,4 +1163,51 @@ Suggested 10 high-value, offline-first tools:
 - `src/pages/MyFiles.jsx`
 - `AI_MEMORY.md`
 
+---
+
+## ✅ Completed (Session 27) — Cloudflare Pages Migration & Core Fixes
+
+### Goal
+- Finalize the migration from Netlify to Cloudflare Pages.
+- Fix Google Search Console sitemap indexing issues and deprecated schema warnings.
+- Resolve Google Drive auth race conditions and UI bugs in the new Chat PDF tool.
+
+### Cloudflare Pages Migration
+- [x] Deleted residual `netlify.toml` configuration.
+- [x] Created `wrangler.toml` for Cloudflare configuration.
+- [x] Removed `[build]` block from `wrangler.toml` as it is not supported in Pages.
+- [x] Removed `[[headers]]` from `wrangler.toml` in favor of preserving the existing strict Content-Security-Policy in `public/_headers`.
+
+### Google Search Console & SEO Fixes
+- [x] **"Sitemap could not be read" Fix**: Removed the `<?xml-stylesheet ...?>` directive from `public/sitemap.xml` and deleted `sitemap.xsl`. Cloudflare's strict CSP was blocking the inline XSL execution, which confused Googlebot's XML parser.
+- [x] Explicitly defined `/sitemap.xml` with `Content-Type: application/xml` in `public/_headers`.
+- [x] Removed the deprecated `FAQPage` rich snippet schema from `src/pages/Home.jsx` following Google's deprecation notice.
+
+### Auth & UI Bug Fixes
+- [x] **Google Drive Race Condition**: Fixed a bug in `DropZone.jsx` (`Uncaught TypeError: Cannot read properties of undefined (reading 'oauth2')`) by implementing a boolean lock that ensures both Google API scripts (`api.js` and `gsi/client`) are 100% loaded before initializing the tokenClient.
+- [x] **Chat PDF UI**: Fixed a layout bug where the Send button took up 100% width, squishing the text input field, by overriding `.ux-btn-primary` with `width: max-content`.
+- [x] **Chat PDF Expectations**: Added highly visible UI warnings in `ChatPdf.jsx` to inform users about the 1.8GB WebGPU model download on first launch and strongly recommend using a PC/Desktop instead of mobile devices.
+- [x] Added `AI Chat` as a permanent quick link in the top Navbar before `Edit`.
+
+### Files Modified
+- `netlify.toml` (Deleted)
+- `wrangler.toml` (Created/Modified)
+- `public/_headers`
+- `public/sitemap.xml`
+- `public/sitemap.xsl` (Deleted)
+- `src/pages/Home.jsx`
+- `src/pages/ChatPdf.jsx`
+- `src/components/DropZone.jsx`
+- `src/components/Navbar.jsx`
+- `AI_MEMORY.md`
+
+---
+
+## 🔲 Pending Tasks (Session 28) — Performance Optimization
+
+### PageSpeed Insights Audit (Mobile Score: 67)
+- **Preconnect**: Add `<link rel="preconnect" href="https://apis.google.com">` to `index.html` to save ~300ms on Google auth initialization.
+- **Render-Blocking Resources**: Look into deferring non-critical CSS/fonts.
+- **Cache Policy**: Optimize `Cache-Control` for Cloudflare Pages (e.g. `auth/iframe.js` is currently only 30m).
+- **Unused JS/CSS**: Evaluate code splitting and CSS minification opportunities.
 

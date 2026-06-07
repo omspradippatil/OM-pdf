@@ -97,6 +97,8 @@ All tools run **100% locally in the browser** using client-side libraries (such 
 -  **QR Code Generator**  Generate bulk QR codes from custom text and arrange them on a printable PDF grid.
 
 ###  View & Edit
+-  **Chat PDF**  Chat directly with your PDF locally. 100% Private WebGPU-powered AI model.
+-  **Verify PDF**  Cryptographically verify the digital signature and authenticity of signed PDFs.
 -  **Form Builder**  Create interactive, fillable PDF forms from any document.
 -  **Watermark PDF**  Add text or image watermarks with position, opacity, and angle controls.
 -  **Draw & Sign PDF**  Electronically sign documents with a drawn, typed, or uploaded signature.
@@ -189,14 +191,3 @@ If you found this project helpful, please give it a ** star** on GitHub or consi
 Built by **OM Patil**  All Rights Reserved.
 
 </div>
-
----
-
-##  Contact the Developer
-
-**Developed by OM Patil**
-
-- **Portfolio**: [ompradippatil.netlify.app](https://ompradippatil.netlify.app/)
-- **GitHub**: [@omspradippatil](https://github.com/omspradippatil)
-- **LinkedIn**: [OM Pradip Patil](https://in.linkedin.com/in/om-pradip-patil)
-- **Email**: [omspradippatil@gmail.com](mailto:omspradippatil@gmail.com)
