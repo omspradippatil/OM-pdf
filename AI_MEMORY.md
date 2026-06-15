@@ -1189,6 +1189,7 @@ Suggested 10 high-value, offline-first tools:
 - [x] **Chat PDF Expectations**: Added highly visible UI warnings in `ChatPdf.jsx` to inform users about the 1.8GB WebGPU model download on first launch and strongly recommend using a PC/Desktop instead of mobile devices.
 - [x] Added `AI Chat` as a permanent quick link in the top Navbar before `Edit`.
 - [x] **SPA Routing Fix**: Created `public/_redirects` with `/* /index.html 200` to prevent Cloudflare Pages from returning 404s on direct URL hits.
+- [x] **Cloudflare 404 Override Bug**: Deleted `public/404.html`. Cloudflare Pages prioritizes a hardcoded `404.html` over wildcard `_redirects` for unmatched paths, preventing the SPA from booting up on direct URLs.
 
 ### Files Modified
 - `netlify.toml` (Deleted)

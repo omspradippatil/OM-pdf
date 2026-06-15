@@ -359,6 +359,27 @@ export const SEO_METADATA = {
     keywords: "qr code to pdf, bulk qr code generator, print qr codes, qr code grid pdf, label generator",
     url: "https://om-pdf.pages.dev/qr-pdf",
   },
+
+  chatPdf: {
+    title: "Chat with PDF AI Online Free | OM PDF",
+    description: "Chat with your PDF documents locally. 100% private, offline WebGPU-powered AI model. No uploads required.",
+    keywords: "chat pdf, ai pdf, chat with pdf, local ai pdf, private pdf ai, webgpu llm, talk to pdf",
+    url: "https://om-pdf.pages.dev/chat-pdf",
+  },
+
+  verifyPdf: {
+    title: "Verify PDF Signatures Online Free | OM PDF",
+    description: "Cryptographically verify the digital signature and authenticity of signed PDFs. 100% private and offline.",
+    keywords: "verify pdf, check pdf signature, validate digital signature pdf, verify signed pdf, pdf authenticity",
+    url: "https://om-pdf.pages.dev/verify-pdf",
+  },
+
+  editPdf: {
+    title: "Edit PDF Online Free | Draw, Annotate, Delete Pages | OM PDF",
+    description: "Edit PDF files instantly. Draw, annotate, delete pages, rotate, and add content directly in your browser. 100% free and private.",
+    keywords: "edit pdf, free pdf editor, annotate pdf, draw on pdf, edit pdf online, pdf editor tool",
+    url: "https://om-pdf.pages.dev/edit-pdf",
+  },
 };
 
 /**
@@ -446,6 +467,12 @@ export function getSeoMetadata(toolKey) {
     'remove_links_pdf': 'removeLinksPdf',
     'qrpdf': 'qrPdf',
     'qr_pdf': 'qrPdf',
+    'chatpdf': 'chatPdf',
+    'chat_pdf': 'chatPdf',
+    'verifypdf': 'verifyPdf',
+    'verify_pdf': 'verifyPdf',
+    'editpdf': 'editPdf',
+    'edit_pdf': 'editPdf',
   };
 
   const metadataKey = keyMap[key] || toolKey;
