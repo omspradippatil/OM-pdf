@@ -11,6 +11,6 @@
 /sw.js
   Cache-Control: public, max-age=0, must-revalidate
 
-/sitemap_v2.xml
+/sitemap_final.xml
   Content-Type: application/xml
   Cache-Control: public, max-age=0, must-revalidate
