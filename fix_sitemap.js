@@ -1,1 +1,11 @@
-const fs = require('fs'); let xml = fs.readFileSync('public/sitemap_final.xml', 'utf8'); xml = xml.replace(/<loc>(https:\/\/om-pdf\.pages\.dev\/[^<]+?[^\/])<\/loc>/g, '<loc>/</loc>'); fs.writeFileSync('public/sitemap_final.xml', xml); console.log('Fixed');
+import fs from 'node:fs';
+
+const sourcePath = 'public/sitemap_final.xml';
+const canonicalPath = 'public/sitemap.xml';
+
+const xml = fs.readFileSync(sourcePath, 'utf8').replace(/^\uFEFF/, '');
+
+fs.writeFileSync(sourcePath, xml, 'utf8');
+fs.writeFileSync(canonicalPath, xml, 'utf8');
+
+console.log(`Wrote ${sourcePath} and ${canonicalPath} without a BOM.`);

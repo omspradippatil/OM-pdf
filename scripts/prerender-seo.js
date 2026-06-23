@@ -22,8 +22,8 @@ async function run() {
   for (const [key, meta] of Object.entries(SEO_METADATA)) {
     if (key === 'home') continue;
     
-    // e.g. "https://om-pdf.pages.dev/merge-pdf"
-    let routeName = meta.url.split('/').pop();
+    // e.g. "https://om-pdf.pages.dev/merge-pdf/"
+    let routeName = new URL(meta.url).pathname.split('/').filter(Boolean).pop();
     if (!routeName) continue;
     
     const routeDir = path.resolve(__dirname, '../dist', routeName);
@@ -36,11 +36,17 @@ async function run() {
     
     // Replace <title>
     html = html.replace(/<title>.*?<\/title>/, `<title>${meta.title}</title>`);
+    html = html.replace(
+      /<meta name="description" content=".*?" \/>/s,
+      `<meta name="description" content="${meta.description.replace(/"/g, '&quot;')}" />`
+    );
+    html = html.replace(
+      /<meta name="keywords" content=".*?" \/>/s,
+      `<meta name="keywords" content="${meta.keywords.replace(/"/g, '&quot;')}" />`
+    );
     
     // Inject custom meta tags before </head>
     const tagsToInject = `
-  <meta name="description" content="${meta.description.replace(/"/g, '&quot;')}" />
-  <meta name="keywords" content="${meta.keywords.replace(/"/g, '&quot;')}" />
   <link rel="canonical" href="${meta.url}" />
   <meta property="og:title" content="${meta.title.replace(/"/g, '&quot;')}" />
   <meta property="og:description" content="${meta.description.replace(/"/g, '&quot;')}" />
