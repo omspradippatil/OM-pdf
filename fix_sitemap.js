@@ -1,0 +1,1 @@
+const fs = require('fs'); let xml = fs.readFileSync('public/sitemap_final.xml', 'utf8'); xml = xml.replace(/<loc>(https:\/\/om-pdf\.pages\.dev\/[^<]+?[^\/])<\/loc>/g, '<loc>/</loc>'); fs.writeFileSync('public/sitemap_final.xml', xml); console.log('Fixed');
