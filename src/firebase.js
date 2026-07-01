@@ -21,12 +21,9 @@ import {
   increment
 } from 'firebase/firestore';
 
-const isCloudflarePages = typeof window !== 'undefined' && window.location.hostname.includes('pages.dev');
-
 const firebaseConfig = {
   apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
-  // Use the current domain on Cloudflare Pages to bypass third-party cookie restrictions.
-  authDomain:        isCloudflarePages ? window.location.hostname : import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
