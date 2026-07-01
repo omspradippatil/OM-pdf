@@ -91,7 +91,7 @@ Quick reference for SEO strategy (persists across sessions):
 ### IMMEDIATE (Do This Week)
 1. **Google Search Console**
    - Go: https://search.google.com/search-console
-   - Add property: om-pdf.pages.dev
+   - Add property: om-pdf.netlify.app
    - Verify via HTML meta tag (already in index.html)
    - Submit sitemap.xml
    - **This is critical** — without GSC, indexing is slow
@@ -129,7 +129,7 @@ Quick reference for SEO strategy (persists across sessions):
 <SEO 
   title="Merge PDF Online Free — OM PDF | No Upload Required"
   description="Combine multiple PDF files into one..."
-  url="https://om-pdf.pages.dev/merge-pdf" 
+  url="https://om-pdf.netlify.app/merge-pdf" 
 />
 ```
 
@@ -185,12 +185,12 @@ Both work. Option 2 is cleaner and DRY (maintainable).
 ```
 1. Go to https://search.google.com/search-console
 2. Click "Add property"
-3. Enter: om-pdf.pages.dev
+3. Enter: om-pdf.netlify.app
 4. Choose "HTML tag" verification
 5. Copy the content attribute value
 6. It's already in index.html <head>, so just click "Verify"
 7. Go to Sitemaps → Add sitemap.xml
-8. Enter: https://om-pdf.pages.dev/sitemap.xml
+8. Enter: https://om-pdf.netlify.app/sitemap.xml
 9. Watch stats pour in
 ```
 

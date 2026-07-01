@@ -22,7 +22,7 @@ export default function AllTools() {
       <SEO 
         title="All PDF Tools | OM PDF" 
         description="Browse our complete collection of free, offline PDF tools. Merge, split, compress, edit, and more."
-        url="https://om-pdf.pages.dev/tools"
+        url="https://om-pdf.netlify.app/tools"
       />
       
       {favoriteTools.length > 0 && (

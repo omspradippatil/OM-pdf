@@ -21,7 +21,7 @@
 - [ ] **Create GitHub repository** (make it public)
   - Add README with project description
   - Add "Free PDF Tools" to description
-  - Link back to om-pdf.pages.dev in README
+  - Link back to om-pdf.netlify.app in README
 - [ ] Submit to Product Hunt (coordinate with co-founder if applicable)
 
 ## Phase 3: Content Expansion (Weeks 5-8) — HIGH IMPACT
@@ -134,7 +134,7 @@ A: Nowhere. Processing happens in your browser. Files never leave your device.
 ## Quick Wins (Do First)
 1. **Google Search Console** (30 min)
    - Go to: https://search.google.com/search-console
-   - Add property: om-pdf.pages.dev
+   - Add property: om-pdf.netlify.app
    - Verify via HTML meta tag (already in index.html)
    - Submit sitemap.xml
    

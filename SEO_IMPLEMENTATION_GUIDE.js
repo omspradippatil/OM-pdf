@@ -30,7 +30,7 @@ import { getSeoMetadata } from '../constants/seoMetadata'; // ← ADD THIS
       <SEO 
         title="Split PDF Online Free — Extract Pages & Ranges | OM PDF"
         description="Extract specific pages or split PDF into individual files. Works offline, no upload needed, completely free and instant."
-        url="https://om-pdf.pages.dev/split-pdf" 
+        url="https://om-pdf.netlify.app/split-pdf" 
       />
       
       {/* OR ← OPTION 2: Use getSeoMetadata helper (cleaner, DRY) */}
@@ -74,7 +74,7 @@ export const SEO_METADATA = {
     title: "Merge PDF Online Free — OM PDF | No Upload Required",
     description: "Combine multiple PDF files into one. Drag to reorder pages, then merge instantly in your browser. 100% free, private, no upload.",
     keywords: "merge pdf, merge pdf online, combine pdf files, pdf merger tool, join pdf files, merge multiple pdf online free",
-    url: "https://om-pdf.pages.dev/merge-pdf",
+    url: "https://om-pdf.netlify.app/merge-pdf",
   },
   // ... more tools
 };
@@ -100,7 +100,7 @@ When you add a new tool (e.g., "PDF Splitter Pro"):
      title: "Advanced PDF Splitter Online Free | OM PDF",
      description: "Professional PDF splitting with advanced options...",
      keywords: "pdf splitter, advanced split, batch pdf splitting...",
-     url: "https://om-pdf.pages.dev/splitter-pro",
+     url: "https://om-pdf.netlify.app/splitter-pro",
    }
 
 3. Update getSeoMetadata keyMap to map tool key to metadata key
@@ -112,12 +112,12 @@ When you add a new tool (e.g., "PDF Splitter Pro"):
    <SEO 
      title="Advanced PDF Splitter Online Free | OM PDF"
      description="Professional PDF splitting with advanced options..."
-     url="https://om-pdf.pages.dev/splitter-pro" 
+     url="https://om-pdf.netlify.app/splitter-pro" 
    />
 
 5. Update public/sitemap.xml to include new route
    <url>
-     <loc>https://om-pdf.pages.dev/splitter-pro</loc>
+     <loc>https://om-pdf.netlify.app/splitter-pro</loc>
      ...
    </url>
 */

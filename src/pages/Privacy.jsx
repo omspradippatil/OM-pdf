@@ -8,7 +8,7 @@ export default function Privacy() {
       <SEO
         title="Privacy Policy"
         description="OM PDF processes files locally in your browser. Learn how we protect your privacy."
-        url="https://om-pdf.pages.dev/privacy"
+        url="https://om-pdf.netlify.app/privacy"
       />
 
       <div className="content-page-inner">

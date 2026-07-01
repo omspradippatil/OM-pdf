@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 export default function SEO({ title, description, keywords, url, canonicalUrl, schema, noindex = false }) {
   const siteName = "OM PDF";
   const defaultDesc = "OM PDF is a free, private PDF toolkit. Merge, split, compress, and convert PDF files instantly in your browser. Your files never leave your device.";
-  const defaultUrl = "https://om-pdf.pages.dev";
+  const defaultUrl = "https://om-pdf.netlify.app";
   const resolvedUrl = url || defaultUrl;
   const resolvedCanonical = canonicalUrl || resolvedUrl;
   const normalizedTitle = title && title.includes(siteName) ? title : (title ? `${title} | ${siteName}` : siteName);

@@ -107,7 +107,7 @@ export default function Profile() {
 
   return (
     <div className="ux-tool-page">
-      <SEO title="My Profile | OM PDF" description="Manage your OM PDF account profile." url="https://om-pdf.pages.dev/profile" />
+      <SEO title="My Profile | OM PDF" description="Manage your OM PDF account profile." url="https://om-pdf.netlify.app/profile" />
       
       <div className="ux-tool-main">
         <div className="ux-one-col" style={{ maxWidth: 500 }}>

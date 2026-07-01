@@ -8,12 +8,12 @@
 
 Merge or split PDF files instantly  right in your browser. No uploads, no sign-up, completely private.
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Netlify-00C7B7?style=flat-square&logo=netlify)](https://om-pdf.pages.dev)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Netlify-00C7B7?style=flat-square&logo=netlify)](https://om-pdf.netlify.app)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg?style=flat-square)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](LICENSE)
 [![Built with Vite](https://img.shields.io/badge/Built%20with-Vite-646CFF?style=flat-square&logo=vite)](https://vitejs.dev)
 
- **Live:** [https://om-pdf.pages.dev](https://om-pdf.pages.dev)
+ **Live:** [https://om-pdf.netlify.app](https://om-pdf.netlify.app)
 
 </div>
 

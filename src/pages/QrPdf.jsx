@@ -12,9 +12,9 @@ import { logUserAction } from '../services/activityLog';
 import { useAuth } from '../context/AuthContext';
 import { useExport } from '../context/ExportContext';
 
-const DEFAULT_ITEMS = `https://om-pdf.pages.dev/merge-pdf
-https://om-pdf.pages.dev/split-pdf
-https://om-pdf.pages.dev/compress-pdf
+const DEFAULT_ITEMS = `https://om-pdf.netlify.app/merge-pdf
+https://om-pdf.netlify.app/split-pdf
+https://om-pdf.netlify.app/compress-pdf
 OM-PDF Label 1
 OM-PDF Label 2
 OM-PDF Label 3`;

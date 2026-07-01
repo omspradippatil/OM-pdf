@@ -8,7 +8,7 @@ export default function HowItWorks() {
       <SEO
         title="How OM PDF Works"
         description="See how OM PDF processes files locally with fast, private browser-based tools."
-        url="https://om-pdf.pages.dev/how-it-works"
+        url="https://om-pdf.netlify.app/how-it-works"
       />
 
       <div className="content-page-inner">

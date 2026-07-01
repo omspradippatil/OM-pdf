@@ -14,7 +14,7 @@ export default function BlogPost() {
         <SEO
           title="Blog Post Not Found"
           description="The blog post you are looking for does not exist."
-          url="https://om-pdf.pages.dev/blog"
+          url="https://om-pdf.netlify.app/blog"
         />
         <div className="content-page-inner">
           <h1>Post not found</h1>
@@ -30,7 +30,7 @@ export default function BlogPost() {
       <SEO
         title={post.title}
         description={post.description}
-        url={`https://om-pdf.pages.dev/blog/${post.slug}`}
+        url={`https://om-pdf.netlify.app/blog/${post.slug}`}
       />
 
       <div className="content-page-inner blog-content">

@@ -10,7 +10,7 @@ export default function Blog() {
       <SEO
         title="OM PDF Blog"
         description="Guides, tips, and privacy-first PDF workflows from OM PDF."
-        url="https://om-pdf.pages.dev/blog"
+        url="https://om-pdf.netlify.app/blog"
       />
 
       <div className="content-page-inner">

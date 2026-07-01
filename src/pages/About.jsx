@@ -8,7 +8,7 @@ export default function About() {
       <SEO
         title="About OM PDF"
         description="Learn about OM PDF, a privacy-first suite of browser-based PDF tools."
-        url="https://om-pdf.pages.dev/about"
+        url="https://om-pdf.netlify.app/about"
       />
 
       <div className="content-page-inner">
