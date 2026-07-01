@@ -116,7 +116,7 @@ function getMetadataAndContent(cleanPath, SEO_METADATA, TOOLS, BLOG_POSTS) {
     const title = "Free PDF Tools Online | Merge, Split, Compress, Convert PDF";
     const description = "Merge PDF, split PDF, compress PDF, convert PDF to JPG and add page numbers — all free, private and instant in your browser. No upload. No sign-up.";
     const keywords = "pdf tools, free pdf editor, merge pdf, split pdf, compress pdf, convert pdf, pdf to jpg, online pdf tools, free pdf converter";
-    const url = "https://om-pdf.pages.dev/";
+    const url = "https://om-pdf.netlify.app/";
     
     let rootHTML = `
       <h1>OM PDF — Free Privacy-First PDF Tools</h1>
@@ -144,7 +144,7 @@ function getMetadataAndContent(cleanPath, SEO_METADATA, TOOLS, BLOG_POSTS) {
     const title = "PDF Guides & Privacy Tips Blog — OM PDF";
     const description = "Learn how to manage, edit, merge, and secure PDF files without compromising privacy. Guides, tips, and step-by-step instructions.";
     const keywords = "pdf guides, pdf tips, privacy tips, pdf how-to, local pdf editing";
-    const url = "https://om-pdf.pages.dev/blog/";
+    const url = "https://om-pdf.netlify.app/";
     
     let rootHTML = `
       <h1>OM PDF Blog — Guides & Privacy Tips</h1>
@@ -173,7 +173,7 @@ function getMetadataAndContent(cleanPath, SEO_METADATA, TOOLS, BLOG_POSTS) {
       const title = `${post.title} — OM PDF Blog`;
       const description = post.description;
       const keywords = `how to, pdf guide, offline pdf, ${post.title.toLowerCase().replace(/[^a-z0-9]+/g, ', ')}`;
-      const url = `https://om-pdf.pages.dev/blog/${slug}/`;
+      const url = `https://om-pdf.netlify.app/${slug}/`;
       
       let rootHTML = `
         <article>
@@ -203,7 +203,7 @@ function getMetadataAndContent(cleanPath, SEO_METADATA, TOOLS, BLOG_POSTS) {
     const title = "All PDF Tools Directory — OM PDF";
     const description = "Browse all free offline-first PDF tools. Merge, split, compress, protect, rotate, convert, and sign PDF files directly on your computer.";
     const keywords = "pdf tools list, offline pdf tools directory, convert pdf list, edit pdf list";
-    const url = "https://om-pdf.pages.dev/tools/";
+    const url = "https://om-pdf.netlify.app/";
     
     let rootHTML = `
       <h1>OM PDF Tools Directory</h1>
@@ -224,7 +224,7 @@ function getMetadataAndContent(cleanPath, SEO_METADATA, TOOLS, BLOG_POSTS) {
       title: "About OM PDF — Privacy-First PDF Toolkit",
       description: "Learn about the mission of OM PDF to build open-source, offline-first, client-side PDF utilities that respect document privacy.",
       keywords: "about om pdf, client-side pdf, privacy first pdf, browser native tools",
-      canonicalUrl: "https://om-pdf.pages.dev/about/",
+      canonicalUrl: "https://om-pdf.netlify.app/",
       rootHTML: `
         <h1>About OM PDF</h1>
         <p>OM PDF is a collection of browser-native PDF utilities. Unlike typical online PDF editors that upload your sensitive documents to remote servers, OM PDF processes your files entirely locally on your device.</p>
@@ -239,7 +239,7 @@ function getMetadataAndContent(cleanPath, SEO_METADATA, TOOLS, BLOG_POSTS) {
       title: "Privacy Policy — OM PDF",
       description: "Read our privacy policy. We have zero servers for processing documents; 100% of PDF processing happens offline in your browser.",
       keywords: "privacy policy, no data collection, private pdf, local pdf processing",
-      canonicalUrl: "https://om-pdf.pages.dev/privacy/",
+      canonicalUrl: "https://om-pdf.netlify.app/",
       rootHTML: `
         <h1>Privacy Policy</h1>
         <p>At OM PDF, we prioritize your privacy. This privacy policy describes how we do NOT collect or store your personal documents.</p>
@@ -254,7 +254,7 @@ function getMetadataAndContent(cleanPath, SEO_METADATA, TOOLS, BLOG_POSTS) {
       title: "How It Works — Offline Client-Side PDF Tools | OM PDF",
       description: "Learn about the technology powering OM PDF — WebAssembly and browser APIs that process PDFs entirely on your device.",
       keywords: "how client side works, browser based tools, webassembly pdf, local file handling",
-      canonicalUrl: "https://om-pdf.pages.dev/how-it-works/",
+      canonicalUrl: "https://om-pdf.netlify.app/",
       rootHTML: `
         <h1>How It Works</h1>
         <p>OM PDF uses modern web technology to process files entirely in your browser.</p>
@@ -289,7 +289,7 @@ function getMetadataAndContent(cleanPath, SEO_METADATA, TOOLS, BLOG_POSTS) {
     const title = meta?.title || `${tool.title} Online Free — OM PDF`;
     const description = meta?.description || `${tool.desc} 100% private, free, and runs entirely in your browser. No registration required.`;
     const keywords = meta?.keywords || `${tool.title.toLowerCase()}, free online pdf tool, offline pdf, local browser pdf`;
-    const url = meta?.url || `https://om-pdf.pages.dev${tool.path}/`;
+    const url = meta?.url || `https://om-pdf.netlify.app/${tool.path}/`;
     
     const rootHTML = `
       <h1>${tool.title}</h1>
@@ -311,7 +311,7 @@ function getMetadataAndContent(cleanPath, SEO_METADATA, TOOLS, BLOG_POSTS) {
     title: `${cleanPath.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} — OM PDF`,
     description: `OM PDF is a collection of browser-native client-side PDF utilities.`,
     keywords: `pdf tools, privacy first pdf, offline pdf`,
-    canonicalUrl: `https://om-pdf.pages.dev/${cleanPath}/`,
+    canonicalUrl: `https://om-pdf.netlify.app/${cleanPath}/`,
     rootHTML: `
       <h1>${cleanPath.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</h1>
       <p>This page is part of the client-side OM PDF application. Please load the application in a modern browser.</p>

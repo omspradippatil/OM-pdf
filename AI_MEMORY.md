@@ -688,7 +688,7 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 
 **Issue 1: "Alternate page with proper canonical tag" — 6 pages**
 - Affected: `/grayscale-pdf`, `/merge-with-ranges`, `/extract-pages`, `/resize-pages`, `/pdf-to-jpg`, `/split-by-bookmarks`
-- Cause: `index.html` had a **static** `<link rel="canonical" href="https://om-pdf.pages.dev/" />` tag. Google's crawler (which partially executes JS) read this before React hydrated, treating every tool page as an alternate of the homepage.
+- Cause: `index.html` had a **static** `<link rel="canonical" href="https://om-pdf.netlify.app/" />` tag. Google's crawler (which partially executes JS) read this before React hydrated, treating every tool page as an alternate of the homepage.
 
 **Issue 2: "Discovered - currently not indexed" — 30 pages**
 - Affected: `/about`, `/blog`, `/blog/*`, `/compress-pdf`, `/crop-pdf`, etc.
@@ -701,7 +701,7 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 ### Fix Applied
 
 **`index.html`:**
-- [x] Removed `<link rel="canonical" href="https://om-pdf.pages.dev/" />` from the static HTML.
+- [x] Removed `<link rel="canonical" href="https://om-pdf.netlify.app/" />` from the static HTML.
 - [x] Added comment: `<!-- Canonical URL is injected per-page by react-helmet-async (SEO.jsx) -->`
 - [x] Added comment clarifying fallback OG tags are home-only.
 - react-helmet-async's `SEO.jsx` already injects correct per-page canonicals via `ToolSeoHead.jsx` (`canonicalUrl={baseMeta.url}`) and plain `SEO` components on blog/about pages.
@@ -714,7 +714,7 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 
 ### Post-Deployment Actions Required (Google Search Console)
 1. Deploy to Netlify (git push).
-2. In Google Search Console → **Sitemaps** → resubmit `https://om-pdf.pages.dev/sitemap.xml`.
+2. In Google Search Console → **Sitemaps** → resubmit `https://om-pdf.netlify.app/sitemap.xml`.
 3. For the 6 "Alternate" pages: click **"Validate Fix"** button in GSC after deploy.
 4. Use **URL Inspection → Test Live URL** on a few affected pages to confirm per-page canonical appears correctly.
 5. Expect full clearance in 1–4 weeks as Googlebot recrawls.
@@ -751,7 +751,7 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 - **Status**: The static canonical removal (Session 15) is the primary fix. Sitemap `lastmod` bumped to `2026-05-21` to force recrawl.
 - **Post-deployment actions**:
   1. `git push` to Netlify to deploy Session 15 changes.
-  2. GSC → Sitemaps → Resubmit `https://om-pdf.pages.dev/sitemap.xml`.
+  2. GSC → Sitemaps → Resubmit `https://om-pdf.netlify.app/sitemap.xml`.
   3. GSC → URL Inspection → Test Live URL on affected pages (verify per-page canonical appears).
   4. GSC → Alternate page issue → Click **"Validate Fix"** for the 6 affected pages.
   5. Allow 1–4 weeks for Googlebot to recrawl and re-evaluate indexability.
@@ -774,7 +774,7 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 - Google Search Console HTML file verification was failing: "Your verification file has the wrong content."
 - Root cause: `google3abb376b0c48cfa0.html` was placed in the **project root**, not in `public/`.
 - Vite only copies the `public/` directory into `dist/` during build. Files in the project root are **not** served by Netlify.
-- Result: `https://om-pdf.pages.dev/google3abb376b0c48cfa0.html` returned 404 (or the SPA fallback `index.html`), not the verification content.
+- Result: `https://om-pdf.netlify.app/google3abb376b0c48cfa0.html` returned 404 (or the SPA fallback `index.html`), not the verification content.
 
 ### Fix
 - [x] Copied `google3abb376b0c48cfa0.html` to `public/google3abb376b0c48cfa0.html`.
@@ -1016,13 +1016,13 @@ Suggested 10 high-value, offline-first tools:
 
 ---
 
-## ✅ Completed (Session 22) — Cloudflare Worker Drive API Docs Alignment
+## ✅ Completed (Session 22) — Netlify Worker Drive API Docs Alignment
 
 ### Goal
 - Update the project documentation to reflect the current Drive backend architecture and the CORS-safe fallback path.
 
 ### Architecture Notes
-- [x] Added the Cloudflare Worker edge backend to `README.md` so the project structure and tech stack now reflect the Drive token API layer.
+- [x] Added the Netlify Worker edge backend to `README.md` so the project structure and tech stack now reflect the Drive token API layer.
 - [x] Documented the Worker-backed Drive endpoints in `README.md`:
   - `/api/drive/status`
   - `/api/drive/callback`
@@ -1037,29 +1037,29 @@ Suggested 10 high-value, offline-first tools:
 
 ---
 
-## Completed (Session 23) - Cloudflare Worker Drive Auto-Refresh Fix
+## Completed (Session 23) - Netlify Worker Drive Auto-Refresh Fix
 
 ### Goal
 - Stop `/my-files` from repeatedly showing "Connect Google Drive to list your saved files" for users who already completed the Worker-backed offline Drive consent flow.
 - Replace stale browser-only token checks with Worker refresh-token renewal around Google's roughly 1-hour access token expiry window.
 
 ### Root Cause
-- `AuthContext.jsx` only loaded the browser-cached access token on auth startup. If that short-lived token expired, `driveConnected` became false even though the Cloudflare Worker still had a valid refresh token.
+- `AuthContext.jsx` only loaded the browser-cached access token on auth startup. If that short-lived token expired, `driveConnected` became false even though the Netlify Worker still had a valid refresh token.
 - `/my-files` used a non-interactive local-token check and showed the connect prompt before attempting the Worker `/api/drive/refresh` path.
 - Save/list retry logic only looked for literal `401` strings, while the Drive service often throws `DRIVE_TOKEN_EXPIRED`.
 
 ### Architecture Change
-- [x] `AuthContext.jsx` now silently refreshes Drive tokens from the Cloudflare Worker on Firebase auth startup, tab focus, visibility changes, and a 50-minute interval before the 1-hour Google access token expiry window.
+- [x] `AuthContext.jsx` now silently refreshes Drive tokens from the Netlify Worker on Firebase auth startup, tab focus, visibility changes, and a 50-minute interval before the 1-hour Google access token expiry window.
 - [x] Added a shared in-flight refresh promise so overlapping startup/focus/listing checks do not spam the Worker.
 - [x] `ensureDriveToken(force, { interactive })` now supports non-interactive refresh mode. Silent paths return `false` instead of opening Google auth.
 - [x] If the Worker reports stored Drive status but cannot provide an access token due to a transient issue, the UI can preserve the connected state instead of immediately pretending the user never linked Drive.
 - [x] `/my-files` now attempts `ensureDriveToken(false, { interactive: false })` before showing the connect warning.
 - [x] `SaveToDriveButton` and `MyFiles` now treat both `401` and `DRIVE_TOKEN_EXPIRED` as refreshable errors and retry once after Worker renewal.
-- [x] `cf-worker/wrangler.toml` now defines a Cloudflare Cron Trigger (`*/30 * * * *`) so the Worker wakes up every 30 minutes even when the website is closed.
+- [x] `cf-worker/wrangler.toml` now defines a Netlify Cron Trigger (`*/30 * * * *`) so the Worker wakes up every 30 minutes even when the website is closed.
 - [x] `cf-worker/src/index.js` now implements `scheduled()` maintenance that lists encrypted `rt:*` refresh tokens in KV, decrypts them, calls Google's refresh endpoint, and deletes revoked refresh tokens.
 - [x] `DriveCallback.jsx` now recovers from a callback response failure by immediately trying a silent Worker refresh if the backend already saved the refresh token.
 - [x] Added shared `src/services/driveOAuth.js` so all re-auth paths use the same Google offline consent URL (`access_type=offline`, `prompt=consent`).
-- [x] `ensureDriveToken()` now redirects to the offline Drive consent flow when the Worker cannot refresh because the refresh token is missing, revoked, or expired. Cloudflare cannot complete this re-auth server-side because Google requires user consent.
+- [x] `ensureDriveToken()` now redirects to the offline Drive consent flow when the Worker cannot refresh because the refresh token is missing, revoked, or expired. Netlify cannot complete this re-auth server-side because Google requires user consent.
 
 ### Validation Performed
 - [x] `npm run build` passes.
@@ -1147,10 +1147,10 @@ Suggested 10 high-value, offline-first tools:
 ## ✅ Completed (Session 26) — Drive Token Auto-Refresh UI Fix
 
 ### Goal
-- Fix a UI issue where logging into a new device with an existing email would incorrectly show a "reconnect background refresh" warning, despite the Cloudflare Worker actively maintaining a valid Drive refresh token for that user.
+- Fix a UI issue where logging into a new device with an existing email would incorrectly show a "reconnect background refresh" warning, despite the Netlify Worker actively maintaining a valid Drive refresh token for that user.
 
 ### Root Cause
-- When a user logged into a new device, their short-lived Google access token was saved, but if a silent background refresh from the Cloudflare Worker was triggered and hit a transient error (e.g. rate limit, CORS, or a network hiccup fetching the new access token), the frontend `cfRefreshToken` would throw an error.
+- When a user logged into a new device, their short-lived Google access token was saved, but if a silent background refresh from the Netlify Worker was triggered and hit a transient error (e.g. rate limit, CORS, or a network hiccup fetching the new access token), the frontend `cfRefreshToken` would throw an error.
 - The `AuthContext.jsx` catch block failed to check the worker's base connection status (`cfDriveStatus`), resulting in the `driveConnected` state incorrectly flipping to `false` and triggering the disconnected warning banner in `MyFiles.jsx`.
 
 ### Architecture Change
@@ -1165,21 +1165,21 @@ Suggested 10 high-value, offline-first tools:
 
 ---
 
-## ✅ Completed (Session 27) — Cloudflare Pages Migration & Core Fixes
+## ✅ Completed (Session 27) — Netlify Migration & Core Fixes
 
 ### Goal
-- Finalize the migration from Netlify to Cloudflare Pages.
+- Finalize the migration from Netlify to Netlify.
 - Fix Google Search Console sitemap indexing issues and deprecated schema warnings.
 - Resolve Google Drive auth race conditions and UI bugs in the new Chat PDF tool.
 
-### Cloudflare Pages Migration
+### Netlify Migration
 - [x] Deleted residual `netlify.toml` configuration.
-- [x] Created `wrangler.toml` for Cloudflare configuration.
+- [x] Created `wrangler.toml` for Netlify configuration.
 - [x] Removed `[build]` block from `wrangler.toml` as it is not supported in Pages.
 - [x] Removed `[[headers]]` from `wrangler.toml` in favor of preserving the existing strict Content-Security-Policy in `public/_headers`.
 
 ### Google Search Console & SEO Fixes
-- [x] **"Sitemap could not be read" Fix**: Removed the `<?xml-stylesheet ...?>` directive from `public/sitemap.xml` and deleted `sitemap.xsl`. Cloudflare's strict CSP was blocking the inline XSL execution, which confused Googlebot's XML parser.
+- [x] **"Sitemap could not be read" Fix**: Removed the `<?xml-stylesheet ...?>` directive from `public/sitemap.xml` and deleted `sitemap.xsl`. Netlify's strict CSP was blocking the inline XSL execution, which confused Googlebot's XML parser.
 - [x] Explicitly defined `/sitemap.xml` with `Content-Type: application/xml` in `public/_headers`.
 - [x] Removed the deprecated `FAQPage` rich snippet schema from `src/pages/Home.jsx` following Google's deprecation notice.
 
@@ -1188,8 +1188,8 @@ Suggested 10 high-value, offline-first tools:
 - [x] **Chat PDF UI**: Fixed a layout bug where the Send button took up 100% width, squishing the text input field, by overriding `.ux-btn-primary` with `width: max-content`.
 - [x] **Chat PDF Expectations**: Added highly visible UI warnings in `ChatPdf.jsx` to inform users about the 1.8GB WebGPU model download on first launch and strongly recommend using a PC/Desktop instead of mobile devices.
 - [x] Added `AI Chat` as a permanent quick link in the top Navbar before `Edit`.
-- [x] **SPA Routing Fix**: Created `public/_redirects` with `/* /index.html 200` to prevent Cloudflare Pages from returning 404s on direct URL hits.
-- [x] **Cloudflare 404 Override Bug**: Deleted `public/404.html`. Cloudflare Pages prioritizes a hardcoded `404.html` over wildcard `_redirects` for unmatched paths, preventing the SPA from booting up on direct URLs.
+- [x] **SPA Routing Fix**: Created `public/_redirects` with `/* /index.html 200` to prevent Netlify from returning 404s on direct URL hits.
+- [x] **Netlify 404 Override Bug**: Deleted `public/404.html`. Netlify prioritizes a hardcoded `404.html` over wildcard `_redirects` for unmatched paths, preventing the SPA from booting up on direct URLs.
 
 ### Files Modified
 - `netlify.toml` (Deleted)
@@ -1211,6 +1211,6 @@ Suggested 10 high-value, offline-first tools:
 ### PageSpeed Insights Audit (Mobile Score: 67)
 - **Preconnect**: Add `<link rel="preconnect" href="https://apis.google.com">` to `index.html` to save ~300ms on Google auth initialization.
 - **Render-Blocking Resources**: Look into deferring non-critical CSS/fonts.
-- **Cache Policy**: Optimize `Cache-Control` for Cloudflare Pages (e.g. `auth/iframe.js` is currently only 30m).
+- **Cache Policy**: Optimize `Cache-Control` for Netlify (e.g. `auth/iframe.js` is currently only 30m).
 - **Unused JS/CSS**: Evaluate code splitting and CSS minification opportunities.
 
