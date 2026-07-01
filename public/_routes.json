@@ -1,5 +1,5 @@
 {
   "version": 1,
   "include": ["/*"],
-  "exclude": ["/sitemap.xml", "/sitemap-gsc.xml", "/sitemap_final.xml", "/robots.txt", "/manifest.webmanifest", "/favicon.ico", "/assets/*"]
+  "exclude": ["/sitemap.xml", "/sitemap-gsc.xml", "/sitemap_final.xml", "/sitemap-fresh.xml", "/robots.txt", "/manifest.webmanifest", "/favicon.ico", "/assets/*"]
 }
