@@ -25,7 +25,7 @@ export default function Navbar() {
   const toolsRef = useRef(null);
 
   useEffect(() => {
-    document.body.dataset.theme = theme;
+    document.documentElement.dataset.theme = theme;
     localStorage.setItem('om-pdf-theme', theme);
   }, [theme]);
 
