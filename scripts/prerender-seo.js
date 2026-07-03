@@ -89,7 +89,7 @@ async function run() {
     html = html.replace('</head>', tagsToInject + '</head>');
 
     // Inject static crawler HTML into #root
-    html = html.replace('<div id="root"></div>', `<div id="root">${rootHTML}</div>`);
+    html = html.replace('<div id="root"></div>', `<div id="root"><div style="display:none;" aria-hidden="true">${rootHTML}</div></div>`);
 
     if (isHome) {
       // Write home index.html directly to dist/index.html
