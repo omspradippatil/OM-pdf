@@ -11,6 +11,9 @@ export default function ToolCard({ tool, isFavorite, toggleFavorite }) {
       className="tool-card"
       style={{ '--card-color': tool.color, position: 'relative', originY: 1 }}
       aria-label={`Open ${tool.title} tool`}
+      initial={{ opacity: 0, y: 15 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "50px" }}
       whileHover={{ scale: 1.02, y: -4 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}

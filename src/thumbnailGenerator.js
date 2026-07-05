@@ -10,9 +10,10 @@ const PAGE_THUMB_WIDTH = 92; // px — for page organizer grid
  * Returns null on failure (encrypted, corrupt, etc.)
  */
 export async function generateThumbnail(file) {
+  let url = null;
   try {
-    const buf  = await file.arrayBuffer();
-    const pdf  = await pdfjsLib.getDocument({ data: buf, verbosity: 0 }).promise;
+    url = URL.createObjectURL(file);
+    const pdf  = await pdfjsLib.getDocument({ url: url, verbosity: 0 }).promise;
     const page = await pdf.getPage(1);
     const scale    = THUMB_WIDTH / page.getViewport({ scale: 1 }).width;
     const viewport = page.getViewport({ scale });
@@ -20,8 +21,11 @@ export async function generateThumbnail(file) {
     canvas.width   = viewport.width;
     canvas.height  = viewport.height;
     await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-    return canvas.toDataURL('image/jpeg', 0.75);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+    URL.revokeObjectURL(url);
+    return dataUrl;
   } catch (err) {
+    if (url) URL.revokeObjectURL(url);
     console.error('[generateThumbnail] error:', err);
     return null;
   }
@@ -32,10 +36,11 @@ export async function generateThumbnail(file) {
  * Returns an array of data URLs (null if a page fails).
  */
 export async function generatePageThumbnails(file, onProgress) {
+  let url = null;
   try {
-    const buf  = await file.arrayBuffer();
+    url = URL.createObjectURL(file);
     const pdf  = await pdfjsLib.getDocument({ 
-      data: buf, 
+      url: url, 
       verbosity: 0,
       cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.6.205/cmaps/',
       cMapPacked: true,
@@ -56,8 +61,10 @@ export async function generatePageThumbnails(file, onProgress) {
       await new Promise(r => setTimeout(r, 0));
     }
 
+    URL.revokeObjectURL(url);
     return thumbs;
   } catch (err) {
+    if (url) URL.revokeObjectURL(url);
     console.error('[generatePageThumbnails] error:', err);
     return null;
   }

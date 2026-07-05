@@ -6,6 +6,8 @@ import { listDriveFiles, deleteFromDrive, hasDriveAccess, loadStoredDriveToken, 
 import DriveConnectButton from '../components/DriveConnectButton';
 import { logUserAction } from '../services/activityLog';
 import ToolPageLayout from '../components/ToolPageLayout';
+import { getRecentFiles, clearRecentFiles } from '../services/recentFiles';
+import { Link } from 'react-router-dom';
 import '../styles/MyFiles.css';
 
 /* ── Helpers ── */
@@ -115,6 +117,18 @@ export default function MyFiles() {
   const [driveLoading, setDriveLoading]   = useState(false);
   const [driveError, setDriveError]       = useState('');
   const [driveReady, setDriveReady]       = useState(false);
+  const [localFiles, setLocalFiles]       = useState([]);
+
+  useEffect(() => {
+    setLocalFiles(getRecentFiles());
+  }, []);
+
+  const handleClearLocal = () => {
+    if (confirm('Clear all local recent files history?')) {
+      clearRecentFiles();
+      setLocalFiles([]);
+    }
+  };
 
   const loadDrive = useCallback(async ({ interactive = true } = {}) => {
     if (!user) return;
@@ -277,9 +291,12 @@ export default function MyFiles() {
 
         {!driveLoading && driveFiles.length === 0 && (
           <div className="mf-empty">
-            <div className="mf-empty-icon">🗂️</div>
-            <p>No files in your <strong>OM PDF</strong> Drive folder yet.</p>
-            <p className="mf-empty-sub">Merge a PDF and click "Save to Drive" to save here.</p>
+            <div className="mf-empty-icon" style={{ fontSize: '3.5rem', marginBottom: '1rem', opacity: 0.9 }}>🗂️</div>
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--text)' }}>Your Drive Folder is Empty</h3>
+            <p className="mf-empty-sub" style={{ marginBottom: '1.5rem', maxWidth: '400px', margin: '0 auto 1.5rem', lineHeight: 1.5 }}>
+              Use any of our 45+ free PDF tools and click <strong>"Save to Drive"</strong> to store your processed files securely in the cloud.
+            </p>
+            <Link to="/tools" className="btn-primary" style={{ display: 'inline-flex', padding: '10px 24px' }}>Explore PDF Tools →</Link>
           </div>
         )}
 
@@ -300,6 +317,44 @@ export default function MyFiles() {
             ))}
           </div>
         )}
+
+        <div style={{ marginTop: '48px' }}>
+          <SectionHeader
+            title="🕒 Local Recent Files"
+            count={localFiles.length}
+            onRefresh={() => setLocalFiles(getRecentFiles())}
+            loading={false}
+          />
+          {localFiles.length === 0 ? (
+            <div className="mf-empty" style={{ padding: '32px 20px' }}>
+              <div className="mf-empty-icon" style={{ fontSize: '2.5rem', opacity: 0.6 }}>🕒</div>
+              <p style={{ color: 'var(--text-muted)' }}>No local recent files.</p>
+            </div>
+          ) : (
+            <>
+              <div className="mf-grid">
+                {localFiles.map(f => (
+                  <div key={f.id} className="mf-card" style={{ opacity: 0.9 }}>
+                    <div className="mf-card-icon" style={{ filter: 'grayscale(1)' }}>📄</div>
+                    <div className="mf-card-info">
+                      <div className="mf-card-name" title={f.name}>{f.name}</div>
+                      <div className="mf-card-meta">
+                        <span className="mf-tag" style={{ background: 'var(--border)' }}>{f.tool}</span>
+                        <span>{fmt(f.size)}</span>
+                        <span>{fmtDate(f.createdAt)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                <button className="btn-secondary" onClick={handleClearLocal} style={{ padding: '8px 16px', fontSize: '0.9rem' }}>
+                  Clear Local History
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </ToolPageLayout>
     </>
