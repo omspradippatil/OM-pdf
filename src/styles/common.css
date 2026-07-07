@@ -2399,24 +2399,26 @@ input[type='range'].ux-range::-moz-range-thumb { width: 15px; height: 15px; bord
   .ux-sidebar-body {
     flex: none;
     overflow: visible;
-    padding: 12px 16px;
+    padding: 12px 16px 90px;
   }
   .ux-sidebar-footer {
     flex: none;
-    position: sticky;
+    position: fixed;
     bottom: 0;
+    left: 0;
+    right: 0;
     padding: 12px 16px 16px;
     background: var(--bg-card);
     border-top: 1px solid var(--border);
     box-shadow: 0 -10px 24px rgba(15, 23, 42, 0.08);
-    z-index: 10;
+    z-index: 1000;
   }
   [data-theme='dark'] .ux-sidebar-footer {
     box-shadow: 0 -10px 24px rgba(0, 0, 0, 0.28);
   }
   .ux-floating-add {
     position: fixed;
-    bottom: 140px;
+    bottom: 90px;
     right: 16px;
     width: 50px;
     height: 50px;
@@ -2424,9 +2426,10 @@ input[type='range'].ux-range::-moz-range-thumb { width: 15px; height: 15px; bord
   }
 }
 @media (max-width: 600px) {
+  .nav-container-mega { padding: 0 16px; }
   .ux-workspace-scroll { padding: 16px 12px 40px; }
   .ux-sidebar-header { padding: 16px; }
-  .ux-sidebar-body   { padding: 16px; }
+  .ux-sidebar-body   { padding: 16px 16px 90px; }
   .ux-sidebar-footer { padding: 16px; }
   .ux-page-grid { grid-template-columns: repeat(auto-fill, minmax(110px,1fr)); gap: 12px; }
   .ux-sidebar-title { font-size: 1.15rem; }
