@@ -97,7 +97,7 @@ All tools run **100% locally in the browser** using client-side libraries (such 
 -  **QR Code Generator**  Generate bulk QR codes from custom text and arrange them on a printable PDF grid.
 
 ###  View & Edit
--  **Chat PDF**  Chat directly with your PDF locally. 100% Private WebGPU-powered AI model.
+-  **Chat PDF**  Chat directly with your PDF locally. 100% Private WebGPU-powered AI model (now with enhanced CSP support for secure model fetching).
 -  **Verify PDF**  Cryptographically verify the digital signature and authenticity of signed PDFs.
 -  **Form Builder**  Create interactive, fillable PDF forms from any document.
 -  **Watermark PDF**  Add text or image watermarks with position, opacity, and angle controls.

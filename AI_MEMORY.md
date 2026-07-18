@@ -1214,3 +1214,23 @@ Suggested 10 high-value, offline-first tools:
 - **Cache Policy**: Optimize `Cache-Control` for Netlify (e.g. `auth/iframe.js` is currently only 30m).
 - **Unused JS/CSS**: Evaluate code splitting and CSS minification opportunities.
 
+---
+
+## ✅ Completed (Session 29) — WebGPU AI Chat PDF & Offline Architecture Fixes
+
+### Goal
+- Resolve Content Security Policy blocks preventing WebGPU AI Models (web-llm) from fetching weights from Hugging Face.
+- Fix PDF.js rendering blob URL failures.
+- Fix missing module imports in the crash recovery logic.
+
+### Architecture Fixes
+- **Web-LLM / WebGPU Support**: Added `https://*.hf.co`, `https://*.mlc.ai`, and `https://*.githubusercontent.com` to `connect-src` in `public/_headers` so the AI engine can safely download model weights directly from the CDN to run offline.
+- **PDF.js Blob Fetching**: Added `blob:` to `connect-src` in `public/_headers` so PDF.js can load local PDF previews without violating the strict CSP.
+- **Crash Recovery Imports**: Fixed `clearSession is not defined` crashes in `MergePDF.jsx` and `EditPdf.jsx` by correctly importing `clearSession` from `sessionRecovery`.
+
+### Files Modified
+- `public/_headers`
+- `src/pages/MergePDF.jsx`
+- `src/pages/EditPdf.jsx`
+- `README.md`
+- `AI_MEMORY.md`

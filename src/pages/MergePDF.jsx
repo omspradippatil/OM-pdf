@@ -11,6 +11,7 @@ import SaveToDriveButton from '../components/SaveToDriveButton';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
+import { clearSession } from '../services/sessionRecovery';
 import { useCrashRecovery } from '../hooks/useCrashRecovery';
 import ToolPageLayout from '../components/ToolPageLayout';
 import FileList from '../components/FileList';
