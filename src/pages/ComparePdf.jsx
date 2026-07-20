@@ -31,7 +31,7 @@ export default function ComparePdf() {
   
   const [text1, setText1] = useState('');
   const [text2, setText2] = useState('');
-  const [diffHtml, setDiffHtml] = useState('');
+  const [diffNodes, setDiffNodes] = useState([]);
   const [isExtracting, setIsExtracting] = useState(false);
 
   const loadFile1 = (raw) => {
@@ -54,16 +54,21 @@ export default function ComparePdf() {
           const diffs = dmp.diff_main(t1, t2);
           dmp.diff_cleanupSemantic(diffs);
           
-          // Generate simple HTML
-          let html = '';
-          for (let i = 0; i < diffs.length; i++) {
-            const [op, data] = diffs[i];
-            const text = data.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br/>');
-            if (op === 1) html += `<ins style="background:#e6ffed;color:#22863a;text-decoration:none;">${text}</ins>`;
-            else if (op === -1) html += `<del style="background:#ffeef0;color:#b31d28;text-decoration:line-through;">${text}</del>`;
-            else html += `<span>${text}</span>`;
-          }
-          setDiffHtml(html);
+          // Generate React nodes
+          const nodes = diffs.map(([op, data], i) => {
+            const lines = data.split('\n');
+            const content = lines.map((line, j) => (
+              <React.Fragment key={j}>
+                {line}
+                {j < lines.length - 1 && <br />}
+              </React.Fragment>
+            ));
+            
+            if (op === 1) return <ins key={i} style={{ background: '#e6ffed', color: '#22863a', textDecoration: 'none' }}>{content}</ins>;
+            if (op === -1) return <del key={i} style={{ background: '#ffeef0', color: '#b31d28', textDecoration: 'line-through' }}>{content}</del>;
+            return <span key={i}>{content}</span>;
+          });
+          setDiffNodes(nodes);
         })
         .finally(() => setIsExtracting(false));
     }
@@ -156,7 +161,7 @@ export default function ComparePdf() {
                 {isExtracting ? (
                   <p style={{ color: 'var(--text-muted)' }}>Running OCR / Text extraction...</p>
                 ) : (
-                  <div dangerouslySetInnerHTML={{ __html: diffHtml }} />
+                  <div>{diffNodes}</div>
                 )}
               </div>
             )}
