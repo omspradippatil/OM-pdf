@@ -52,7 +52,7 @@ export default function SEO({ title, description, keywords, url, canonicalUrl, s
         <script 
           key={`schema-${index}`} 
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(item) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(item).replace(/</g, '\\u003c') }}
         />
       ))}
     </Helmet>

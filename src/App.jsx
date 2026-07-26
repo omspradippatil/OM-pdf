@@ -1,4 +1,5 @@
 import React, { Suspense, lazy } from 'react';
+import * as Sentry from "@sentry/react";
 import { BrowserRouter, Routes, Route, useLocation, Outlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AuthProvider } from './context/AuthContext';
@@ -203,14 +204,16 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ExportProvider>
-        <BrowserRouter>
-          <ScrollToTop />
-          <InstallPWA />
-          <AppContent />
-        </BrowserRouter>
-      </ExportProvider>
-    </AuthProvider>
+    <Sentry.ErrorBoundary fallback={<div style={{padding: '2rem', textAlign: 'center'}}><h2>Something went wrong.</h2><p>Our team has been notified and we are working on a fix.</p></div>}>
+      <AuthProvider>
+        <ExportProvider>
+          <BrowserRouter>
+            <ScrollToTop />
+            <InstallPWA />
+            <AppContent />
+          </BrowserRouter>
+        </ExportProvider>
+      </AuthProvider>
+    </Sentry.ErrorBoundary>
   );
 }

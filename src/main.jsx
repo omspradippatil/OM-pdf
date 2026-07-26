@@ -5,6 +5,20 @@ import './styles/common.css';
 import { HelmetProvider } from 'react-helmet-async';
 import { registerSW } from 'virtual:pwa-register';
 
+import * as Sentry from "@sentry/react";
+
+Sentry.init({
+  dsn: "https://examplePublicKey@o0.ingest.sentry.io/0", // Replace with your actual Sentry DSN
+  integrations: [
+    Sentry.browserTracingIntegration(),
+    Sentry.replayIntegration(),
+  ],
+  tracesSampleRate: 1.0, 
+  tracePropagationTargets: ["localhost", /^https:\/\/om-pdf\.netlify\.app/],
+  replaysSessionSampleRate: 0.1, 
+  replaysOnErrorSampleRate: 1.0, 
+});
+
 registerSW({ immediate: true });
 
 const savedTheme = localStorage.getItem('theme');
