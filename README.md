@@ -171,7 +171,7 @@ This project uses a **Proprietary License**  see [LICENSE](LICENSE) for full ter
 
 ##  Show Your Support
 
-If you found this project helpful, please give it a ** star** on GitHub or consider [supporting the project](https://ompradippatil.netlify.app/donate)!
+If you found this project helpful, please give it a ** star** on GitHub or consider [supporting the project](https://om-patil.com/donate)!
 
 ---
 
@@ -179,7 +179,7 @@ If you found this project helpful, please give it a ** star** on GitHub or consi
 
 **Developed by OM Patil**
 
-- **Portfolio**: [ompradippatil.netlify.app](https://ompradippatil.netlify.app/)
+- **Portfolio**: [om-patil.com](https://om-patil.com)
 - **GitHub**: [@omspradippatil](https://github.com/omspradippatil)
 - **LinkedIn**: [OM Pradip Patil](https://in.linkedin.com/in/om-pradip-patil)
 - **Email**: [omspradippatil@gmail.com](mailto:omspradippatil@gmail.com)

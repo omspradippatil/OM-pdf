@@ -203,7 +203,7 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
 
 ### Next Steps for SEO Success (Outside Codebase)
 1. **Google Search Console**:
-   - Add property: om-pdf.pages.dev
+   - Add property: om-pdf.netlify.app
    - Verify ownership (via index.html meta tag)
    - Submit sitemap.xml
    - Monitor impressions, clicks, CTR by tool page
@@ -231,7 +231,7 @@ Upgrade the OM-pdf website UI/UX to match the professional uxpilot design system
    - Tech news sites: Contact and pitch as "privacy-first alternative to Smallpdf"
 
 5. **Custom Domain (Critical)**:
-   - Current: om-pdf.pages.dev (feels temporary, hurts perception)
+   - Current: om-pdf.netlify.app (feels temporary, hurts perception)
    - Target: ompdf.app, ompdf.tools, ompdf.io
    - Cheap registrars: Namecheap ($8-12/year), Domain.com
    - Connect to Netlify (5 min setup via DNS records)
@@ -946,7 +946,7 @@ Suggested 10 high-value, offline-first tools:
 ## ✅ Completed (Session 20) — Support Project Button in Footer
 
 ### Goal
-- Add a "Support Project" button to the footer pointing to `https://ompradippatil.netlify.app/donate/`.
+- Add a "Support Project" button to the footer pointing to `https://om-patil.com/donate`.
 
 ### Implementation
 - **Footer UI Component**:

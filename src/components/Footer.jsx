@@ -120,7 +120,7 @@ export default function Footer() {
             </p>
             <div className="creator-badge" style={{ marginBottom: 24 }}>
               <span className="creator-label">Designed & Developed by</span>
-              <a href="https://ompradippatil.netlify.app/" target="_blank" rel="noopener noreferrer" className="creator-name">OM Patil</a>
+              <a href="https://om-patil.com" target="_blank" rel="noopener noreferrer" className="creator-name">OM Patil</a>
             </div>
             
             <div className="footer-os-section" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -128,7 +128,7 @@ export default function Footer() {
                 <GitHubIcon size={16} />
                 <span>Contribute on GitHub</span>
               </a>
-              <a href="https://ompradippatil.netlify.app/donate/" target="_blank" rel="noopener noreferrer" className="os-badge-v2 support-badge-v2">
+              <a href="https://om-patil.com/donate" target="_blank" rel="noopener noreferrer" className="os-badge-v2 support-badge-v2">
                 <HeartIcon size={16} />
                 <span>Support Project</span>
               </a>
