@@ -1,4 +1,3 @@
-import React from 'react';
 import { useLocation } from 'react-router-dom';
 import SEO from './SEO';
 import { getSeoMetadata } from '../constants/seoMetadata';
@@ -21,6 +20,7 @@ export default function ToolSeoHead({ toolKey }) {
     url: baseMeta.url,
     description: baseMeta.description,
     faqs: toolContent?.faqs || [],
+    howTo: toolContent?.howTo || [],
   });
 
   return (

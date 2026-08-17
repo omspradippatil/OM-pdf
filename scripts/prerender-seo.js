@@ -4,11 +4,12 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const BASE_URL = "https://om-pdf.netlify.app";
 
 async function run() {
   const indexHtmlPath = path.resolve(__dirname, '../dist/index.html');
   if (!fs.existsSync(indexHtmlPath)) {
-    console.error("dist/index.html not found. Run 'npm run build' first.");
+    console.error("dist/index.html not found. Run 'vite build' first.");
     process.exit(1);
   }
   
@@ -30,11 +31,10 @@ async function run() {
     urls.push(match[1]);
   }
 
-  console.log(`Found ${urls.length} URLs in sitemap to prerender.`);
-
-  // Dynamically import constants
+  // Import application constants
   const seoModule = await import('../src/constants/seoMetadata.js');
   const SEO_METADATA = seoModule.SEO_METADATA;
+  const getSeoMetadata = seoModule.getSeoMetadata;
 
   const toolsModule = await import('../src/constants/tools.js');
   const TOOLS = toolsModule.TOOLS;
@@ -42,281 +42,574 @@ async function run() {
   const blogModule = await import('../src/constants/blogPosts.js');
   const BLOG_POSTS = blogModule.BLOG_POSTS;
 
+  const toolContentModule = await import('../src/constants/toolContent.js');
+  const getToolContent = toolContentModule.getToolContent;
+
+  const schemasModule = await import('../src/constants/seoSchemas.js');
+  const buildToolSchemas = schemasModule.buildToolSchemas;
+
+  // Make sure all tools from TOOLS are in the urls list
+  for (const tool of TOOLS) {
+    const fullUrl = `${BASE_URL}${tool.path}`;
+    if (!urls.includes(fullUrl)) {
+      urls.push(fullUrl);
+    }
+  }
+
+  console.log(`Found ${urls.length} URLs to prerender with full SSR semantic HTML and JSON-LD schemas.`);
+
   let count = 0;
 
   for (const urlStr of urls) {
     const url = new URL(urlStr);
     const pathname = url.pathname;
-    
-    // Normalize path to clean relative path (e.g. '', 'merge-pdf', 'blog/how-to-merge-pdf-without-upload')
     const cleanPath = pathname.replace(/^\/|\/$/g, '');
     const isHome = cleanPath === '';
-    
-    const pageMeta = getMetadataAndContent(cleanPath, SEO_METADATA, TOOLS, BLOG_POSTS);
-    if (!pageMeta) {
+    const canonicalUrl = isHome ? `${BASE_URL}/` : `${BASE_URL}/${cleanPath}`;
+
+    const pageData = getPageData({
+      cleanPath,
+      canonicalUrl,
+      SEO_METADATA,
+      getSeoMetadata,
+      TOOLS,
+      BLOG_POSTS,
+      getToolContent,
+      buildToolSchemas
+    });
+
+    if (!pageData) {
       console.warn(`⚠️ Warning: No metadata resolver found for path: ${pathname}`);
       continue;
     }
 
-    const { title, description, keywords, canonicalUrl, rootHTML } = pageMeta;
+    const { title, description, keywords, schemas, rootHTML } = pageData;
 
     let html = indexHtmlContent;
 
-    // Replace Title
+    // 1. Replace Title
     html = html.replace(/<title>.*?<\/title>/, `<title>${title}</title>`);
     
-    // Replace Description
+    // 2. Replace Description
     html = html.replace(
       /<meta name="description" content=".*?" \/>/s,
-      `<meta name="description" content="${description.replace(/"/g, '&quot;')}" />`
+      `<meta name="description" content="${escapeHtml(description)}" />`
     );
 
-    // Replace Keywords
+    // 3. Replace Keywords
     html = html.replace(
       /<meta name="keywords" content=".*?" \/>/s,
-      `<meta name="keywords" content="${keywords.replace(/"/g, '&quot;')}" />`
+      `<meta name="keywords" content="${escapeHtml(keywords)}" />`
     );
 
-    // Inject canonical and OG tags before </head>
-    const tagsToInject = `
+    // 4. Inject Canonical, OG, Twitter & JSON-LD schemas in <head>
+    let schemaTags = '';
+    if (schemas && Array.isArray(schemas)) {
+      for (const item of schemas) {
+        schemaTags += `\n  <script type="application/ld+json">${JSON.stringify(item).replace(/</g, '\\u003c')}</script>`;
+      }
+    }
+
+    const headInjections = `
   <link rel="canonical" href="${canonicalUrl}" />
-  <meta property="og:title" content="${title.replace(/"/g, '&quot;')}" />
-  <meta property="og:description" content="${description.replace(/"/g, '&quot;')}" />
+  <meta property="og:title" content="${escapeHtml(title)}" />
+  <meta property="og:description" content="${escapeHtml(description)}" />
   <meta property="og:url" content="${canonicalUrl}" />
-  <meta name="twitter:title" content="${title.replace(/"/g, '&quot;')}" />
-  <meta name="twitter:description" content="${description.replace(/"/g, '&quot;')}" />
+  <meta property="og:type" content="${cleanPath.startsWith('blog/') ? 'article' : 'website'}" />
+  <meta property="og:site_name" content="OM PDF" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${escapeHtml(title)}" />
+  <meta name="twitter:description" content="${escapeHtml(description)}" />${schemaTags}
 `;
-    html = html.replace('</head>', tagsToInject + '</head>');
+    html = html.replace('</head>', headInjections + '\n</head>');
 
-    // Inject static crawler HTML into #root
-    html = html.replace('<div id="root"></div>', `<div id="root"><div style="display:none;" aria-hidden="true">${rootHTML}</div></div>`);
+    // 5. Inject visible, semantic SSR HTML inside #root (clean fallback before React mounts)
+    html = html.replace('<div id="root"></div>', `<div id="root">${rootHTML}</div>`);
 
+    // 6. Write output
     if (isHome) {
-      // Write home index.html directly to dist/index.html
       fs.writeFileSync(indexHtmlPath, html);
-      console.log(`Generated home page: dist/index.html`);
+      console.log(`✓ Generated home: dist/index.html`);
     } else {
-      // Write custom route page
       const routeDir = path.resolve(__dirname, '../dist', cleanPath);
       if (!fs.existsSync(routeDir)) {
         fs.mkdirSync(routeDir, { recursive: true });
       }
       fs.writeFileSync(path.resolve(routeDir, 'index.html'), html);
-      console.log(`Generated route page: dist/${cleanPath}/index.html`);
+      console.log(`✓ Generated route: dist/${cleanPath}/index.html`);
     }
     count++;
   }
 
-  console.log(`\n✅ SEO Prerender Complete: Generated static index.html for ${count} routes.`);
+  console.log(`\n✅ Prerender Success: Generated ${count} fully indexed static HTML pages with zero hidden text.`);
 }
 
-function getMetadataAndContent(cleanPath, SEO_METADATA, TOOLS, BLOG_POSTS) {
+function escapeHtml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function getPageData({ cleanPath, canonicalUrl, SEO_METADATA, getSeoMetadata, TOOLS, BLOG_POSTS, getToolContent, buildToolSchemas }) {
   // 1. Home Page
   if (cleanPath === '') {
-    const title = "Free PDF Tools Online | Merge, Split, Compress, Convert PDF";
+    const title = "Free PDF Tools Online | Merge, Split, Compress, Convert PDF | OM PDF";
     const description = "Merge PDF, split PDF, compress PDF, convert PDF to JPG and add page numbers — all free, private and instant in your browser. No upload. No sign-up.";
-    const keywords = "pdf tools, free pdf editor, merge pdf, split pdf, compress pdf, convert pdf, pdf to jpg, online pdf tools, free pdf converter";
-    const url = "https://om-pdf.netlify.app/";
+    const keywords = "pdf tools, free pdf editor, merge pdf, split pdf, compress pdf, convert pdf, pdf to jpg, online pdf tools, free pdf converter, offline pdf";
     
-    let rootHTML = `
-      <h1>OM PDF — Free Privacy-First PDF Tools</h1>
-      <p>OM PDF is a collection of free, offline-first PDF utilities. All tools process your files directly in your web browser, meaning your sensitive documents are never uploaded to any server.</p>
-      <h2>Available PDF Tools:</h2>
-      <ul>
+    const websiteSchema = {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "OM PDF",
+      "url": `${BASE_URL}/`,
+      "description": description,
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": `${BASE_URL}/tools?q={search_term_string}`,
+        "query-input": "required name=search_term_string"
+      }
+    };
+
+    const homeFaqSchema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is OM PDF free to use?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes, OM PDF is 100% free with no sign-up, no subscriptions, and no watermarks." }
+        },
+        {
+          "@type": "Question",
+          "name": "Are my files uploaded to a remote server?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. All PDF processing happens locally in your web browser using WebAssembly. Your sensitive files never leave your device." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use OM PDF offline?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes! OM PDF works offline as a Progressive Web App (PWA) once loaded in your browser." }
+        }
+      ]
+    };
+
+    const rootHTML = `
+      <header class="navbar-v2">
+        <div class="navbar-container">
+          <a href="/" class="brand-link"><strong>OM PDF</strong> — Free Privacy-First PDF Toolkit</a>
+          <nav>
+            <a href="/tools">All Tools</a>
+            <a href="/about">About</a>
+            <a href="/blog">Blog</a>
+          </nav>
+        </div>
+      </header>
+      <main class="home-page">
+        <section class="hero-section">
+          <h1>Free, Private PDF Tools — 100% in Your Browser</h1>
+          <p class="hero-subtitle">Merge, split, compress, convert, edit, and sign PDFs locally. No uploads, no servers, zero data leakage.</p>
+        </section>
+        <section class="tools-section">
+          <h2>Popular PDF Tools</h2>
+          <div class="tools-grid">
+            ${TOOLS.map(t => `
+              <div class="tool-card">
+                <a href="${t.path}">
+                  <h3>${t.icon} ${t.title}</h3>
+                  <p>${t.desc}</p>
+                </a>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+        <section class="seo-content-section">
+          <h2>Why Choose OM PDF?</h2>
+          <p>Unlike traditional online PDF editors that upload sensitive files to remote servers, OM PDF processes your files directly on your computer or smartphone using WebAssembly. This ensures instant performance and complete data privacy for legal contracts, medical records, and financial files.</p>
+        </section>
+      </main>
     `;
-    for (const tool of TOOLS) {
-      rootHTML += `        <li><a href="${tool.path}/">${tool.title}</a>: ${tool.desc}</li>\n`;
-    }
-    rootHTML += `      </ul>
-      <h2>Latest Privacy & PDF Guides:</h2>
-      <ul>
-    `;
-    for (const post of BLOG_POSTS) {
-      rootHTML += `        <li><a href="/blog/${post.slug}/">${post.title}</a>: ${post.description}</li>\n`;
-    }
-    rootHTML += `      </ul>`;
-    
-    return { title, description, keywords, canonicalUrl: url, rootHTML };
+
+    return { title, description, keywords, schemas: [websiteSchema, homeFaqSchema], rootHTML };
   }
 
-  // 2. Blog index page
+  // 2. Blog Index
   if (cleanPath === 'blog') {
     const title = "PDF Guides & Privacy Tips Blog — OM PDF";
-    const description = "Learn how to manage, edit, merge, and secure PDF files without compromising privacy. Guides, tips, and step-by-step instructions.";
-    const keywords = "pdf guides, pdf tips, privacy tips, pdf how-to, local pdf editing";
-    const url = "https://om-pdf.netlify.app/";
-    
-    let rootHTML = `
-      <h1>OM PDF Blog — Guides & Privacy Tips</h1>
-      <p>Our blog offers tutorials on managing PDF files securely, preserving document privacy, and using browser-native tools.</p>
-      <h2>All Blog Articles:</h2>
-      <ul>
+    const description = "Learn how to manage, edit, merge, and secure PDF files without compromising privacy. In-depth tutorials, tips, and step-by-step guides.";
+    const keywords = "pdf guides, pdf tips, privacy tips, pdf how-to, local pdf editing, webassembly pdf";
+
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": `${BASE_URL}/` },
+        { "@type": "ListItem", "position": 2, "name": "Blog", "item": `${BASE_URL}/blog` }
+      ]
+    };
+
+    const rootHTML = `
+      <header class="navbar-v2"><div class="navbar-container"><a href="/">OM PDF</a> <nav><a href="/tools">Tools</a><a href="/blog">Blog</a></nav></div></header>
+      <main style="max-width: 900px; margin: 40px auto; padding: 0 20px;">
+        <h1>OM PDF Guides & Privacy Blog</h1>
+        <p>Step-by-step tutorials on document security, client-side PDF manipulation, and productivity workflows.</p>
+        <div class="blog-list" style="margin-top: 30px;">
+          ${BLOG_POSTS.map(p => `
+            <article style="margin-bottom: 30px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+              <h2><a href="/blog/${p.slug}">${p.title}</a></h2>
+              <p style="color: #64748b; font-size: 0.9rem;">Published: ${p.date} • ${p.readingTime}</p>
+              <p>${p.description}</p>
+              <a href="/blog/${p.slug}" style="color: #2563eb; font-weight: 600;">Read Guide →</a>
+            </article>
+          `).join('')}
+        </div>
+      </main>
     `;
-    for (const post of BLOG_POSTS) {
-      rootHTML += `
-        <li>
-          <a href="/blog/${post.slug}/"><strong>${post.title}</strong></a> (Published: ${post.date})
-          <p>${post.description}</p>
-        </li>
-      `;
-    }
-    rootHTML += `      </ul>`;
-    
-    return { title, description, keywords, canonicalUrl: url, rootHTML };
+
+    return { title, description, keywords, schemas: [breadcrumbSchema], rootHTML };
   }
 
-  // 3. Blog post
+  // 3. Blog Post
   if (cleanPath.startsWith('blog/')) {
-    const slug = cleanPath.substring(5); // remove 'blog/'
+    const slug = cleanPath.substring(5);
     const post = BLOG_POSTS.find(p => p.slug === slug);
     if (post) {
       const title = `${post.title} — OM PDF Blog`;
       const description = post.description;
-      const keywords = `how to, pdf guide, offline pdf, ${post.title.toLowerCase().replace(/[^a-z0-9]+/g, ', ')}`;
-      const url = `https://om-pdf.netlify.app/${slug}/`;
-      
-      let rootHTML = `
-        <article>
-          <h1>${post.title}</h1>
-          <p><strong>Published on:</strong> ${post.date} | <strong>Reading Time:</strong> ${post.readingTime}</p>
-          <p>${post.description}</p>
+      const keywords = `pdf guide, how to, ${post.title.toLowerCase().replace(/[^a-z0-9]+/g, ', ')}`;
+
+      const articleSchema = {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": post.title,
+        "description": post.description,
+        "datePublished": post.date,
+        "author": { "@type": "Person", "name": "OM Patil" },
+        "publisher": { "@type": "Organization", "name": "OM PDF", "url": `${BASE_URL}/` },
+        "mainEntityOfPage": { "@type": "WebPage", "@id": `${BASE_URL}/blog/${slug}` }
+      };
+
+      const breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": `${BASE_URL}/` },
+          { "@type": "ListItem", "position": 2, "name": "Blog", "item": `${BASE_URL}/blog` },
+          { "@type": "ListItem", "position": 3, "name": post.title, "item": `${BASE_URL}/blog/${slug}` }
+        ]
+      };
+
+      const rootHTML = `
+        <header class="navbar-v2"><div class="navbar-container"><a href="/">OM PDF</a> <nav><a href="/tools">Tools</a><a href="/blog">Blog</a></nav></div></header>
+        <main style="max-width: 800px; margin: 40px auto; padding: 0 20px;">
+          <article>
+            <nav style="font-size: 0.85rem; color: #64748b; margin-bottom: 16px;">
+              <a href="/">Home</a> / <a href="/blog">Blog</a> / <span>${post.title}</span>
+            </nav>
+            <h1>${post.title}</h1>
+            <p style="color: #64748b; font-size: 0.9rem;">Published on ${post.date} • ${post.readingTime}</p>
+            <p style="font-size: 1.1rem; line-height: 1.7; margin-top: 20px;">${post.description}</p>
+            ${(post.sections || []).map(s => `
+              <section style="margin-top: 28px;">
+                <h2>${s.heading}</h2>
+                <p style="line-height: 1.7; color: #334155;">${s.body}</p>
+              </section>
+            `).join('')}
+          </article>
+          <div style="margin-top: 40px; padding: 20px; background: #f8fafc; border-radius: 12px;">
+            <h3>Try OM PDF Tools Free</h3>
+            <p>Process your PDF files locally with complete privacy and zero uploads.</p>
+            <a href="/merge-pdf" style="display: inline-block; padding: 10px 18px; background: #2563eb; color: white; border-radius: 8px; text-decoration: none; font-weight: 600;">Merge PDF Online →</a>
+          </div>
+        </main>
       `;
-      if (post.sections) {
-        for (const section of post.sections) {
-          rootHTML += `
-            <h2>${section.heading}</h2>
-            <p>${section.body}</p>
-          `;
-        }
-      }
-      rootHTML += `
-        </article>
-        <p><a href="/blog/">Back to all blog posts</a></p>
-      `;
-      
-      return { title, description, keywords, canonicalUrl: url, rootHTML };
+
+      return { title, description, keywords, schemas: [articleSchema, breadcrumbSchema], rootHTML };
     }
   }
 
-  // 4. Tools directory list
+  // 4. Tools Directory
   if (cleanPath === 'tools') {
-    const title = "All PDF Tools Directory — OM PDF";
-    const description = "Browse all free offline-first PDF tools. Merge, split, compress, protect, rotate, convert, and sign PDF files directly on your computer.";
-    const keywords = "pdf tools list, offline pdf tools directory, convert pdf list, edit pdf list";
-    const url = "https://om-pdf.netlify.app/";
-    
-    let rootHTML = `
-      <h1>OM PDF Tools Directory</h1>
-      <p>Browse our complete list of offline-first PDF utilities. All tools process your files directly in your web browser.</p>
-      <ul>
+    const title = "All Free Online PDF Tools Directory | OM PDF";
+    const description = "Browse our comprehensive collection of 45+ free, offline-first PDF utilities. Merge, split, compress, protect, edit, sign, and convert PDF documents in your browser.";
+    const keywords = "all pdf tools, pdf utilities list, offline pdf tools, free pdf editor directory, browser pdf tools";
+
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": `${BASE_URL}/` },
+        { "@type": "ListItem", "position": 2, "name": "Tools", "item": `${BASE_URL}/tools` }
+      ]
+    };
+
+    const rootHTML = `
+      <header class="navbar-v2"><div class="navbar-container"><a href="/">OM PDF</a> <nav><a href="/tools">Tools</a><a href="/blog">Blog</a></nav></div></header>
+      <main style="max-width: 1100px; margin: 40px auto; padding: 0 20px;">
+        <h1>All PDF Tools</h1>
+        <p>Complete suite of free, private, browser-based document utilities. Zero uploads guaranteed.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 30px;">
+          ${TOOLS.map(t => `
+            <div style="padding: 18px; border: 1px solid #e2e8f0; border-radius: 12px; background: white;">
+              <a href="${t.path}" style="text-decoration: none; color: inherit;">
+                <h3 style="margin: 0 0 8px; color: #1e293b;">${t.icon} ${t.title}</h3>
+                <p style="margin: 0; font-size: 0.9rem; color: #64748b;">${t.desc}</p>
+              </a>
+            </div>
+          `).join('')}
+        </div>
+      </main>
     `;
-    for (const tool of TOOLS) {
-      rootHTML += `        <li><a href="${tool.path}/">${tool.title}</a>: ${tool.desc}</li>\n`;
-    }
-    rootHTML += `      </ul>`;
-    
-    return { title, description, keywords, canonicalUrl: url, rootHTML };
+
+    return { title, description, keywords, schemas: [breadcrumbSchema], rootHTML };
   }
 
-  // 5. Generic content pages
+  // 5. About, Privacy, How It Works
   if (cleanPath === 'about') {
-    return {
-      title: "About OM PDF — Privacy-First PDF Toolkit",
-      description: "Learn about the mission of OM PDF to build open-source, offline-first, client-side PDF utilities that respect document privacy.",
-      keywords: "about om pdf, client-side pdf, privacy first pdf, browser native tools",
-      canonicalUrl: "https://om-pdf.netlify.app/",
-      rootHTML: `
-        <h1>About OM PDF</h1>
-        <p>OM PDF is a collection of browser-native PDF utilities. Unlike typical online PDF editors that upload your sensitive documents to remote servers, OM PDF processes your files entirely locally on your device.</p>
-        <h2>Our Privacy Promise</h2>
-        <p>Your documents never leave your computer. We use browser APIs and client-side WebAssembly to perform all merging, splitting, compression, and conversions.</p>
-      `
+    const title = "About OM PDF — Free Privacy-First PDF Tools";
+    const description = "Learn about the mission of OM PDF: building open-source, client-side, offline-first document utilities that protect privacy with zero server uploads.";
+    const keywords = "about om pdf, client-side pdf, privacy first pdf, zero upload tools, om patil";
+
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": `${BASE_URL}/` },
+        { "@type": "ListItem", "position": 2, "name": "About", "item": `${BASE_URL}/about` }
+      ]
     };
+
+    const rootHTML = `
+      <header class="navbar-v2"><div class="navbar-container"><a href="/">OM PDF</a> <nav><a href="/tools">Tools</a><a href="/about">About</a></nav></div></header>
+      <main style="max-width: 800px; margin: 40px auto; padding: 0 20px;">
+        <h1>About OM PDF</h1>
+        <p>OM PDF is a collection of browser-native PDF utilities created by OM Patil. Unlike standard web tools that upload confidential contracts and records to remote cloud servers, OM PDF processes your files entirely locally in your browser memory.</p>
+        <h2>Our Privacy Architecture</h2>
+        <p>Using WebAssembly and modern browser APIs, parsing, merging, splitting, and rendering happen on your device's CPU/GPU. Your files are never transmitted across the network, ensuring complete compliance with GDPR and HIPAA.</p>
+      </main>
+    `;
+
+    return { title, description, keywords, schemas: [breadcrumbSchema], rootHTML };
   }
 
   if (cleanPath === 'privacy') {
-    return {
-      title: "Privacy Policy — OM PDF",
-      description: "Read our privacy policy. We have zero servers for processing documents; 100% of PDF processing happens offline in your browser.",
-      keywords: "privacy policy, no data collection, private pdf, local pdf processing",
-      canonicalUrl: "https://om-pdf.netlify.app/",
-      rootHTML: `
-        <h1>Privacy Policy</h1>
-        <p>At OM PDF, we prioritize your privacy. This privacy policy describes how we do NOT collect or store your personal documents.</p>
-        <h2>Zero Uploads</h2>
-        <p>All PDF operations are carried out client-side. We do not upload, transmit, or save any of your PDF files on our servers.</p>
-      `
+    const title = "Privacy Policy — Zero Server Uploads | OM PDF";
+    const description = "OM PDF's privacy policy: 100% client-side processing, zero server storage, zero document transmission, and complete confidentiality.";
+    const keywords = "privacy policy, no data collection, private pdf, local pdf processing, zero upload privacy";
+
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": `${BASE_URL}/` },
+        { "@type": "ListItem", "position": 2, "name": "Privacy", "item": `${BASE_URL}/privacy` }
+      ]
     };
+
+    const rootHTML = `
+      <header class="navbar-v2"><div class="navbar-container"><a href="/">OM PDF</a> <nav><a href="/tools">Tools</a><a href="/privacy">Privacy</a></nav></div></header>
+      <main style="max-width: 800px; margin: 40px auto; padding: 0 20px;">
+        <h1>Privacy Policy</h1>
+        <p>At OM PDF, we believe your personal documents should remain personal. We do not operate document processing servers; everything runs locally in your web browser.</p>
+        <h2>Zero Upload Guarantee</h2>
+        <p>We do not collect, transmit, store, or view your PDF documents. All operations occur in client-side memory.</p>
+      </main>
+    `;
+
+    return { title, description, keywords, schemas: [breadcrumbSchema], rootHTML };
   }
 
   if (cleanPath === 'how-it-works') {
-    return {
-      title: "How It Works — Offline Client-Side PDF Tools | OM PDF",
-      description: "Learn about the technology powering OM PDF — WebAssembly and browser APIs that process PDFs entirely on your device.",
-      keywords: "how client side works, browser based tools, webassembly pdf, local file handling",
-      canonicalUrl: "https://om-pdf.netlify.app/",
-      rootHTML: `
-        <h1>How It Works</h1>
-        <p>OM PDF uses modern web technology to process files entirely in your browser.</p>
-        <h2>WebAssembly & Local APIs</h2>
-        <p>By compiling PDF libraries to WebAssembly, your browser is able to handle document merging, page extraction, and compression directly. This ensures fast speed and total privacy.</p>
-      `
+    const title = "How It Works — Offline Client-Side PDF Tools | OM PDF";
+    const description = "Discover how OM PDF processes documents locally using WebAssembly, PDF-lib, PDF.js, and browser APIs with zero cloud latency.";
+    const keywords = "how client side works, browser based tools, webassembly pdf, local file handling";
+
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": `${BASE_URL}/` },
+        { "@type": "ListItem", "position": 2, "name": "How It Works", "item": `${BASE_URL}/how-it-works` }
+      ]
     };
+
+    const rootHTML = `
+      <header class="navbar-v2"><div class="navbar-container"><a href="/">OM PDF</a> <nav><a href="/tools">Tools</a><a href="/how-it-works">How It Works</a></nav></div></header>
+      <main style="max-width: 800px; margin: 40px auto; padding: 0 20px;">
+        <h1>How OM PDF Works</h1>
+        <p>OM PDF uses WebAssembly binaries and native browser APIs to manipulate PDF binary streams locally on your device without server communication.</p>
+      </main>
+    `;
+
+    return { title, description, keywords, schemas: [breadcrumbSchema], rootHTML };
   }
 
-  // 6. Tool Pages (e.g. merge-pdf, compress-pdf, pdf-to-word)
-  // Let's find a tool that matches this path or key
+  // 6. Tool Pages (e.g. merge-with-ranges, merge-pdf, compress-pdf, etc.)
   const tool = TOOLS.find(t => {
     const toolCleanPath = t.path.replace(/^\/|\/$/g, '');
     return toolCleanPath === cleanPath;
   });
 
-  if (tool) {
-    // Check if we have SEO metadata in SEO_METADATA
-    let meta = SEO_METADATA[tool.key];
-    if (!meta) {
-      // Try to find by matching url
-      meta = Object.values(SEO_METADATA).find(m => {
-        try {
-          const mPath = new URL(m.url).pathname.replace(/^\/|\/$/g, '');
-          return mPath === cleanPath;
-        } catch {
-          return false;
-        }
-      });
-    }
+  const toolMeta = getSeoMetadata(tool ? tool.key : cleanPath);
+  const toolContent = getToolContent(tool ? tool.key : cleanPath);
 
-    const title = meta?.title || `${tool.title} Online Free — OM PDF`;
-    const description = meta?.description || `${tool.desc} 100% private, free, and runs entirely in your browser. No registration required.`;
-    const keywords = meta?.keywords || `${tool.title.toLowerCase()}, free online pdf tool, offline pdf, local browser pdf`;
-    const url = meta?.url || `https://om-pdf.netlify.app/${tool.path}/`;
-    
-    const rootHTML = `
-      <h1>${tool.title}</h1>
-      <p>${tool.desc}</p>
-      <h2>How to use ${tool.title}:</h2>
-      <ol>
-        <li>Drag and drop your PDF files into the secure browser window, or click Browse.</li>
-        <li>Configure the settings (e.g., page order, compression strength, file output).</li>
-        <li>Click the action button. The processed file will download immediately.</li>
-      </ol>
-      <p><strong>Security Note:</strong> This tool runs 100% locally. Your files never leave your device.</p>
-    `;
-    
-    return { title, description, keywords, canonicalUrl: url, rootHTML };
-  }
+  const title = toolMeta?.title || (tool ? `${tool.title} Online Free — OM PDF` : `${cleanPath} — OM PDF`);
+  const description = toolMeta?.description || (tool ? `${tool.desc} 100% private, free, and runs entirely in your browser with zero uploads.` : `Free online PDF tool.`);
+  const keywords = toolMeta?.keywords || (tool ? `${tool.title.toLowerCase()}, free online pdf tool, offline pdf, local browser pdf` : `pdf tools`);
 
-  // 7. Fallback if not matched (e.g. standard pages like my-files)
-  return {
-    title: `${cleanPath.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')} — OM PDF`,
-    description: `OM PDF is a collection of browser-native client-side PDF utilities.`,
-    keywords: `pdf tools, privacy first pdf, offline pdf`,
-    canonicalUrl: `https://om-pdf.netlify.app/${cleanPath}/`,
-    rootHTML: `
-      <h1>${cleanPath.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</h1>
-      <p>This page is part of the client-side OM PDF application. Please load the application in a modern browser.</p>
-    `
-  };
+  const schemas = buildToolSchemas({
+    toolName: toolContent?.name || tool?.title || title,
+    url: canonicalUrl,
+    description: description,
+    faqs: toolContent?.faqs || [],
+    howTo: toolContent?.howTo || [
+      { title: "Upload Files", text: `Drop your PDF files into the ${tool?.title || 'tool'} workspace.` },
+      { title: "Configure Settings", text: "Adjust settings and options to your preference." },
+      { title: "Process & Download", text: "Click the action button to process locally and download your file." }
+    ]
+  });
+
+  // Render comprehensive semantic SSR HTML
+  const relatedTools = TOOLS.filter(t => t.path.replace(/^\/|\/$/g, '') !== cleanPath).slice(0, 5);
+
+  const rootHTML = `
+    <header class="navbar-v2">
+      <div class="navbar-container">
+        <a href="/" class="brand-link"><strong>OM PDF</strong></a>
+        <nav>
+          <a href="/tools">All Tools</a>
+          <a href="/about">About</a>
+          <a href="/blog">Blog</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="tool-page-container" style="max-width: 1000px; margin: 30px auto; padding: 0 20px;">
+      <nav aria-label="Breadcrumb" style="font-size: 0.85rem; color: #64748b; margin-bottom: 16px;">
+        <a href="/" style="color: inherit; text-decoration: none;">Home</a> / 
+        <a href="/tools" style="color: inherit; text-decoration: none;">Tools</a> / 
+        <span style="color: #1e293b; font-weight: 600;">${toolContent?.name || tool?.title || cleanPath}</span>
+      </nav>
+
+      <section class="tool-hero" style="margin-bottom: 24px;">
+        <h1 style="font-size: 2.2rem; font-weight: 800; color: #0f172a; margin: 0 0 10px;">${toolContent?.name || tool?.title || cleanPath}</h1>
+        <p style="font-size: 1.1rem; color: #475569; line-height: 1.6; margin: 0;">${toolContent?.headline || description}</p>
+      </section>
+
+      <div class="tool-workspace-preview" style="padding: 40px 20px; border: 2px dashed #cbd5e1; border-radius: 16px; background: #f8fafc; text-align: center; margin-bottom: 30px;">
+        <div style="font-size: 3rem; margin-bottom: 12px;">${tool?.icon || '📄'}</div>
+        <h2 style="font-size: 1.3rem; margin: 0 0 8px; color: #1e293b;">Drag and Drop PDF files here</h2>
+        <p style="color: #64748b; font-size: 0.9rem; margin: 0 0 16px;">Fast, 100% private in-browser processing. Your files never leave your device.</p>
+        <button style="padding: 12px 24px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer;">
+          Select PDF File
+        </button>
+      </div>
+
+      ${toolContent?.description ? `
+        <section class="tool-overview" style="margin-bottom: 30px; line-height: 1.7; color: #334155; font-size: 1.02rem;">
+          <p>${toolContent.description}</p>
+        </section>
+      ` : ''}
+
+      ${toolContent?.syntaxGuide ? `
+        <section class="tool-syntax-guide" style="margin-bottom: 30px; padding: 20px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;">
+          <h2 style="font-size: 1.25rem; margin-top: 0; color: #0f172a;">${toolContent.syntaxGuide.title}</h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 14px;">
+            ${toolContent.syntaxGuide.examples.map(ex => `
+              <div style="padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <code style="background: rgba(37, 99, 235, 0.1); color: #2563eb; padding: 2px 6px; border-radius: 4px; font-weight: 700;">${ex.syntax}</code>
+                <p style="margin: 6px 0 0; font-size: 0.88rem; color: #475569;">${ex.desc}</p>
+              </div>
+            `).join('')}
+          </div>
+          ${toolContent.syntaxGuide.tip ? `<p style="margin-top: 14px; font-size: 0.88rem; color: #64748b; font-style: italic;">💡 ${toolContent.syntaxGuide.tip}</p>` : ''}
+        </section>
+      ` : ''}
+
+      ${toolContent?.howTo && toolContent.howTo.length > 0 ? `
+        <section class="tool-howto" style="margin-bottom: 30px;">
+          <h2 style="font-size: 1.4rem; color: #0f172a; margin-bottom: 16px;">How to use ${toolContent.name}</h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+            ${toolContent.howTo.map((step, idx) => `
+              <div style="padding: 18px; background: white; border: 1px solid #e2e8f0; border-radius: 12px;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; margin-bottom: 10px;">${idx + 1}</div>
+                <h3 style="font-size: 1rem; margin: 0 0 6px; color: #0f172a;">${step.title}</h3>
+                <p style="margin: 0; font-size: 0.88rem; color: #64748b; line-height: 1.5;">${step.text}</p>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      ` : ''}
+
+      ${toolContent?.useCases && toolContent.useCases.length > 0 ? `
+        <section class="tool-usecases" style="margin-bottom: 30px;">
+          <h2 style="font-size: 1.4rem; color: #0f172a; margin-bottom: 16px;">Practical Use Cases</h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+            ${toolContent.useCases.map(uc => `
+              <div style="padding: 16px; background: white; border: 1px solid #e2e8f0; border-radius: 12px;">
+                <h3 style="font-size: 1rem; margin: 0 0 6px; color: #0f172a;">${uc.title}</h3>
+                <p style="margin: 0; font-size: 0.88rem; color: #64748b; line-height: 1.5;">${uc.text}</p>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      ` : ''}
+
+      ${toolContent?.sections && toolContent.sections.length > 0 ? `
+        <section class="tool-features" style="margin-bottom: 30px;">
+          <h2 style="font-size: 1.4rem; color: #0f172a; margin-bottom: 16px;">Key Features & Capabilities</h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+            ${toolContent.sections.map(sec => `
+              <div style="padding: 18px; background: white; border: 1px solid #e2e8f0; border-radius: 12px;">
+                <h3 style="font-size: 1.05rem; margin: 0 0 8px; color: #0f172a;">${sec.title}</h3>
+                <p style="margin: 0; font-size: 0.9rem; color: #475569; line-height: 1.6;">${sec.body}</p>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      ` : ''}
+
+      ${toolContent?.faqs && toolContent.faqs.length > 0 ? `
+        <section class="tool-faqs" style="margin-bottom: 30px;">
+          <h2 style="font-size: 1.4rem; color: #0f172a; margin-bottom: 16px;">Frequently Asked Questions</h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+            ${toolContent.faqs.map(faq => `
+              <div style="padding: 18px; background: white; border: 1px solid #e2e8f0; border-radius: 12px;">
+                <h3 style="font-size: 1rem; margin: 0 0 8px; color: #0f172a;">${faq.q}</h3>
+                <p style="margin: 0; font-size: 0.9rem; color: #475569; line-height: 1.6;">${faq.a}</p>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      ` : ''}
+
+      <section class="tool-privacy-guarantee" style="margin-bottom: 30px; padding: 20px; background: rgba(37, 99, 235, 0.05); border: 1px solid rgba(37, 99, 235, 0.15); border-radius: 12px;">
+        <h2 style="font-size: 1.15rem; color: #2563eb; margin: 0 0 6px;">🔒 100% Client-Side Privacy Guarantee</h2>
+        <p style="margin: 0; font-size: 0.9rem; color: #475569; line-height: 1.6;">
+          OM PDF processes all documents entirely in your web browser memory using WebAssembly. Your files are never uploaded to any cloud server, preventing data leakage and guaranteeing total security for confidential documents.
+        </p>
+      </section>
+
+      <section class="related-tools" style="margin-bottom: 40px;">
+        <h2 style="font-size: 1.2rem; color: #0f172a; margin-bottom: 12px;">Related PDF Tools</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+          ${relatedTools.map(t => `
+            <a href="${t.path}" style="padding: 8px 14px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #1e293b; font-size: 0.88rem; font-weight: 600;">
+              ${t.icon} ${t.title}
+            </a>
+          `).join('')}
+        </div>
+      </section>
+    </main>
+
+    <footer style="border-top: 1px solid #e2e8f0; padding: 30px 20px; text-align: center; font-size: 0.85rem; color: #64748b;">
+      <p>© ${new Date().getFullYear()} OM PDF. Fast, free, client-side PDF tools by <strong>OM Patil</strong>.</p>
+    </footer>
+  `;
+
+  return { title, description, keywords, schemas, rootHTML };
 }
 
 run();

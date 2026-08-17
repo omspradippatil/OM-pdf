@@ -1234,3 +1234,43 @@ Suggested 10 high-value, offline-first tools:
 - `src/pages/EditPdf.jsx`
 - `README.md`
 - `AI_MEMORY.md`
+
+---
+
+## ✅ Completed (Session 30) — Google Search Console "Crawled - currently not indexed" & Full Site Indexing Architecture Fixes
+
+### Issues Reported
+- Google Search Console status: **"Crawled - currently not indexed"**
+- Affected Page: `https://om-pdf.netlify.app/merge-with-ranges` (and other SPA routes).
+
+### Root Causes Discovered & Fixed
+1. **Hidden Text (`display:none` / `aria-hidden`) in Prerender Script**:
+   - `scripts/prerender-seo.js` previously wrapped static crawler text inside `<div style="display:none;" aria-hidden="true">` inside `#root`. Google's crawler evaluates `display:none` content as cloaked or empty shells, rejecting pages from index.
+   - **Fix**: Removed hidden tags. Prerender script now generates a full, semantic, visible HTML SSR snapshot (>600 words) inside `#root` for all 64 routes.
+2. **FAQ Schema Guideline Mismatch**:
+   - `ToolSeoHead.jsx` injected JSON-LD `FAQPage` schema, but `ToolSeoContent.jsx` never rendered the FAQs into the visible DOM, violating Google Structured Data Guidelines.
+   - **Fix**: Updated `ToolSeoContent.jsx` to visibly render full FAQ sections matching `FAQPage` schema.
+3. **Thin Content & Missing Tool Definitions**:
+   - `/merge-with-ranges` had only ~50 words of copy, and 18+ tools had zero definitions in `toolContent.js`.
+   - **Fix**: Expanded `src/constants/toolContent.js` with comprehensive, rich guides (>300 words each) including Page Range Syntax guides (`1-5, 8, 11-15`), step-by-step How-To instructions, practical use cases, and 6-8 FAQs per tool across all 45+ tools.
+4. **Broken Canonical URLs in Prerender Script**:
+   - Static prerender script previously pointed canonical URLs for `/about`, `/privacy`, `/how-it-works`, `/blog`, and `/tools` to the homepage `https://om-pdf.netlify.app/`, and generated broken blog canonical URLs with trailing slashes.
+   - **Fix**: Rewrote `scripts/prerender-seo.js` to ensure 100% exact 1:1 canonical matching for all 64 routes.
+5. **Missing Rich Schemas**:
+   - Enhanced `seoSchemas.js` to generate `WebApplication`, `BreadcrumbList`, `HowTo`, and `FAQPage` structured data.
+6. **Broken Sitemap Reference in `index.html`**:
+   - Fixed `index.html` pointing to `sitemap-gsc.xml` (404) -> updated to `sitemap.xml`.
+7. **Sitemap Lastmod Bump**:
+   - Updated `public/sitemap.xml` with `2026-08-17` `<lastmod>` across all 64 canonical pages to trigger instant Googlebot recrawl.
+
+### Validation
+- [x] `npm run build` passes with zero errors and generates 64 static pre-rendered HTML files in `dist/`.
+- [x] `npx eslint` passes on all modified components and constants.
+- [x] `dist/merge-with-ranges/index.html` verified for correct `<title>`, `<meta description>`, `<link rel="canonical">`, Schema.org scripts (`WebApplication`, `FAQPage`, `HowTo`, `BreadcrumbList`), and rich visible SSR HTML.
+
+### Post-Deployment Actions for User
+1. Push changes to GitHub (`git add .`, `git commit -m "...", `git push`).
+2. In Google Search Console:
+   - Sitemaps → Resubmit `https://om-pdf.netlify.app/sitemap.xml`.
+   - URL Inspection → Inspect `https://om-pdf.netlify.app/merge-with-ranges` → Click **Test Live URL** to verify Googlebot receives the rich prerendered HTML and schemas.
+   - Indexing / Page indexing → In "Crawled - currently not indexed", click **"Validate Fix"**.

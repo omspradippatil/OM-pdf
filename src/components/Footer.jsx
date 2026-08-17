@@ -1,6 +1,4 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
-import { TOOLS } from '../constants/tools';
 
 // Pure SVG Icon components to ensure 0-dependency build success
 const GitHubIcon = ({ size }) => (
@@ -12,13 +10,6 @@ const GitHubIcon = ({ size }) => (
 const LinkedInIcon = ({ size }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2zM4 2a2 2 0 1 1-2 2 2 2 0 0 1 2-2z" />
-  </svg>
-);
-
-const GlobeIcon = ({ size }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
   </svg>
 );
 
@@ -138,11 +129,18 @@ export default function Footer() {
           <div className="footer-v2-links">
             <h3 className="footer-v2-title">Popular Tools</h3>
             <div className="footer-tools-grid">
-              {TOOLS.slice(0, 8).map(tool => (
-                <Link key={tool.key} to={tool.path} className="footer-tool-link">
-                  {tool.title}
-                </Link>
-              ))}
+              <Link to="/merge-pdf" className="footer-tool-link">Merge PDF</Link>
+              <Link to="/merge-with-ranges" className="footer-tool-link" style={{ fontWeight: 600, color: 'var(--primary)' }}>Merge with Ranges</Link>
+              <Link to="/split-pdf" className="footer-tool-link">Split PDF</Link>
+              <Link to="/split-by-size" className="footer-tool-link">Split by Size</Link>
+              <Link to="/compress-pdf" className="footer-tool-link">Compress PDF</Link>
+              <Link to="/pdf-to-word" className="footer-tool-link">PDF to Word</Link>
+              <Link to="/pdf-to-jpg" className="footer-tool-link">PDF to JPG</Link>
+              <Link to="/page-numbers" className="footer-tool-link">Page Numbers</Link>
+              <Link to="/ocr-pdf" className="footer-tool-link">Offline OCR</Link>
+              <Link to="/draw-sign-pdf" className="footer-tool-link">Draw & Sign</Link>
+              <Link to="/protect-pdf" className="footer-tool-link">Protect PDF</Link>
+              <Link to="/tools" className="footer-tool-link" style={{ fontWeight: 700, color: 'var(--primary)' }}>All 45+ Tools →</Link>
             </div>
           </div>
 
