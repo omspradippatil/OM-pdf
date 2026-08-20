@@ -1274,3 +1274,42 @@ Suggested 10 high-value, offline-first tools:
    - Sitemaps → Resubmit `https://om-pdf.netlify.app/sitemap.xml`.
    - URL Inspection → Inspect `https://om-pdf.netlify.app/merge-with-ranges` → Click **Test Live URL** to verify Googlebot receives the rich prerendered HTML and schemas.
    - Indexing / Page indexing → In "Crawled - currently not indexed", click **"Validate Fix"**.
+
+---
+
+## ✅ Completed (Session 31) — AI Chat with PDF Intelligence & Reliability Overhaul
+
+### Problem Reported
+- AI chat was not working as intended / output was incomplete, inaccurate, or failing to generate desired responses.
+
+### Root Causes Fixed
+1. **Model Instability & High Memory Overhead**:
+   - Replaced heavy model with `Llama-3.2-1B-Instruct-q4f16_1-MLC` (~700MB, fast & low VRAM) and added model options for `Qwen2.5-1.5B` and `SmolLM2-1.7B`.
+2. **Text Extraction & Context Slicing Bug**:
+   - Previously only extracted up to 10 pages and sliced to 10k chars (ignoring most of the document).
+   - Now extracts all pages (up to 100 pages) and uses a smart TF-IDF/relevance RAG search to feed the most pertinent page sections and summary into the context window.
+3. **Turn Template Formatting**:
+   - Fixed chat history turn sequence (filtered out initial assistant greeting to prevent LLM prompt template corruption).
+4. **Markdown Rendering**:
+   - Integrated `marked` to render structured responses with bold highlights, bullet lists, code blocks, and tables.
+5. **Multi-Engine Support**:
+   - Added 3 flexible modes:
+     - 🔒 **Local WebGPU (100% Private)**
+     - ⚡ **Cloud API (Free Gemini 2.0/1.5 Flash, Groq Llama 3.3 70B, OpenAI GPT-4o-mini)**
+     - 🔍 **Instant Smart Search Extractor (Zero WebGPU fallback)**
+6. **1-Click Quick Action Chips**:
+   - Added quick prompt buttons (Summarize, 5 Key Takeaways, Dates & Deadlines, Numbers & Stats, 3 Study Q&As).
+7. **Copy & Text-to-Speech (Read Aloud)**:
+   - Added 1-click clipboard copy and speech synthesis read-aloud buttons.
+
+### Validation Performed
+- [x] `npm run build` compiles with zero errors.
+- [x] `npx eslint src/pages/ChatPdf.jsx` passes with 0 errors.
+- [x] CSP in `public/_headers` updated for AI endpoints (`api.openai.com`, `api.groq.com`, `openrouter.ai`).
+
+### Files Modified
+- `src/pages/ChatPdf.jsx`
+- `src/styles/ChatPdf.css`
+- `public/_headers`
+- `AI_MEMORY.md`
+
