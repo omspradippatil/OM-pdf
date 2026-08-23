@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
-import RecentFilesPanel from '../components/RecentFilesPanel';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +13,7 @@ import { logUserAction } from '../services/activityLog';
 import { pdfjsLib } from '../utils/pdfjs';
 import Tesseract from 'tesseract.js';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { dataUrlToBytes } from '../utils/dataUrl';
 
 
 async function renderPageToDataURL(page) {
@@ -66,7 +66,7 @@ async function runOcrOnPdf(file, language, onProgress) {
     
     // Add page to output PDF
     const outPage = outDoc.addPage([width / scale, height / scale]);
-    const imgBytes = await fetch(dataUrl).then(r => r.arrayBuffer());
+    const imgBytes = dataUrlToBytes(dataUrl);
     const img = await outDoc.embedPng(imgBytes);
     
     // Draw the image
@@ -77,7 +77,6 @@ async function runOcrOnPdf(file, language, onProgress) {
       const bbox = word.bbox;
       const x = bbox.x0 / scale;
       const y = (height - bbox.y1) / scale; // PDF y is bottom-up
-      const w = (bbox.x1 - bbox.x0) / scale;
       const h = (bbox.y1 - bbox.y0) / scale;
       const fontSize = h * 0.9;
       
@@ -86,7 +85,7 @@ async function runOcrOnPdf(file, language, onProgress) {
         outPage.drawText(word.text, {
           x, y, size: fontSize, font, color: rgb(0,0,0), opacity: 0
         });
-      } catch (e) {
+      } catch {
         // Ignore font errors for weird characters
       }
     });
@@ -153,7 +152,7 @@ export default function OcrPdf() {
       </div>
 
       <div className="alert alert-info" style={{ marginTop:12 }}>
-        <span>ℹ️ OCR processing runs entirely locally in your browser. It may take some time depending on document length and your device's speed.</span>
+        <span>ℹ️ OCR processing runs entirely locally in your browser. It may take some time depending on document length and your device&apos;s speed.</span>
       </div>
 
       {error && <div className="alert alert-error" style={{ marginTop:12 }}><span>❌ {error}</span></div>}
@@ -206,7 +205,7 @@ export default function OcrPdf() {
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '4rem', marginBottom: 16 }}>🤖</div>
               <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Ready for Text Recognition</h3>
-              <p style={{ color: 'var(--text-muted)' }}>Click "Start OCR" to begin. The engine will read the text and embed an invisible searchable layer.</p>
+              <p style={{ color: 'var(--text-muted)' }}>Click &quot;Start OCR&quot; to begin. The engine will read the text and embed an invisible searchable layer.</p>
             </div>
           </div>
         </div>

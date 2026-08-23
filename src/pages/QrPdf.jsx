@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import ToolPageLayout from '../components/ToolPageLayout';
 import ProgressBar from '../components/ProgressBar';
 import ToolSeoHead from '../components/ToolSeoHead';
@@ -11,6 +11,7 @@ import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
 import { useAuth } from '../context/AuthContext';
 import { useExport } from '../context/ExportContext';
+import { dataUrlToBytes } from '../utils/dataUrl';
 
 const DEFAULT_ITEMS = `https://om-pdf.netlify.app/merge-pdf
 https://om-pdf.netlify.app/split-pdf
@@ -83,7 +84,7 @@ export default function QrPdf() {
           margin: 1,
           errorCorrectionLevel: 'M'
         });
-        const qrBytes = await fetch(qrDataUrl).then(r => r.arrayBuffer());
+        const qrBytes = dataUrlToBytes(qrDataUrl);
         const qrImage = await pdfDoc.embedPng(qrBytes);
 
         // Grid indexing calculations

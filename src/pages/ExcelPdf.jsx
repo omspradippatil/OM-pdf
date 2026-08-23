@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
@@ -14,6 +14,7 @@ import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
 import { useAuth } from '../context/AuthContext';
 import { useExport } from '../context/ExportContext';
+import { dataUrlToBytes } from '../utils/dataUrl';
 
 
 export default function ExcelPdf() {
@@ -156,7 +157,6 @@ export default function ExcelPdf() {
       if (!iDoc) throw new Error('Cannot access preview document.');
 
       const body = iDoc.body;
-      const totalW = body.scrollWidth || 800;
       const totalH = body.scrollHeight || 1100;
 
       // standard A4 at 96 DPI is 794x1123
@@ -184,7 +184,7 @@ export default function ExcelPdf() {
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.9);
-        const imgBytes = await fetch(imgData).then(r => r.arrayBuffer());
+        const imgBytes = dataUrlToBytes(imgData);
         const img = await pdfDoc.embedJpg(imgBytes);
 
         const page = pdfDoc.addPage([pageW, pageH]);

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import ToolPageLayout from '../components/ToolPageLayout';
 import ProgressBar from '../components/ProgressBar';
 import ToolSeoHead from '../components/ToolSeoHead';
@@ -11,6 +11,7 @@ import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
 import { useAuth } from '../context/AuthContext';
 import { useExport } from '../context/ExportContext';
+import { dataUrlToBytes } from '../utils/dataUrl';
 
 const DEFAULT_MARKDOWN = `# My Markdown Document
 
@@ -204,7 +205,7 @@ export default function MarkdownPdf() {
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.92);
-        const imgBytes = await fetch(imgData).then(r => r.arrayBuffer());
+        const imgBytes = dataUrlToBytes(imgData);
         const img = await pdfDoc.embedJpg(imgBytes);
 
         const page = pdfDoc.addPage([pageW, pageH]);

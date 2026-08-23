@@ -1313,3 +1313,45 @@ Suggested 10 high-value, offline-first tools:
 - `public/_headers`
 - `AI_MEMORY.md`
 
+---
+
+## ✅ Completed (Session 32) — Fix "Signing failed: Load failed ()" & Universal Data URL Decoding
+
+### Problem Reported
+- User encountered error: `❌ Signing failed: Load failed ()` in Draw & Sign PDF.
+
+### Root Causes Discovered & Fixed
+1. **`fetch(dataUrl)` Network/CSP Failure**:
+   - `applySignature` called `await fetch(sigDataUrl).then(r => r.arrayBuffer())`. In Safari/WebKit and browsers with strict Content Security Policy, `fetch()` on `data:` URLs throws `TypeError: Load failed`.
+   - **Fix**: Created universal utility `src/utils/dataUrl.js` with `dataUrlToBytes()` that synchronously converts Data URLs to `Uint8Array` in memory without calling `fetch()`.
+   - Also updated `public/_headers` CSP to allow `data:` in `connect-src`.
+2. **Missing Real "Draw" Mode & Font Picker in Draw & Sign PDF**:
+   - `DrawSignPdf.jsx` previously lacked actual interactive drawing pad support.
+   - **Fix**: Added interactive drawing canvas pad with mouse, touch, and stylus pen events, fine/medium/bold line widths, color selection, font style picker (Elegant Cursive, Formal Script, Classic Serif, Handwritten), and image format normalization via `imageToPngDataUrl()`.
+3. **Sitewide `fetch(dataUrl)` Elimination**:
+   - Replaced fragile `fetch(dataUrl)` calls with `dataUrlToBytes()` across:
+     - `src/pages/DrawSignPdf.jsx`
+     - `src/pages/ExcelPdf.jsx`
+     - `src/pages/HtmlToPdf.jsx`
+     - `src/pages/MarkdownPdf.jsx`
+     - `src/pages/OcrPdf.jsx`
+     - `src/pages/QrPdf.jsx`
+
+### Validation Performed
+- [x] `npm run build` compiles with zero errors.
+- [x] `npx eslint` passes on all modified files with zero errors.
+- [x] In-memory conversion eliminates all `fetch('data:...')` network/CSP failures.
+
+### Files Modified / Created
+- `src/utils/dataUrl.js` (New)
+- `src/styles/DrawSignPdf.css` (New)
+- `src/pages/DrawSignPdf.jsx`
+- `src/pages/ExcelPdf.jsx`
+- `src/pages/HtmlToPdf.jsx`
+- `src/pages/MarkdownPdf.jsx`
+- `src/pages/OcrPdf.jsx`
+- `src/pages/QrPdf.jsx`
+- `public/_headers`
+- `AI_MEMORY.md`
+
+
