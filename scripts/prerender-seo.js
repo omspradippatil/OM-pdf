@@ -446,6 +446,100 @@ function getPageData({ cleanPath, canonicalUrl, SEO_METADATA, getSeoMetadata, TO
     return { title, description, keywords, schemas: [breadcrumbSchema], rootHTML };
   }
 
+  // Competitor Alternative Pages
+  if (cleanPath === 'ilovepdf-alternative' || cleanPath === 'smallpdf-alternative') {
+    const isIlove = cleanPath === 'ilovepdf-alternative';
+    const compName = isIlove ? 'iLovePDF' : 'Smallpdf';
+    const title = isIlove
+      ? "Best Free iLovePDF Alternative (100% Private, Zero Uploads) | OM PDF"
+      : "Best Free Smallpdf Alternative with No Limits & Zero Uploads | OM PDF";
+    const description = isIlove
+      ? "Looking for a private iLovePDF alternative? OM PDF processes all files 100% locally in your browser with no file size limits, zero uploads, and no sign-up."
+      : "Tired of Smallpdf daily limits and paywalls? Switch to OM PDF — the free, open, and 100% private browser-based PDF suite.";
+    const keywords = `${compName.toLowerCase()} alternative, free ${compName.toLowerCase()} alternative, offline pdf editor, private pdf tools, no upload pdf merger`;
+
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": `${BASE_URL}/` },
+        { "@type": "ListItem", "position": 2, "name": `${compName} Alternative`, "item": `${BASE_URL}/${cleanPath}` }
+      ]
+    };
+
+    const webAppSchema = {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": `OM PDF - ${compName} Alternative`,
+      "url": `${BASE_URL}/${cleanPath}`,
+      "description": description,
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "All",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    };
+
+    const faqSchema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": `Why is OM PDF a safer alternative to ${compName}?`,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": `Unlike ${compName}, which uploads your documents to remote cloud servers, OM PDF processes everything directly on your computer or mobile device in WebAssembly. Your files never touch a server.`
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does OM PDF have daily task limits?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. OM PDF provides unlimited free document tasks forever with zero paywalls or subscriptions."
+          }
+        }
+      ]
+    };
+
+    const rootHTML = `
+      <header class="navbar-v2"><div class="navbar-container"><a href="/">OM PDF</a> <nav><a href="/tools">Tools</a><a href="/blog">Blog</a></nav></div></header>
+      <main style="max-width: 960px; margin: 40px auto; padding: 0 20px; font-family: system-ui, sans-serif;">
+        <h1 style="font-size: 2.2rem; margin-bottom: 12px;">The 100% Private, Zero-Upload Alternative to ${compName}</h1>
+        <p style="font-size: 1.1rem; color: #475569; line-height: 1.6;">Process PDFs directly on your device without uploading confidential documents to remote cloud servers. Completely free, no task limits, and fully offline.</p>
+        
+        <section style="margin: 36px 0;">
+          <h2>Direct Feature Comparison: OM PDF vs ${compName}</h2>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 16px; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <thead>
+              <tr style="background: #f8fafc;">
+                <th style="padding: 12px; border: 1px solid #e2e8f0; text-align: left;">Feature</th>
+                <th style="padding: 12px; border: 1px solid #e2e8f0; text-align: left; color: #2563eb;">OM PDF (Local)</th>
+                <th style="padding: 12px; border: 1px solid #e2e8f0; text-align: left;">${compName} (Cloud)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="padding: 12px; border: 1px solid #e2e8f0;">Data Privacy</td><td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 700; color: #10b981;">100% In-Browser (Zero Upload)</td><td style="padding: 12px; border: 1px solid #e2e8f0; color: #ef4444;">Uploads to remote servers</td></tr>
+              <tr><td style="padding: 12px; border: 1px solid #e2e8f0;">Daily Usage Limits</td><td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 700; color: #10b981;">Unlimited Forever</td><td style="padding: 12px; border: 1px solid #e2e8f0; color: #ef4444;">Restricted / Paywalled</td></tr>
+              <tr><td style="padding: 12px; border: 1px solid #e2e8f0;">Offline Mode</td><td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: 700; color: #10b981;">Full PWA Offline Support</td><td style="padding: 12px; border: 1px solid #e2e8f0; color: #ef4444;">Requires constant internet</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section style="margin: 36px 0;">
+          <h2>Popular Free Tools</h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 14px;">
+            <a href="/merge-pdf" style="padding: 14px; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #1e293b;"><strong>📑 Merge PDF</strong><br/><small style="color: #64748b;">Combine multiple files</small></a>
+            <a href="/compress-pdf" style="padding: 14px; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #1e293b;"><strong>🗜️ Compress PDF</strong><br/><small style="color: #64748b;">Shrink file size</small></a>
+            <a href="/draw-sign-pdf" style="padding: 14px; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #1e293b;"><strong>✍️ E-Sign PDF</strong><br/><small style="color: #64748b;">Sign documents</small></a>
+            <a href="/chat-pdf" style="padding: 14px; border: 1px solid #e2e8f0; border-radius: 8px; text-decoration: none; color: #1e293b;"><strong>🤖 Chat with PDF</strong><br/><small style="color: #64748b;">Local AI Q&amp;A</small></a>
+          </div>
+        </section>
+      </main>
+    `;
+
+    return { title, description, keywords, schemas: [breadcrumbSchema, webAppSchema, faqSchema], rootHTML };
+  }
+
   // 6. Tool Pages (e.g. merge-with-ranges, merge-pdf, compress-pdf, etc.)
   const tool = TOOLS.find(t => {
     const toolCleanPath = t.path.replace(/^\/|\/$/g, '');

@@ -3,6 +3,7 @@ import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
+import ToolChaining from '../components/ToolChaining';
 import RecentFilesPanel from '../components/RecentFilesPanel';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
@@ -518,13 +519,16 @@ export default function DrawSignPdf() {
             <p className="ux-result-success-title">Signed Successfully!</p>
           </div>
           <div className="ux-result-body">
-            <button
-              className="ux-btn-primary"
-              onClick={() => triggerExport(lastBytes, lastName, 'application/pdf', 'Signed')}
-            >
-              ↓ Download Again
-            </button>
-            <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Signed" />
+            <div className="ux-result-actions" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button
+                className="ux-btn-primary"
+                onClick={() => triggerExport(lastBytes, lastName, 'application/pdf', 'Signed')}
+              >
+                ↓ Download Again
+              </button>
+              <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Signed" />
+            </div>
+            <ToolChaining lastBytes={lastBytes} lastName={lastName} currentTool="draw_sign" />
           </div>
         </div>
       )}

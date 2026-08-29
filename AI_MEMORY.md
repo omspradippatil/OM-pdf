@@ -1354,4 +1354,78 @@ Suggested 10 high-value, offline-first tools:
 - `public/_headers`
 - `AI_MEMORY.md`
 
+---
+
+## ✅ Completed (Session 33) — Platform-Wide Ultimate Skills Optimization
+
+### Enhancements Implemented
+1. **Performance & Core Web Vitals (FCP + LCP Boost)**:
+   - Eliminated render-blocking `@import` from `common.css`.
+   - Added DNS `preconnect` for Google Fonts, Google Static Fonts, and Google APIs directly into `index.html`.
+   - Guarded Sentry initialization with `VITE_SENTRY_DSN` in `src/main.jsx` to prevent dummy DSN network warnings.
+2. **Frontend UI Aesthetics & Tactile Feedback**:
+   - Upgraded Homepage hero illustration from floating emojis to a modern, multi-layered 3D SVG document visualizer with glassmorphic format chips (`Merge & Split`, `E-Sign & Draw`, `85% Compress`, `Local AI Chat`).
+   - Added active state scaling (`:active { transform: scale(0.98); }`) for crisp tactile button feedback.
+3. **UX Post-Export Tool Chaining (`ToolChaining.jsx`)**:
+   - Created universal 1-click continuation drawer after export (*"Next Steps: 🗜️ Compress, ✍️ Sign, 🔢 Page Numbers, 🔒 Protect, 🤖 Chat AI"*) passing in-memory byte buffers directly to subsequent tools via session recovery.
+4. **Strategic SEO: Competitor Alternative Acquisition Pages**:
+   - Built high-converting comparison landing pages:
+     - `/ilovepdf-alternative` (100% In-Browser Privacy, No 25MB caps, Unlimited tasks, Offline PWA).
+     - `/smallpdf-alternative` (No paywalls, No 2-task daily limits, Zero watermarks).
+   - Added routes in `App.jsx`, updated `sitemap.xml`, and registered full SSR pre-rendering with JSON-LD schemas in `scripts/prerender-seo.js`. Total indexed static pages expanded from 64 to 66.
+5. **AI Chat Polish (`ChatPdf.jsx`)**:
+   - Converted markdown `[Page X]` citations into interactive badges.
+   - Added explicit "Clear Stored Key" button and key privacy controls.
+
+### Validation Performed
+- [x] `npm run build` passed with zero errors, generating 66 fully pre-rendered static HTML routes with full JSON-LD schemas.
+- [x] `npx eslint` passed across all modified and new files with 0 errors.
+
+### Files Modified / Created
+- `src/components/ToolChaining.jsx` (New)
+- `src/styles/ToolChaining.css` (New)
+- `src/pages/CompetitorAlternative.jsx` (New)
+- `src/styles/CompetitorAlternative.css` (New)
+- `index.html`
+- `src/styles/common.css`
+- `src/main.jsx`
+- `src/pages/Home.jsx`
+- `src/styles/Home.css`
+- `src/pages/MergePDF.jsx`
+- `src/pages/DrawSignPdf.jsx`
+- `src/pages/ChatPdf.jsx`
+- `src/styles/ChatPdf.css`
+- `src/App.jsx`
+- `src/constants/seoMetadata.js`
+- `AI_MEMORY.md`
+
+---
+
+## ✅ Completed (Session 34) — Advanced AI Chatbot & RAG Optimization
+
+### Enhancements Implemented
+1. **Sublinear BM25 Hybrid Retrieval Engine**:
+   - Implemented sublinear term frequency scoring with document length normalization and exact phrase bonus (+30 score).
+   - Dynamic prioritization: For summary/overview queries, automatically synthesizes executive introduction (Pages 1–2), structural headers, and concluding pages.
+2. **Upgraded Cloud AI Endpoints**:
+   - Upgraded default Google Gemini endpoint to **Gemini 2.0 Flash (`gemini-2.0-flash`)** with automatic graceful fallback to `gemini-1.5-flash`.
+   - Added OpenRouter **DeepSeek R1 (`deepseek/deepseek-r1:free`)** and Groq **Llama 3.3 70B** options.
+3. **Interactive Citation Inspector & Modal**:
+   - Clicking any `📄 Page X` citation in the chat opens an inline source excerpt modal displaying the exact raw extracted text of Page X.
+4. **Chat Export & Control**:
+   - Added **📥 Export Chat** button: downloads full conversation as formatted Markdown (`[file]_chat_transcript.md`).
+   - Added **⏹️ Stop Generation** support via `AbortController` allowing users to halt responses in progress.
+   - Expanded quick prompt chips (Executive Summary, 5 Key Takeaways, Dates & Deadlines, Figures & Metrics, Action Items, 3 Study Q&As).
+
+### Validation Performed
+- [x] `npm run build` compiled in 3.89s with 66 pre-rendered routes.
+- [x] `npx eslint src/pages/ChatPdf.jsx` passed with 0 errors.
+
+### Files Modified
+- `src/pages/ChatPdf.jsx`
+- `src/styles/ChatPdf.css`
+- `AI_MEMORY.md`
+
+
+
 

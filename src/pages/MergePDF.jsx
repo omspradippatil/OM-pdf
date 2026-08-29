@@ -1,12 +1,11 @@
-import React, { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   addFiles, getFiles, clearFiles, removeFile,
-  subscribe, setPageCount, setThumbnail, setFileStatus, setFileProgress, formatBytes
+  subscribe, setPageCount, setThumbnail, setFileStatus, setFileProgress
 } from '../fileManager';
 import { mergePDFs, downloadPDF, getPageCount, timestampedFilename } from '../pdfMerger';
 import { generateThumbnail } from '../thumbnailGenerator';
 import { useAuth } from '../context/AuthContext';
-import { useExport } from '../context/ExportContext';
 import SaveToDriveButton from '../components/SaveToDriveButton';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
@@ -18,6 +17,7 @@ import FileList from '../components/FileList';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import RecentFilesPanel from '../components/RecentFilesPanel';
+import ToolChaining from '../components/ToolChaining';
 import CrashRecoveryBanner from '../components/CrashRecoveryBanner';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
@@ -33,8 +33,7 @@ export default function MergePDF() {
   const [warning, setWarning]   = useState('');
   const [success, setSuccess]   = useState('');
   const [filename, setFilename] = useState('');
-  const lastBytesRef = useRef(null);
-  const lastNameRef  = useRef('');
+  const [lastResult, setLastResult] = useState(null);
   const fileInputRef = useRef(null);
 
   const {
@@ -42,8 +41,7 @@ export default function MergePDF() {
     recovering,
     recoverFiles,
     discardRecovery,
-    saveFilesToCache,
-    clearCache
+    saveFilesToCache
   } = useCrashRecovery('merge_session');
 
   const handleFiles = useCallback(async (rawFiles) => {
@@ -78,7 +76,7 @@ export default function MergePDF() {
     });
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const unsub = subscribe(list => {
       setFiles([...list]);
       saveFilesToCache(list.map(f => f.file));
@@ -100,8 +98,7 @@ export default function MergePDF() {
     try {
       const name = timestampedFilename(filename.trim() || 'merged');
       const { bytes, warnings: w } = await mergePDFs(files, (p, lbl) => { setProgress(p); if (lbl) setProgLabel(lbl); });
-      lastBytesRef.current = bytes;
-      lastNameRef.current  = name;
+      setLastResult({ bytes, name });
       downloadPDF(bytes, name);
       if (w.length) setWarning(w.join(' | '));
       const pages = files.reduce((s, f) => s + (f.pages || 0), 0);
@@ -146,7 +143,7 @@ export default function MergePDF() {
       {merging  && <ProgressBar pct={progress} label={progLabel || 'Merging PDFs…'} />}
 
       {/* Success result */}
-      {success && (
+      {success && lastResult && (
         <div className="ux-result-card" style={{ marginTop:12 }}>
           <div className="ux-result-success-bar">
             <div className="ux-result-check">✓</div>
@@ -155,11 +152,12 @@ export default function MergePDF() {
           </div>
           <div className="ux-result-body">
             <div className="ux-result-actions">
-              <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => downloadPDF(lastBytesRef.current, lastNameRef.current)}>
+              <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => downloadPDF(lastResult.bytes, lastResult.name)}>
                 ↓ Download Again
               </button>
-              <SaveToDriveButton bytes={lastBytesRef.current} filename={lastNameRef.current} toolFolder="Merged" />
+              <SaveToDriveButton bytes={lastResult.bytes} filename={lastResult.name} toolFolder="Merged" />
             </div>
+            <ToolChaining lastBytes={lastResult.bytes} lastName={lastResult.name} currentTool="merge" />
           </div>
         </div>
       )}

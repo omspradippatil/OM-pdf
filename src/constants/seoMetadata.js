@@ -380,6 +380,20 @@ export const SEO_METADATA = {
     keywords: "edit pdf, free pdf editor, annotate pdf, draw on pdf, edit pdf online, pdf editor tool",
     url: "https://om-pdf.netlify.app/edit-pdf",
   },
+
+  ilovepdfAlternative: {
+    title: "Best Free iLovePDF Alternative (100% Private, Zero Uploads) | OM PDF",
+    description: "Looking for a private iLovePDF alternative? OM PDF processes all files 100% locally in your browser with no file size limits, zero uploads, and no sign-up.",
+    keywords: "ilovepdf alternative, free ilovepdf alternative, offline pdf editor, private pdf tools, no upload pdf merger",
+    url: "https://om-pdf.netlify.app/ilovepdf-alternative",
+  },
+
+  smallpdfAlternative: {
+    title: "Best Free Smallpdf Alternative with No Limits & Zero Uploads | OM PDF",
+    description: "Tired of Smallpdf daily limits and paywalls? Switch to OM PDF — the free, open, and 100% private browser-based PDF suite.",
+    keywords: "smallpdf alternative, free smallpdf alternative, unlimited pdf tools, private pdf tools, offline pdf editor",
+    url: "https://om-pdf.netlify.app/smallpdf-alternative",
+  },
 };
 
 /**

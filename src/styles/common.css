@@ -1,8 +1,17 @@
-/* ─── Google Fonts ─── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+/* ─── Google Fonts preconnected in index.html for zero render-blocking ─── */
 
 /* ─── Critical: prevent display:flex/grid from overriding [hidden] ─── */
 [hidden] { display: none !important; }
+
+/* ─── Tactile Feedback for Buttons & Interactive Elements ─── */
+.btn-primary:active,
+.btn-secondary:active,
+.ux-btn-primary:active,
+.ux-btn-secondary:active,
+.ux-action-btn:active,
+.tool-card:active {
+  transform: scale(0.98);
+}
 
 /* ─── Design Tokens ─── */
 :root {

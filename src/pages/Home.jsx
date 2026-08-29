@@ -1,5 +1,3 @@
-import React, { useRef } from 'react';
-import { useExport } from '../context/ExportContext';
 import SEO from '../components/SEO';
 import { Link } from 'react-router-dom';
 import PrivacyDashboard from '../components/PrivacyDashboard';
@@ -16,10 +14,6 @@ const FEATURES = [
   { icon: '✅', title: 'No Watermarks',     desc: 'Clean output files with no forced branding.' },
   { icon: '⚙️', title: 'All-in-One Suite',  desc: 'Merge, split, rotate, compress, and more in one place.' },
 ];
-
-const FloatIcon = ({ icon, style }) => (
-  <div className="float-icon" style={style} aria-hidden="true">{icon}</div>
-);
 
 export default function Home() {
   const { favorites, toggleFavorite } = useFavorites();
@@ -84,20 +78,43 @@ export default function Home() {
           </div>
 
           <div className="hero-right" aria-hidden="true">
-            <div className="hero-illustration">
-              <div className="hero-center-icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-                  <path d="M14 2H6C4.9 2 4 2.9 4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8L14 2z"
-                    stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M14 2v6h6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+            <div className="hero-doc-visual">
+              <div className="hero-doc-card hero-doc-back" />
+              <div className="hero-doc-card hero-doc-mid" />
+              <div className="hero-doc-card hero-doc-front">
+                <div className="doc-header">
+                  <div className="doc-dots">
+                    <span className="dot dot-red" />
+                    <span className="dot dot-yellow" />
+                    <span className="dot dot-green" />
+                  </div>
+                  <div className="doc-chip">PDF Engine</div>
+                </div>
+                <div className="doc-body">
+                  <div className="doc-line doc-line-title" />
+                  <div className="doc-line doc-line-long" />
+                  <div className="doc-line doc-line-med" />
+                  <div className="doc-line doc-line-short" />
+                </div>
+                <div className="doc-footer">
+                  <div className="doc-badge-pill">🔒 Zero Upload</div>
+                  <div className="doc-badge-pill pulse">⚡ WASM Fast</div>
+                </div>
               </div>
-              <FloatIcon icon="🔗" style={{ top: '8%',   left: '4%',  '--dur': '3.2s', animationDelay: '0s'   }} />
-              <FloatIcon icon="✂️" style={{ top: '18%',  right: '6%', '--dur': '2.8s', animationDelay: '0.6s' }} />
-              <FloatIcon icon="⚡" style={{ bottom:'18%',left: '8%',  '--dur': '3.5s', animationDelay: '1.0s' }} />
-              <FloatIcon icon="🔢" style={{ bottom:'8%', right: '4%', '--dur': '3.0s', animationDelay: '0.3s' }} />
-              <FloatIcon icon="🔄" style={{ top: '48%',  left: '0%',  '--dur': '2.6s', animationDelay: '1.4s' }} />
-              <FloatIcon icon="📄" style={{ top: '38%',  right: '1%', '--dur': '3.3s', animationDelay: '0.8s' }} />
+
+              {/* Floating Format Chips */}
+              <div className="format-tag tag-merge" style={{ top: '8%', left: '-8%' }}>
+                <span>📑</span> Merge &amp; Split
+              </div>
+              <div className="format-tag tag-sign" style={{ top: '22%', right: '-12%' }}>
+                <span>✍️</span> E-Sign &amp; Draw
+              </div>
+              <div className="format-tag tag-compress" style={{ bottom: '16%', left: '-12%' }}>
+                <span>🗜️</span> 85% Compress
+              </div>
+              <div className="format-tag tag-ai" style={{ bottom: '4%', right: '-6%' }}>
+                <span>🤖</span> Local AI Chat
+              </div>
             </div>
           </div>
         </div>
@@ -173,7 +190,7 @@ export default function Home() {
             <h3>100% Local Processing: No Uploads Required</h3>
             <p>Unlike traditional online PDF editors that force you to upload sensitive documents to remote cloud servers, OM PDF leverages advanced browser technologies like WebAssembly. This means every action — from rotating pages to lossless compression — happens locally on your device. Your files are never uploaded, ensuring absolute privacy and eliminating wait times.</p>
             <h3>Secure, Fast, and Free PDF Tools</h3>
-            <p>We believe essential document management should be accessible to everyone. That's why OM PDF offers premium features like drag-and-drop page reordering, offline Progressive Web App (PWA) support, and high-quality image extraction completely free of charge. No watermarks, no account registration, and no limits.</p>
+            <p>We believe essential document management should be accessible to everyone. That&apos;s why OM PDF offers premium features like drag-and-drop page reordering, offline Progressive Web App (PWA) support, and high-quality image extraction completely free of charge. No watermarks, no account registration, and no limits.</p>
           </article>
 
           <div className="faq-section">

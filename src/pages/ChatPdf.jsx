@@ -50,9 +50,11 @@ export default function ChatPdf() {
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState('');
   const [copyFeedback, setCopyFeedback] = useState(null);
+  const [activeExcerpt, setActiveExcerpt] = useState(null);
 
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const abortControllerRef = useRef(null);
 
   // Check WebGPU capability on mount
   useEffect(() => {
@@ -76,6 +78,30 @@ export default function ChatPdf() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
+  const formatMarkdown = (content) => {
+    if (!content) return '';
+    const rawHtml = marked.parse(content, { breaks: true, gfm: true });
+    // Transform [Page X] or [Pages X-Y] into interactive clickable citation badges
+    return rawHtml.replace(
+      /\[(?:Page|Pages)\s*(\d+(?:-\d+)?)\]/gi,
+      '<span class="chat-citation-badge" data-page="$1" title="Click to view Page $1 source excerpt">📄 Page $1</span>'
+    );
+  };
+
+  const handleChatContainerClick = (e) => {
+    const badge = e.target.closest('.chat-citation-badge');
+    if (badge && badge.dataset.page) {
+      const pageStr = badge.dataset.page.split('-')[0];
+      const pageNum = parseInt(pageStr, 10);
+      if (!isNaN(pageNum)) {
+        const found = pagesData.find(p => p.pageNum === pageNum);
+        if (found) {
+          setActiveExcerpt({ pageNum: found.pageNum, text: found.text });
+        }
+      }
+    }
+  };
+
   // 1. PDF Loading & Comprehensive Text Extraction
   const loadFile = async (raw) => {
     const f = Array.isArray(raw) ? raw[0] : (raw?.[0] || raw);
@@ -90,6 +116,7 @@ export default function ChatPdf() {
     setExtractProgress(0);
     setPagesData([]);
     setMessages([]);
+    setActiveExcerpt(null);
 
     try {
       const buf = await f.arrayBuffer();
@@ -174,50 +201,57 @@ export default function ChatPdf() {
     }
   };
 
-  // 3. Smart Document Context Search (RAG)
+  // 3. Smart Document Context Search (BM25 + Hybrid RAG)
   const buildContextForQuery = (query) => {
     if (!pagesData.length) return 'No document text available.';
 
     const fullDocText = pagesData.map(p => `[Page ${p.pageNum}]\n${p.text}`).join('\n\n');
 
-    // If document is short (<10,000 chars), provide entire document text
-    if (fullDocText.length <= 10000) {
-      return `DOCUMENT: ${file?.name || 'Document'} (${pdfStats.totalPages} pages)\n\nFULL TEXT:\n${fullDocText}`;
+    // If document is short (<12,000 chars), provide entire document text
+    if (fullDocText.length <= 12000) {
+      return `DOCUMENT: ${file?.name || 'Document'} (${pdfStats.totalPages} pages, ~${pdfStats.totalWords.toLocaleString()} words)\n\nFULL TEXT:\n${fullDocText}`;
     }
 
-    // Keyword & Relevance scoring for long documents
-    const queryTerms = query
-      .toLowerCase()
-      .replace(/[^\w\s]/g, ' ')
+    const queryClean = query.toLowerCase().replace(/[^\w\s]/g, ' ');
+    const queryTerms = queryClean
       .split(/\s+/)
-      .filter(t => t.length > 2 && !['the', 'and', 'for', 'that', 'this', 'with', 'from', 'what', 'when', 'where', 'which', 'explain', 'summarize', 'about'].includes(t));
+      .filter(t => t.length > 2 && !['the', 'and', 'for', 'that', 'this', 'with', 'from', 'what', 'when', 'where', 'which', 'explain', 'summarize', 'about', 'tell', 'give'].includes(t));
 
-    const isSummaryQuery = /summar|overview|key point|takeaway|about|explain/i.test(query);
+    const isSummaryQuery = /summar|overview|key point|takeaway|about|explain|intro|conclusion|finding|agenda/i.test(query);
 
     const scoredPages = pagesData.map(p => {
       const lowerText = p.text.toLowerCase();
       let score = 0;
 
+      // Executive Summary priority
       if (isSummaryQuery) {
-        // Prioritize first 2 pages and last page for summaries
-        if (p.pageNum <= 2) score += 10;
-        if (p.pageNum === pagesData.length) score += 8;
+        if (p.pageNum <= 2) score += 18;
+        if (p.pageNum >= pagesData.length - 1) score += 14;
       }
 
+      // Exact phrase match bonus
+      if (queryTerms.length > 1 && lowerText.includes(queryClean.trim())) {
+        score += 30;
+      }
+
+      // BM25 term frequency with length normalization
+      const pageWords = p.text.split(/\s+/).length || 1;
       for (const term of queryTerms) {
-        const matches = (lowerText.match(new RegExp(term, 'g')) || []).length;
-        score += matches * 2;
+        const matches = (lowerText.match(new RegExp(`\\b${term}`, 'g')) || []).length;
+        if (matches > 0) {
+          const tf = (matches * 2.2) / (matches + 1.2 * (0.25 + 0.75 * (pageWords / 300)));
+          score += tf * 5;
+        }
       }
 
       return { ...p, score };
     });
 
     scoredPages.sort((a, b) => b.score - a.score);
-    const topPages = scoredPages.slice(0, 5).sort((a, b) => a.pageNum - b.pageNum);
+    const topPages = scoredPages.slice(0, 6).sort((a, b) => a.pageNum - b.pageNum);
+    const relevantSections = topPages.map(p => `=== PAGE ${p.pageNum} ===\n${p.text}`).join('\n\n');
 
-    const relevantSections = topPages.map(p => `--- PAGE ${p.pageNum} ---\n${p.text}`).join('\n\n');
-
-    return `DOCUMENT: ${file?.name || 'Document'} (${pdfStats.totalPages} pages total, ~${pdfStats.totalWords} words)\n\nRELEVANT EXCERPTS:\n${relevantSections}`;
+    return `DOCUMENT: ${file?.name || 'Document'} (${pdfStats.totalPages} pages total, ~${pdfStats.totalWords.toLocaleString()} words)\n\nRELEVANT EXCERPTS:\n${relevantSections}`;
   };
 
   // 4. Handle Sending User Messages
@@ -231,6 +265,8 @@ export default function ChatPdf() {
 
     const newMessages = [...messages, { role: 'user', content: textToSend }];
     setMessages(newMessages);
+
+    abortControllerRef.current = new AbortController();
 
     try {
       const context = buildContextForQuery(textToSend);
@@ -281,7 +317,7 @@ ${context}`;
           });
         }
       }
-      // Mode 2: Cloud API (Gemini / OpenAI / Groq)
+      // Mode 2: Cloud API (Gemini / OpenAI / Groq / OpenRouter)
       else if (engineType === 'cloud') {
         if (!apiKey.trim()) {
           throw new Error(`Please enter your ${cloudProvider.toUpperCase()} API key in the sidebar.`);
@@ -292,20 +328,28 @@ ${context}`;
         let replyText = '';
 
         if (cloudProvider === 'gemini') {
-          // Google Gemini 2.0 / 1.5 Flash API
-          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`, {
+          // Try Gemini 2.0 Flash first, fallback to 1.5 Flash
+          let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey.trim()}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contents: [
-                {
-                  role: 'user',
-                  parts: [{ text: `${systemPrompt}\n\nUSER QUESTION: ${textToSend}` }]
-                }
-              ],
+              contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n\nUSER QUESTION: ${textToSend}` }] }],
               generationConfig: { temperature: 0.3 }
-            })
+            }),
+            signal: abortControllerRef.current.signal
           });
+
+          if (!res.ok) {
+            res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ role: 'user', parts: [{ text: `${systemPrompt}\n\nUSER QUESTION: ${textToSend}` }] }],
+                generationConfig: { temperature: 0.3 }
+              }),
+              signal: abortControllerRef.current.signal
+            });
+          }
 
           if (!res.ok) {
             const errJson = await res.json().catch(() => ({}));
@@ -325,7 +369,7 @@ ${context}`;
           const modelName = cloudProvider === 'groq'
             ? 'llama-3.3-70b-versatile'
             : cloudProvider === 'openrouter'
-            ? 'meta-llama/llama-3.2-3b-instruct:free'
+            ? 'deepseek/deepseek-r1:free'
             : 'gpt-4o-mini';
 
           const res = await fetch(endpoint, {
@@ -341,7 +385,8 @@ ${context}`;
                 { role: 'user', content: textToSend }
               ],
               temperature: 0.3,
-            })
+            }),
+            signal: abortControllerRef.current.signal
           });
 
           if (!res.ok) {
@@ -374,13 +419,28 @@ ${context}`;
 
       await logUserAction(user, 'chat_pdf_query', { engine: engineType });
     } catch (err) {
-      setMessages(prev => [
-        ...prev,
-        { role: 'assistant', content: `❌ **Error:** ${err.message}\n\n*Tip: You can switch to Cloud API in the sidebar or use the Smart Extractor.*` }
-      ]);
+      if (err.name === 'AbortError') {
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: `⏹️ *Generation stopped by user.*` }
+        ]);
+      } else {
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: `❌ **Error:** ${err.message}\n\n*Tip: You can switch to Cloud API in the sidebar or use the Smart Extractor.*` }
+        ]);
+      }
     } finally {
       setIsTyping(false);
+      abortControllerRef.current = null;
     }
+  };
+
+  const handleStop = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    setIsTyping(false);
   };
 
   // Instant Client-Side Semantic/Keyword Extractor Fallback
@@ -398,7 +458,7 @@ ${context}`;
       pages.forEach(p => {
         const matches = p.text.match(dateRegex);
         if (matches) {
-          matches.forEach(m => foundDates.push(`- **${m}** (Found on Page ${p.pageNum})`));
+          matches.forEach(m => foundDates.push(`- **${m}** (Found on [Page ${p.pageNum}])`));
         }
       });
 
@@ -413,7 +473,7 @@ ${context}`;
       pages.forEach(p => {
         const matches = p.text.match(numRegex);
         if (matches) {
-          matches.forEach(m => foundNumbers.push(`- **${m}** (Page ${p.pageNum})`));
+          matches.forEach(m => foundNumbers.push(`- **${m}** ([Page ${p.pageNum}])`));
         }
       });
 
@@ -441,38 +501,54 @@ ${context}`;
     return `I searched all ${stats.totalPages} pages, but could not find a direct match for "${query}". Try searching for specific keywords or switch to WebGPU AI in the sidebar.`;
   };
 
-  // Helper to copy markdown or text
-  const copyMessage = (text, index) => {
+  const copyMessage = (text, idx) => {
     navigator.clipboard.writeText(text);
-    setCopyFeedback(index);
+    setCopyFeedback(idx);
     setTimeout(() => setCopyFeedback(null), 2000);
   };
 
-  // Helper for text-to-speech read aloud
   const speakMessage = (text) => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const cleanText = text.replace(/[#*`_>[\]]/g, '');
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    window.speechSynthesis.speak(utterance);
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const cleanText = text.replace(/[*#_`>]/g, '');
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      window.speechSynthesis.speak(utterance);
+    }
   };
 
-  // Sidebar Configuration & Status Content
+  const exportChatTranscript = () => {
+    if (!messages.length) return;
+    let transcript = `# AI Chat Transcript: ${file?.name || 'Document'}\n`;
+    transcript += `*Exported from OM PDF (100% Private Document AI) on ${new Date().toLocaleString()}*\n\n---\n\n`;
+    messages.forEach(msg => {
+      const roleName = msg.role === 'user' ? '👤 **You**' : '🤖 **OM PDF AI**';
+      transcript += `### ${roleName}\n\n${msg.content}\n\n---\n\n`;
+    });
+
+    const blob = new Blob([transcript], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(file?.name || 'document').replace(/\.pdf$/i, '')}_chat_transcript.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  /* ── Sidebar Controls ── */
   const sidebarContent = (
     <>
       <p className="ux-section-label">AI Engine Mode</p>
 
+      {/* Mode Selector Tabs */}
       <div className="chat-engine-tabs">
         <button
           className={`chat-engine-tab ${engineType === 'local' ? 'active' : ''}`}
           onClick={() => {
             setEngineType('local');
-            if (file && !localEngineReady && !loadingLocalAI) {
-              initLocalEngine(selectedLocalModel);
-            }
+            if (file && webgpuSupported) initLocalEngine(selectedLocalModel);
           }}
         >
-          🔒 Local WebGPU
+          🔒 Local GPU
         </button>
         <button
           className={`chat-engine-tab ${engineType === 'cloud' ? 'active' : ''}`}
@@ -484,17 +560,17 @@ ${context}`;
           className={`chat-engine-tab ${engineType === 'extractor' ? 'active' : ''}`}
           onClick={() => setEngineType('extractor')}
         >
-          🔍 Smart Search
+          🔍 Extractor
         </button>
       </div>
 
-      {/* Local WebGPU Mode Details */}
+      {/* Local WebGPU Mode */}
       {engineType === 'local' && (
         <div className="chat-model-card">
           <div className="chat-model-title">
             <span>Model:</span>
-            <span style={{ color: localEngineReady ? '#10b981' : '#f59e0b', fontSize: '0.82rem' }}>
-              {localEngineReady ? '🟢 Ready' : loadingLocalAI ? '⏳ Loading' : '⚪ Standby'}
+            <span style={{ fontSize: '0.75rem', color: localEngineReady ? '#10b981' : 'var(--text-muted)' }}>
+              {localEngineReady ? '✓ Loaded' : 'Not Loaded'}
             </span>
           </div>
 
@@ -546,22 +622,37 @@ ${context}`;
             onChange={(e) => setCloudProvider(e.target.value)}
             style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text-primary)', fontSize: '0.85rem', marginBottom: 10 }}
           >
-            <option value="gemini">Google Gemini (Free & Recommended)</option>
+            <option value="gemini">Google Gemini 2.0 Flash (Free & Fast)</option>
             <option value="groq">Groq (Ultra-Fast Llama 3.3 70B)</option>
+            <option value="openrouter">OpenRouter (DeepSeek R1 / Free)</option>
             <option value="openai">OpenAI (GPT-4o-mini)</option>
-            <option value="openrouter">OpenRouter (Free / Multi-Model)</option>
           </select>
 
           <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: 6 }}>
             {cloudProvider === 'gemini' ? 'Gemini API Key:' : `${cloudProvider.toUpperCase()} API Key:`}
           </label>
-          <input
-            type="password"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="Paste your API key here..."
-            style={{ width: '100%', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text-primary)', fontSize: '0.85rem', boxSizing: 'border-box' }}
-          />
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Paste your API key here..."
+              style={{ flex: 1, padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text-primary)', fontSize: '0.85rem', boxSizing: 'border-box' }}
+            />
+            {apiKey && (
+              <button
+                type="button"
+                className="ux-btn-secondary"
+                style={{ padding: '6px 10px', fontSize: '0.78rem', whiteSpace: 'nowrap' }}
+                onClick={() => {
+                  setApiKey('');
+                  localStorage.removeItem('om_pdf_ai_key');
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
 
           <p style={{ margin: '8px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             🔑 Keys are stored strictly in your local browser storage. Get a free Gemini key at <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>aistudio.google.com</a>.
@@ -573,8 +664,8 @@ ${context}`;
       {engineType === 'extractor' && (
         <div className="chat-model-card">
           <div className="chat-model-title">
-            <span>Instant Search & Summary:</span>
-            <span style={{ color: '#10b981', fontSize: '0.82rem' }}>🟢 Active</span>
+            <span>Mode:</span>
+            <span style={{ fontSize: '0.75rem', color: '#10b981' }}>✓ Always Ready</span>
           </div>
           <p style={{ margin: '6px 0 0', fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
             Instant client-side keyword and semantic search across all pages with zero model download and zero setup.
@@ -642,17 +733,25 @@ ${context}`;
                 </p>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <button
                 className="ux-btn-secondary"
-                style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                style={{ padding: '6px 10px', fontSize: '0.78rem' }}
+                onClick={exportChatTranscript}
+                title="Download conversation transcript as Markdown"
+              >
+                📥 Export Chat
+              </button>
+              <button
+                className="ux-btn-secondary"
+                style={{ padding: '6px 10px', fontSize: '0.78rem' }}
                 onClick={() => setMessages([messages[0]])}
               >
                 Clear Chat
               </button>
               <button
                 className="ux-btn-secondary"
-                style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                style={{ padding: '6px 10px', fontSize: '0.78rem' }}
                 onClick={() => fileInputRef.current?.click()}
               >
                 Change PDF
@@ -663,27 +762,30 @@ ${context}`;
           {/* Quick Prompt Action Chips */}
           <div className="chat-prompt-chips">
             <button className="chat-prompt-chip" onClick={() => handleSend("Summarize this document in detail with an executive summary and main findings.")}>
-              📝 Summarize Document
+              📝 Executive Summary
             </button>
             <button className="chat-prompt-chip" onClick={() => handleSend("What are the top 5 key takeaways and conclusions from this PDF?")}>
               🎯 5 Key Takeaways
             </button>
             <button className="chat-prompt-chip" onClick={() => handleSend("Extract all important dates, deadlines, and timeline events mentioned in this document.")}>
-              📅 Dates & Deadlines
+              📅 Dates &amp; Deadlines
             </button>
             <button className="chat-prompt-chip" onClick={() => handleSend("List all key financial numbers, metrics, statistics, and figures with their context.")}>
-              📊 Numbers & Stats
+              📊 Figures &amp; Metrics
+            </button>
+            <button className="chat-prompt-chip" onClick={() => handleSend("Extract all actionable to-dos, obligations, or next steps from this document.")}>
+              📋 Action Items
             </button>
             <button className="chat-prompt-chip" onClick={() => handleSend("Generate 3 critical study questions and answers based on this text.")}>
-              ❓ 3 Study Q&As
+              ❓ 3 Study Q&amp;As
             </button>
           </div>
 
           {/* Messages Area */}
-          <div className="chat-messages-area">
+          <div className="chat-messages-area" onClick={handleChatContainerClick}>
             {extracting && (
               <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
-                <p style={{ margin: '0 0 10px', fontWeight: 600 }}>Extracting pages & building index ({extractProgress}%)...</p>
+                <p style={{ margin: '0 0 10px', fontWeight: 600 }}>Extracting pages &amp; building index ({extractProgress}%)...</p>
                 <div className="chat-progress-bar" style={{ maxWidth: 300, margin: '0 auto' }}>
                   <div className="chat-progress-fill" style={{ width: `${extractProgress}%` }} />
                 </div>
@@ -699,7 +801,7 @@ ${context}`;
                   <div
                     className="chat-markdown"
                     dangerouslySetInnerHTML={{
-                      __html: marked.parse(msg.content || '', { breaks: true, gfm: true })
+                      __html: formatMarkdown(msg.content || '')
                     }}
                   />
                   {msg.role === 'assistant' && msg.content && (
@@ -719,14 +821,43 @@ ${context}`;
             {isTyping && (
               <div className="chat-msg-wrapper assistant">
                 <div className="chat-avatar assistant">🤖</div>
-                <div className="chat-bubble assistant" style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>
-                  Analyzing document and generating response...
+                <div className="chat-bubble assistant" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>
+                    Analyzing document and generating response...
+                  </span>
+                  <button
+                    className="ux-btn-secondary"
+                    style={{ padding: '3px 8px', fontSize: '0.72rem', color: '#ef4444' }}
+                    onClick={handleStop}
+                  >
+                    ⏹️ Stop
+                  </button>
                 </div>
               </div>
             )}
 
             <div ref={messagesEndRef} />
           </div>
+
+          {/* Source Excerpt Modal */}
+          {activeExcerpt && (
+            <div className="chat-excerpt-modal-overlay" onClick={() => setActiveExcerpt(null)}>
+              <div className="chat-excerpt-modal" onClick={e => e.stopPropagation()}>
+                <div className="chat-excerpt-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: '1.2rem' }}>📄</span>
+                    <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)' }}>Source Excerpt: Page {activeExcerpt.pageNum}</h3>
+                  </div>
+                  <button className="ux-btn-secondary" style={{ padding: '4px 8px', fontSize: '0.8rem' }} onClick={() => setActiveExcerpt(null)}>✕ Close</button>
+                </div>
+                <div className="chat-excerpt-body">
+                  <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                    {activeExcerpt.text}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Bottom Chat Input Bar */}
           <div className="chat-input-container">
@@ -745,14 +876,26 @@ ${context}`;
                 placeholder="Ask anything about this PDF (e.g., 'What is the main conclusion on page 4?')..."
                 disabled={isTyping}
               />
-              <button
-                type="submit"
-                className="chat-send-btn"
-                disabled={!input.trim() || isTyping}
-              >
-                <span>Send</span>
-                <span>→</span>
-              </button>
+              {isTyping ? (
+                <button
+                  type="button"
+                  className="chat-send-btn"
+                  style={{ background: '#ef4444' }}
+                  onClick={handleStop}
+                >
+                  <span>Stop</span>
+                  <span>⏹️</span>
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  className="chat-send-btn"
+                  disabled={!input.trim()}
+                >
+                  <span>Send</span>
+                  <span>→</span>
+                </button>
+              )}
             </form>
           </div>
         </div>

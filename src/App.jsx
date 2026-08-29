@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import { Suspense, lazy } from 'react';
 import * as Sentry from "@sentry/react";
 import { BrowserRouter, Routes, Route, useLocation, Outlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -77,6 +77,7 @@ const SplitBySizePdf = lazy(() => import('./pages/SplitBySizePdf'));
 const FormBuilderPdf = lazy(() => import('./pages/FormBuilderPdf'));
 const PdfToWord = lazy(() => import('./pages/PdfToWord'));
 const PipelinePdf = lazy(() => import('./pages/PipelinePdf'));
+const CompetitorAlternative = lazy(() => import('./pages/CompetitorAlternative'));
 
 function AnimatedLayout() {
   const location = useLocation();
@@ -186,6 +187,8 @@ function AppContent() {
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/feedback" element={<Feedback />} />
+            <Route path="/ilovepdf-alternative" element={<CompetitorAlternative competitor="ilovepdf" />} />
+            <Route path="/smallpdf-alternative" element={<CompetitorAlternative competitor="smallpdf" />} />
             {variantRoutes.map((route) => (
               <Route
                 key={route.path}
