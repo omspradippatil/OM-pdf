@@ -112,6 +112,7 @@ async function run() {
 
     const headInjections = `
   <link rel="canonical" href="${canonicalUrl}" />
+  <link rel="alternate" type="application/rss+xml" title="OM PDF RSS Feed" href="https://om-pdf.netlify.app/feed.xml" />
   <meta property="og:title" content="${escapeHtml(title)}" />
   <meta property="og:description" content="${escapeHtml(description)}" />
   <meta property="og:url" content="${canonicalUrl}" />

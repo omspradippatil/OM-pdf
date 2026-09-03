@@ -1,16 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { runPdfWorkerTask } from '../workers/workerClient';
-import { PDFDocument } from 'pdf-lib';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
+import ToolChaining from '../components/ToolChaining';
 import RecentFilesPanel from '../components/RecentFilesPanel';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
 import '../styles/ImageToPDF.css';
 import { useAuth } from '../context/AuthContext';
-import { useExport } from '../context/ExportContext';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
@@ -160,6 +159,7 @@ export default function ImageToPDF() {
               }}>↓ Download</button>
               <SaveToDriveButton bytes={lastBytes} filename={lastName} toolFolder="Images" />
             </div>
+            <ToolChaining lastBytes={lastBytes} lastName={lastName} currentTool="image_to_pdf" />
           </div>
         </div>
       )}
@@ -188,7 +188,8 @@ export default function ImageToPDF() {
     </button>
   );
 
-  const fileInputRef = React.useRef(null);
+  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
 
   return (
     <ToolPageLayout
@@ -202,9 +203,22 @@ export default function ImageToPDF() {
       <ToolSeoHead toolKey="imageToPdf" />
 
       <input type="file" ref={fileInputRef} style={{ display:'none' }} accept="image/*" multiple onChange={e => addImages(e.target.files)} />
+      <input type="file" ref={cameraInputRef} style={{ display:'none' }} accept="image/*" capture="environment" onChange={e => addImages(e.target.files)} />
 
       {!images.length ? (
-        <DropZone onFiles={addImages} multiple accept="image/*" label="Drop images to convert" hint="JPG, PNG, WebP · Max 20 files" filter={f => f.type.startsWith('image/')} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <DropZone onFiles={addImages} multiple accept="image/*" label="Drop images to convert" hint="JPG, PNG, WebP · Max 20 files" filter={f => f.type.startsWith('image/')} />
+          <div style={{ textAlign: 'center' }}>
+            <button
+              type="button"
+              className="ux-btn-secondary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', borderRadius: 10, fontSize: '0.9rem', fontWeight: 600 }}
+              onClick={() => cameraInputRef.current?.click()}
+            >
+              📷 Scan with Mobile Camera
+            </button>
+          </div>
+        </div>
       ) : (
         <div className="ux-workspace-content">
           <div className="ux-toolbar-inline">
@@ -212,12 +226,15 @@ export default function ImageToPDF() {
               <h2 style={{ margin:0, fontSize:'1.3rem', fontWeight:800 }}>Workspace</h2>
               <p style={{ margin:'4px 0 0', fontSize:'0.8rem', color:'var(--text-muted)' }}>Drag to reorder images. Click × to remove.</p>
             </div>
-            <div style={{ display:'flex', gap:8 }}>
-              <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px', display:'flex', alignItems:'center', gap:6 }} onClick={() => fileInputRef.current?.click()}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>
-                Add More
+            <div style={{ display:'flex', gap:8, flexWrap: 'wrap' }}>
+              <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 14px', display:'flex', alignItems:'center', gap:6 }} onClick={() => cameraInputRef.current?.click()}>
+                📷 Scan Camera
               </button>
-              <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 16px' }} onClick={() => setImages([])}>
+              <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 14px', display:'flex', alignItems:'center', gap:6 }} onClick={() => fileInputRef.current?.click()}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/></svg>
+                Add Files
+              </button>
+              <button className="ux-btn-secondary" style={{ borderRadius:'10px', padding:'8px 14px' }} onClick={() => setImages([])}>
                 Clear All
               </button>
             </div>

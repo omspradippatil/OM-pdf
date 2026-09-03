@@ -1,14 +1,13 @@
-import React, { useState, useRef } from 'react';
+import { useState } from 'react';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
+import ToolChaining from '../components/ToolChaining';
 import { addPageNumbers, getPdfPageCount } from '../pageNumbers';
 import PdfCanvas from '../components/PdfCanvas';
-import { downloadBytes } from '../splitPdf';
 import { formatBytes } from '../fileManager';
 import { useAuth } from '../context/AuthContext';
-import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
@@ -26,6 +25,16 @@ const POSITIONS = [
   { value:'top-left',      label:'Top Left'      },
 ];
 
+const downloadFile = (bytes, name) => {
+  const blob = new Blob([bytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
 export default function PageNumbers() {
   const { user } = useAuth();
   const [file, setFile]     = useState(null);
@@ -38,8 +47,7 @@ export default function PageNumbers() {
   const [previewError, setPreviewError] = useState('');
   const [opts, setOpts] = useState({ startFrom:1, startPage:1, position:'bottom-center', prefix:'', showTotal:false, fontSize:11 });
   const [filename, setFilename] = useState('');
-  const lastBytesRef = useRef(null);
-  const lastNameRef  = useRef('');
+  const [lastResult, setLastResult] = useState(null);
 
   const loadFile = async (raw) => {
     const f = Array.isArray(raw) ? raw[0] : (raw?.[0] || raw);
@@ -60,8 +68,8 @@ export default function PageNumbers() {
     try {
       const bytes = await addPageNumbers(file, opts, setProgress);
       const name  = `${(filename.trim()||'numbered')}_${new Date().toISOString().slice(0,10)}.pdf`;
-      triggerExport(bytes, name, 'application/pdf', "Page Numbers");
-      lastBytesRef.current = bytes; lastNameRef.current = name;
+      downloadFile(bytes, name);
+      setLastResult({ bytes, name });
       setSuccess(`"${name}" — page numbers added`);
       addRecentFile({ tool:'page_numbers', name, size:bytes.byteLength||0, pages });
       bumpLocalJob();
@@ -76,7 +84,7 @@ export default function PageNumbers() {
 
   const sidebarContent = (
     <>
-      <p className="ux-section-label">Number Settings</p>
+      <p className="ux-section-label">Options</p>
 
       <div className="ux-field">
         <label className="ux-label" htmlFor="pnPos">Position</label>
@@ -107,7 +115,7 @@ export default function PageNumbers() {
       <div className="ux-toggle-row">
         <div className="ux-toggle-info">
           <p>Show Total Pages</p>
-          <span>e.g. "1 of 10"</span>
+          <span>e.g. &ldquo;1 of 10&rdquo;</span>
         </div>
         <label className="ux-toggle">
           <input type="checkbox" checked={opts.showTotal} onChange={e => set('showTotal', e.target.checked)} />
@@ -126,7 +134,7 @@ export default function PageNumbers() {
       {error   && <div className="alert alert-error"   style={{ marginTop:12 }}><span>❌ {error}</span></div>}
       {working && <ProgressBar pct={progress} label="Adding numbers…" />}
 
-      {success && (
+      {success && lastResult && (
         <div className="ux-result-card" style={{ marginTop:12 }}>
           <div className="ux-result-success-bar">
             <div className="ux-result-check">✓</div>
@@ -134,11 +142,12 @@ export default function PageNumbers() {
           </div>
           <div className="ux-result-body">
             <div className="ux-result-actions">
-               <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => triggerExport(lastBytesRef.current, lastNameRef.current, 'application/pdf', "Page Numbers")}>
+               <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => downloadFile(lastResult.bytes, lastResult.name)}>
                 ↓ Download
               </button>
-              <SaveToDriveButton bytes={lastBytesRef.current} filename={lastNameRef.current} toolFolder="Page Numbers" />
+              <SaveToDriveButton bytes={lastResult.bytes} filename={lastResult.name} toolFolder="Page Numbers" />
             </div>
+            <ToolChaining lastBytes={lastResult.bytes} lastName={lastResult.name} currentTool="page_numbers" />
           </div>
         </div>
       )}

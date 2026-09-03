@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "postbuild": "node scripts/prerender-seo.js",
+    "postbuild": "node scripts/prerender-seo.js && node scripts/ping-search-engines.js",
     "preview": "vite preview",
     "lint": "eslint src/",
     "test": "playwright test"

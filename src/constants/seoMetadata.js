@@ -116,79 +116,79 @@ export const SEO_METADATA = {
   },
 
   mergeRanges: {
-    title: "Merge PDF with Ranges Online Free | OM PDF",
-    description: "Merge PDFs while selecting page ranges per file. Private, no upload required.",
-    keywords: "merge pdf ranges, merge pdf pages range, combine pdf specific pages, merge selected pages",
+    title: "Merge Specific Pages of PDF Online Free | Custom Page Ranges | OM PDF",
+    description: "Combine specific page numbers and custom intervals (e.g. 1-3, 5, 8-10) from multiple PDF files into one. 100% private in-browser, no uploads.",
+    keywords: "merge specific pages pdf, merge pdf ranges, combine selected pdf pages, merge page range online, cherry pick pdf pages, merge custom pages",
     url: "https://om-pdf.netlify.app/merge-with-ranges",
   },
 
   autoRotate: {
-    title: "Auto Rotate PDF Online Free | OM PDF",
-    description: "Auto-rotate pages and deskew PDFs for clean orientation. Private, no upload.",
-    keywords: "auto rotate pdf, deskew pdf, fix pdf orientation, rotate landscape pdf, straighten pdf",
+    title: "Auto-Rotate & Straighten Scanned PDF Pages Online Free | OM PDF",
+    description: "Automatically detect tilted, upside-down, or skewed scanned PDF pages and fix orientation with one click. 100% private and offline.",
+    keywords: "auto rotate pdf, deskew scanned pdf, fix pdf orientation, straighten pdf scan, rotate upside down pdf, auto straighten pdf",
     url: "https://om-pdf.netlify.app/auto-rotate-deskew",
   },
 
   watermark: {
-    title: "Add Watermark to PDF Online Free — OM PDF | Text & Images",
-    description: "Add text or image watermarks to PDF. Protect documents, customize positioning, instant processing, 100% free.",
-    keywords: "watermark pdf, add watermark to pdf, pdf watermark tool, text watermark pdf, image watermark pdf, pdf watermarking tool",
+    title: "Add Watermark to PDF Online Free (Text & Logo Stamp) | OM PDF",
+    description: "Add custom text or image/logo watermarks to PDF pages. Position, rotate, tile, and adjust opacity with instant local processing.",
+    keywords: "watermark pdf, add watermark to pdf, stamp logo on pdf, text watermark pdf, draft watermark pdf, confidential watermark",
     url: "https://om-pdf.netlify.app/watermark-pdf",
   },
 
   crop: {
-    title: "Crop PDF Pages Online Free — Trim Margins | OM PDF",
-    description: "Crop and trim PDF pages, remove margins instantly. Adjust page size, no upload, completely free and private.",
-    keywords: "crop pdf, crop pdf pages, pdf cropper tool, trim pdf margins, resize pdf pages, crop pdf online free",
+    title: "Crop PDF Pages Online Free — Trim White Margins | OM PDF",
+    description: "Crop and trim PDF page boundaries, remove excessive white margins, and adjust canvas dimensions with 100% private local processing.",
+    keywords: "crop pdf, crop pdf pages, trim pdf margins, remove pdf margins, pdf cropper online, crop margins pdf free",
     url: "https://om-pdf.netlify.app/crop-pdf",
   },
 
   pageNumbers: {
-    title: "Add Page Numbers to PDF Online Free | OM PDF | No Upload",
-    description: "Insert page numbers with custom formatting. Add numbering, totals, and customize placement, completely free.",
-    keywords: "add page numbers pdf, page numbers tool, pdf page numbering, insert page numbers pdf, number pdf pages, free page numbers",
+    title: "Add Page Numbers to PDF Online Free (Custom Format & Position) | OM PDF",
+    description: "Insert sequential page numbers (e.g. 'Page 1 of 10') into PDF documents. Choose font, size, position, and starting page with zero uploads.",
+    keywords: "add page numbers pdf, number pdf pages, insert page numbers, page numbering tool, numbering format pdf, bates numbering",
     url: "https://om-pdf.netlify.app/page-numbers",
   },
 
   grayscale: {
-    title: "Grayscale PDF Online Free | OM PDF",
-    description: "Convert PDFs to grayscale for better printing and smaller files. Private, no upload needed.",
-    keywords: "grayscale pdf, convert pdf to grayscale, black and white pdf, pdf grayscale converter, print pdf grayscale",
+    title: "Convert PDF to Black and White Online Free | Grayscale PDF | OM PDF",
+    description: "Convert color PDF documents to clean black and white / grayscale for smaller file size and economical printing. 100% private.",
+    keywords: "convert pdf to black and white, grayscale pdf, make pdf black and white, print pdf grayscale, bw pdf converter",
     url: "https://om-pdf.netlify.app/grayscale-pdf",
   },
 
   resizePages: {
-    title: "Resize PDF Pages Online Free | OM PDF",
-    description: "Resize PDF pages to A4, Letter, and more. Fit or fill with no uploads required.",
-    keywords: "resize pdf pages, change pdf page size, scale pdf to A4, pdf page size converter, resize pdf online",
+    title: "Change PDF Page Size (A4, Letter, Legal) Online Free | OM PDF",
+    description: "Resize and scale PDF page dimensions to standard A4, US Letter, Legal, or custom sizes. Fit or fill with zero upload and total privacy.",
+    keywords: "change pdf page size, scale pdf to A4, resize pdf pages, pdf page size converter, convert letter to a4 pdf, resize pdf online",
     url: "https://om-pdf.netlify.app/resize-pages",
   },
 
   addMargins: {
-    title: "Add Margins to PDF Online Free | OM PDF",
-    description: "Add or trim margins on PDF pages with custom sizes. Private and instant.",
-    keywords: "add margins to pdf, trim pdf margins, pdf margin tool, increase pdf margins, edit pdf margins",
+    title: "Add Margins & Padding to PDF Pages Online Free | OM PDF",
+    description: "Add custom top, bottom, and side margins to PDF pages for hole-punching, spiral binding, and printing. 100% private and instant.",
+    keywords: "add margins to pdf, increase pdf margins, pad pdf pages, pdf margin editor, gutter margins pdf, binding margins",
     url: "https://om-pdf.netlify.app/add-margins",
   },
 
   metadata: {
-    title: "PDF Metadata Editor Online Free — View & Edit Properties | OM PDF",
-    description: "View and edit PDF metadata (title, author, subject, keywords). No upload, instant editing, 100% private.",
-    keywords: "pdf metadata editor, edit pdf metadata, view pdf properties, pdf title editor, change pdf metadata, pdf metadata tool",
+    title: "PDF Metadata Editor Online Free — View, Edit & Update Properties | OM PDF",
+    description: "View and edit PDF metadata properties (title, author, subject, keywords, creation date) without software installation. 100% private.",
+    keywords: "pdf metadata editor, edit pdf metadata, change pdf author, view pdf properties, update pdf title, edit document properties",
     url: "https://om-pdf.netlify.app/metadata-editor",
   },
 
   sanitizeMeta: {
-    title: "Remove PDF Metadata Online Free | OM PDF",
-    description: "Sanitize PDF metadata by removing title, author, keywords, and hidden fields. Private, no upload.",
-    keywords: "remove pdf metadata, sanitize pdf, clean pdf metadata, strip pdf properties, pdf privacy",
+    title: "Remove Sensitive PDF Metadata & Hidden Properties Online Free | OM PDF",
+    description: "Sanitize PDF files by stripping author names, revision history, creation software, GPS data, and hidden metadata before sharing.",
+    keywords: "remove pdf metadata, sanitize pdf, clean pdf metadata, strip pdf properties, remove author from pdf, clean document privacy",
     url: "https://om-pdf.netlify.app/sanitize-metadata",
   },
 
   flattenForms: {
-    title: "Flatten PDF Forms Online Free | OM PDF",
-    description: "Flatten fillable form fields into static content to prevent edits. Private, no upload required.",
-    keywords: "flatten pdf form, flatten fillable pdf, remove form fields, pdf form to static, lock pdf form",
+    title: "Flatten Fillable PDF Forms Online Free — Lock Form Fields | OM PDF",
+    description: "Flatten interactive fillable PDF form fields and checkboxes into read-only static text to prevent further editing or tampering.",
+    keywords: "flatten pdf form, flatten fillable pdf, lock pdf form fields, convert fillable pdf to read only, make pdf uneditable",
     url: "https://om-pdf.netlify.app/flatten-forms",
   },
 

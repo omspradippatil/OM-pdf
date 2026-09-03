@@ -6,4 +6,6 @@ Disallow: /my-files
 Disallow: /my-files/
 Disallow: /feedback
 
+# Search Sitemaps & Feeds
 Sitemap: https://om-pdf.netlify.app/sitemap.xml
+Sitemap: https://om-pdf.netlify.app/feed.xml

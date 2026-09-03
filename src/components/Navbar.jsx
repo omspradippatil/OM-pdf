@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { TOOLS, CATEGORIES } from '../constants/tools';
+import CommandPalette from './CommandPalette';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -13,16 +14,23 @@ const GoogleIcon = () => (
 );
 
 export default function Navbar() {
-  const { user, login, logout, authBusy, authError, setAuthError, authSuccess, setAuthSuccess } = useAuth();
+  const { user, login, logout, authBusy, authError, setAuthError, authSuccess } = useAuth();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [toolsOpen, setToolsOpen]       = useState(false);
   const [menuOpen, setMenuOpen]         = useState(false);
+  const [cmdOpen, setCmdOpen]           = useState(false);
   const [scrolled, setScrolled]         = useState(false);
   const [theme, setTheme]               = useState(() => localStorage.getItem('om-pdf-theme') || 'light');
   
   const dropRef = useRef(null);
   const toolsRef = useRef(null);
+
+  // Expose global opener for shortcuts
+  useEffect(() => {
+    window.__openCommandPalette = () => setCmdOpen(true);
+    return () => { window.__openCommandPalette = null; };
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -45,13 +53,15 @@ export default function Navbar() {
   }, []);
 
   // Close menus on route change
-  useEffect(() => {
+  const [prevPath, setPrevPath] = useState(location.pathname);
+  if (prevPath !== location.pathname) {
+    setPrevPath(location.pathname);
     setToolsOpen(false);
     setMenuOpen(false);
     setDropdownOpen(false);
-  }, [location]);
+  }
 
-  const categorizedTools = Object.entries(CATEGORIES).map(([key, label]) => ({
+  const categorizedTools = Object.values(CATEGORIES).map(label => ({
     label,
     tools: TOOLS.filter(t => t.category === label)
   }));
@@ -117,6 +127,17 @@ export default function Navbar() {
 
         {/* Right actions */}
         <div className="nav-right">
+          <button
+            className="nav-search-btn"
+            onClick={() => setCmdOpen(true)}
+            title="Search all 45+ PDF tools (⌘K)"
+            aria-label="Search tools"
+          >
+            <span className="nav-search-icon">🔍</span>
+            <span>Search</span>
+            <span className="nav-search-kbd">⌘K</span>
+          </button>
+
           <button
             className="theme-toggle"
             onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
@@ -215,6 +236,13 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
+      {/* Global Command Palette */}
+      <CommandPalette
+        isOpen={cmdOpen}
+        onClose={() => setCmdOpen(false)}
+        onToggleTheme={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+      />
     </nav>
   );
 }

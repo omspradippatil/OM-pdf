@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>OM PDF — Free Privacy-First PDF Toolkit</title>
+    <link>https://om-pdf.netlify.app/</link>
+    <description>Fast, private, client-side PDF utilities running 100% in your browser with zero server uploads.</description>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 03 Sep 2026 12:00:00 GMT</lastBuildDate>
+    <atom:link href="https://om-pdf.netlify.app/feed.xml" rel="self" type="application/rss+xml"/>
+    
+    <item>
+      <title>Merge PDF with Ranges Online Free</title>
+      <link>https://om-pdf.netlify.app/merge-with-ranges</link>
+      <guid>https://om-pdf.netlify.app/merge-with-ranges</guid>
+      <pubDate>Sun, 17 Aug 2026 00:00:00 GMT</pubDate>
+      <description>Cherry-pick specific page intervals from multiple PDF files and combine them into a single PDF locally with zero uploads.</description>
+    </item>
+
+    <item>
+      <title>Best Free iLovePDF Alternative (100% Private, Zero Uploads)</title>
+      <link>https://om-pdf.netlify.app/ilovepdf-alternative</link>
+      <guid>https://om-pdf.netlify.app/ilovepdf-alternative</guid>
+      <pubDate>Fri, 29 Aug 2026 00:00:00 GMT</pubDate>
+      <description>Why OM PDF is the superior, privacy-first alternative to iLovePDF with zero cloud uploads and no daily task limits.</description>
+    </item>
+
+    <item>
+      <title>Best Free Smallpdf Alternative without Limits</title>
+      <link>https://om-pdf.netlify.app/smallpdf-alternative</link>
+      <guid>https://om-pdf.netlify.app/smallpdf-alternative</guid>
+      <pubDate>Fri, 29 Aug 2026 00:00:00 GMT</pubDate>
+      <description>Tired of Smallpdf paywalls? Discover OM PDF's unlimited free client-side PDF manipulation tools.</description>
+    </item>
+
+    <item>
+      <title>How to Merge PDF Files Locally Without Uploading to Cloud</title>
+      <link>https://om-pdf.netlify.app/blog/how-to-merge-pdf-without-upload</link>
+      <guid>https://om-pdf.netlify.app/blog/how-to-merge-pdf-without-upload</guid>
+      <pubDate>Sun, 17 Aug 2026 00:00:00 GMT</pubDate>
+      <description>Step-by-step guide explaining how browser WebAssembly allows merging private contracts and records with 100% data safety.</description>
+    </item>
+
+    <item>
+      <title>Best Free PDF Tools for Students and Researchers</title>
+      <link>https://om-pdf.netlify.app/blog/best-free-pdf-tools-for-students</link>
+      <guid>https://om-pdf.netlify.app/blog/best-free-pdf-tools-for-students</guid>
+      <pubDate>Sun, 17 Aug 2026 00:00:00 GMT</pubDate>
+      <description>Top free document tools for study guides, reading packs, textbook chapter splitting, and citation management.</description>
+    </item>
+
+    <item>
+      <title>How to Compress PDF for Email Attachments without Losing Quality</title>
+      <link>https://om-pdf.netlify.app/blog/compress-pdf-for-email</link>
+      <guid>https://om-pdf.netlify.app/blog/compress-pdf-for-email</guid>
+      <pubDate>Fri, 29 Aug 2026 00:00:00 GMT</pubDate>
+      <description>Optimize PDF document size for email attachment limits (25MB) while keeping vector text and logos crisp.</description>
+    </item>
+  </channel>
+</rss>

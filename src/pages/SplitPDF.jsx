@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
+import ToolChaining from '../components/ToolChaining';
 import RecentFilesPanel from '../components/RecentFilesPanel';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
@@ -10,7 +11,6 @@ import { formatBytes } from '../fileManager';
 import { parsePageRanges, extractPages, splitEveryPage, splitEveryNPages, downloadBytes } from '../splitPdf';
 import { generatePageThumbnails } from '../thumbnailGenerator';
 import { useAuth } from '../context/AuthContext';
-import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
@@ -34,7 +34,6 @@ export default function SplitPDF() {
   const [success, setSuccess] = useState('');
   const [lastResult, setLastResult] = useState(null);
   const [pageThumbs, setPageThumbs] = useState([]);
-  const fileInputRef = React.useRef(null);
 
   const loadFile = async (raw) => {
     const f = Array.isArray(raw) ? raw[0] : (raw?.[0] || raw);
@@ -53,15 +52,16 @@ export default function SplitPDF() {
 
   const togglePageSelection = (index) => {
     if (mode !== 'range') setMode('range');
-    let currentIndices = [];
-    try { currentIndices = parsePageRanges(range, pages || 9999); } catch { currentIndices = []; }
-    if (currentIndices.includes(index)) {
-      currentIndices = currentIndices.filter(i => i !== index);
-    } else {
-      currentIndices.push(index);
-      currentIndices.sort((a,b) => a-b);
+    let parsed;
+    try {
+      parsed = parsePageRanges(range, pages || 9999);
+    } catch {
+      parsed = [];
     }
-    setRange(currentIndices.map(i => i + 1).join(', '));
+    const indices = parsed.includes(index)
+      ? parsed.filter(i => i !== index)
+      : [...parsed, index].sort((a,b) => a-b);
+    setRange(indices.map(i => i + 1).join(', '));
   };
 
   const handleSplit = async () => {
@@ -74,7 +74,7 @@ export default function SplitPDF() {
         if (!indices.length) throw new Error('No valid pages in that range.');
         const bytes = await extractPages(file, indices);
         const name  = `${baseName}_pages.pdf`;
-        triggerExport(bytes, name, 'application/pdf', "Split");
+        downloadBytes(bytes, name);
         addRecentFile({ tool: 'split', name, size: bytes.byteLength || 0 });
         setSuccess(`Extracted ${indices.length} pages → "${name}"`);
         setLastResult({ bytes, name, mime: 'application/pdf' });
@@ -88,8 +88,7 @@ export default function SplitPDF() {
         addRecentFile({ tool: 'split', name: zipName, size: blob.size || 0 });
         setSuccess(`Split into chunks → "${zipName}"`);
         setLastResult({ bytes: blob, name: zipName, mime: 'application/zip' });
-      } else {
-        setProgress(10);
+      } else if (mode === 'single') {
         const blob = await splitEveryPage(file, baseName, setProgress);
         const zipName = `${baseName}_all_pages.zip`;
         const url  = URL.createObjectURL(blob);
@@ -97,11 +96,11 @@ export default function SplitPDF() {
         document.body.appendChild(a); a.click();
         setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
         addRecentFile({ tool: 'split', name: zipName, size: blob.size || 0 });
-        setSuccess(`${pages} pages saved → "${zipName}"`);
+        setSuccess(`Extracted each page → "${zipName}"`);
         setLastResult({ bytes: blob, name: zipName, mime: 'application/zip' });
       }
       bumpLocalJob();
-      await logUserAction(user, 'split', { tool: 'split', status: 'success', meta: { mode } });
+      await logUserAction(user, 'split', { tool: 'split', status: 'success', meta: { mode, range } });
     } catch (err) {
       setError('Split failed: ' + (err.message || 'Unexpected error.'));
       await logUserAction(user, 'split', { tool: 'split', status: 'error', meta: { error: err?.message } });
@@ -110,32 +109,26 @@ export default function SplitPDF() {
 
   const sidebarContent = (
     <>
-      <p className="ux-section-label">Split Settings</p>      <div className="ux-label" style={{ marginBottom:8 }}>Split Mode</div>
-      {MODE_OPTIONS.map(m => (
-        <div key={m.id} className={`ux-option-card${mode===m.id?' selected':''}`} onClick={() => setMode(m.id)}>
-          <div><div className="ux-option-title">{m.label}</div><div className="ux-option-desc">{m.desc}</div></div>
+      <p className="ux-section-label">Split Mode</p>
+      {MODE_OPTIONS.map(opt => (
+        <div key={opt.id} className={`ux-option-card${mode===opt.id?' selected':''}`} onClick={() => setMode(opt.id)}>
+          <div className="ux-option-title">{opt.label}</div>
+          <div className="ux-option-desc">{opt.desc}</div>
         </div>
       ))}
 
       {mode === 'range' && (
-        <div className="ux-field">
+        <div className="ux-field" style={{ marginTop:16 }}>
           <label className="ux-label" htmlFor="splitRange">Page Range</label>
-          <input id="splitRange" className="ux-input" type="text" value={range}
-            onChange={e => setRange(e.target.value)} placeholder="e.g. 1-3, 5, 7-10" />
-          <p style={{ fontSize:'0.7rem', color:'var(--text-muted)', marginTop:4 }}>Comma-separated ranges</p>
+          <input id="splitRange" className="ux-input" type="text" value={range} onChange={e => setRange(e.target.value)} placeholder="e.g. 1-3, 5, 7-10" />
+          <p className="ux-hint">Comma-separated pages or ranges.</p>
         </div>
       )}
+
       {mode === 'every' && (
-        <div className="ux-field">
-          <label className="ux-label" htmlFor="chunkSize">Pages per chunk</label>
-          <input id="chunkSize" className="ux-input" type="number" min={1} max={pages||999} value={chunkSize}
-            onChange={e => setChunkSize(Math.max(1, parseInt(e.target.value)||3))} />
-        </div>
-      )}
-      {mode === 'single' && pages && (
-        <div className="ux-option-card selected">
-          <div><div className="ux-option-title">One file per page</div>
-          <div className="ux-option-desc">{pages} individual PDFs → ZIP archive</div></div>
+        <div className="ux-field" style={{ marginTop:16 }}>
+          <label className="ux-label" htmlFor="chunkSize">Pages Per File</label>
+          <input id="chunkSize" className="ux-input" type="number" min={1} max={pages||100} value={chunkSize} onChange={e => setChunkSize(Math.max(1,parseInt(e.target.value)||1))} />
         </div>
       )}
 
@@ -159,7 +152,7 @@ export default function SplitPDF() {
             <div className="ux-result-body">
               <div className="ux-result-actions">
                 <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => {
-                  if (lastResult.mime === 'application/pdf') triggerExport(lastResult.bytes, lastResult.name, 'application/pdf', "Split");
+                  if (lastResult.mime === 'application/pdf') downloadBytes(lastResult.bytes, lastResult.name);
                   else {
                     const url = URL.createObjectURL(lastResult.bytes);
                     const a = document.createElement('a'); a.href = url; a.download = lastResult.name;
@@ -170,6 +163,9 @@ export default function SplitPDF() {
                 </button>
                 <SaveToDriveButton bytes={lastResult.bytes} filename={lastResult.name} mimeType={lastResult.mime} toolFolder="Split" />
               </div>
+              {lastResult.mime === 'application/pdf' && (
+                <ToolChaining lastBytes={lastResult.bytes} lastName={lastResult.name} currentTool="split" />
+              )}
             </div>
           )}
         </div>

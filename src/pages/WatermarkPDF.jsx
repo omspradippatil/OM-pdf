@@ -1,9 +1,10 @@
-import React, { useMemo, useState, useRef } from 'react';
+import { useState } from 'react';
 import JSZip from 'jszip';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
+import ToolChaining from '../components/ToolChaining';
 import FileList from '../components/FileList';
 import RecentFilesPanel from '../components/RecentFilesPanel';
 import ToolSeoHead from '../components/ToolSeoHead';
@@ -13,7 +14,6 @@ import { useAuth } from '../context/AuthContext';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
-import { formatBytes } from '../fileManager';
 import { PDFDocument, rgb, StandardFonts, degrees } from 'pdf-lib';
 
 function hexToRgb(hex) {
@@ -31,16 +31,15 @@ function computePosition(page, { width, height }, position, margin) {
     default:             return { x: (pw - width) / 2, y: (ph - height) / 2 };
   }
 }
-async function applyTextWatermark(file, opts, onProgress) {
+async function applyTextWatermark(file, opts) {
   const { text, fontSize, color, opacity, rotation, position, margin, pattern, spacing } = opts;
   const buf = await file.arrayBuffer();
   const pdfDoc = await PDFDocument.load(buf, { ignoreEncryption: true });
   const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const pages = pdfDoc.getPages();
-  const total = pages.length;
   const textWidth = font.widthOfTextAtSize(text, fontSize);
   const textHeight = fontSize;
-  pages.forEach((page, idx) => {
+  pages.forEach((page) => {
     if (pattern === 'tile') {
       const { width: pw, height: ph } = page.getSize();
       const stepX = textWidth + spacing; const stepY = textHeight + spacing;
@@ -54,15 +53,15 @@ async function applyTextWatermark(file, opts, onProgress) {
   });
   return pdfDoc.save();
 }
-async function applyImageWatermark(file, imageFile, opts, onProgress) {
+async function applyImageWatermark(file, imageFile, opts) {
   const { scale, opacity, rotation, position, margin, pattern, spacing } = opts;
   const buf = await file.arrayBuffer();
   const pdfDoc = await PDFDocument.load(buf, { ignoreEncryption: true });
-  const pages = pdfDoc.getPages(); const total = pages.length;
+  const pages = pdfDoc.getPages();
   const imageBytes = await imageFile.arrayBuffer();
   const img = imageFile.type === 'image/png' ? await pdfDoc.embedPng(imageBytes) : await pdfDoc.embedJpg(imageBytes);
   const imgDims = img.scale(scale);
-  pages.forEach((page, idx) => {
+  pages.forEach((page) => {
     if (pattern === 'tile') {
       const { width: pw, height: ph } = page.getSize();
       const stepX = imgDims.width + spacing; const stepY = imgDims.height + spacing;
@@ -97,9 +96,7 @@ export default function WatermarkPDF() {
   const [working, setWorking]     = useState(false);
   const [error, setError]         = useState('');
   const [success, setSuccess]     = useState('');
-  const lastBytesRef = useRef(null);
-  const lastNameRef  = useRef('');
-  const isZipRef     = useRef(false);
+  const [lastResult, setLastResult] = useState(null);
 
   const loadFiles = (raw) => {
     const valid = Array.from(raw).filter(f => f.type === 'application/pdf');
@@ -163,7 +160,7 @@ export default function WatermarkPDF() {
         a.href = url; a.download = name; a.click();
         setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
         
-        lastBytesRef.current = bytes; lastNameRef.current = name; isZipRef.current = false;
+        setLastResult({ bytes, name, isZip: false });
         setSuccess('Successfully applied watermark!');
         setProgress(100);
         addRecentFile({ tool: 'watermark', name, size: bytes.byteLength || 0 });
@@ -217,7 +214,7 @@ export default function WatermarkPDF() {
         const a = document.createElement('a'); a.href = url; a.download = zipName;
         a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
         
-        lastBytesRef.current = zipBlob; lastNameRef.current = zipName; isZipRef.current = true;
+        setLastResult({ bytes: zipBlob, name: zipName, isZip: true });
         setSuccess(`Successfully watermarked ${successCount} files!`);
         
         addRecentFile({ tool: 'watermark_batch', name: zipName, size: zipBlob.size });
@@ -319,7 +316,7 @@ export default function WatermarkPDF() {
       {error   && <div className="alert alert-error"   style={{ marginTop:12 }}><span>❌ {error}</span></div>}
       {working && <ProgressBar pct={progress} label="Applying watermark…" />}
 
-      {success && (
+      {success && lastResult && (
         <div className="ux-result-card" style={{ marginTop:12 }}>
           <div className="ux-result-success-bar">
             <div className="ux-result-check">✓</div>
@@ -328,15 +325,18 @@ export default function WatermarkPDF() {
           <div className="ux-result-body">
             <div className="ux-result-actions">
                <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => {
-                 const blob = isZipRef.current ? lastBytesRef.current : new Blob([lastBytesRef.current], { type: 'application/pdf' });
+                 const blob = lastResult.isZip ? lastResult.bytes : new Blob([lastResult.bytes], { type: 'application/pdf' });
                  const url = URL.createObjectURL(blob);
-                 const a = document.createElement('a'); a.href = url; a.download = lastNameRef.current;
+                 const a = document.createElement('a'); a.href = url; a.download = lastResult.name;
                  a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
                }}>
                 ↓ Download
               </button>
-              <SaveToDriveButton bytes={lastBytesRef.current} filename={lastNameRef.current} toolFolder="Watermarked" mimeType={isZipRef.current ? "application/zip" : "application/pdf"} />
+              <SaveToDriveButton bytes={lastResult.bytes} filename={lastResult.name} toolFolder="Watermarked" mimeType={lastResult.isZip ? "application/zip" : "application/pdf"} />
             </div>
+            {!lastResult.isZip && (
+              <ToolChaining lastBytes={lastResult.bytes} lastName={lastResult.name} currentTool="watermark" />
+            )}
           </div>
         </div>
       )}

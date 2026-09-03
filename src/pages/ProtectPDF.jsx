@@ -1,14 +1,13 @@
-import React, { useState, useRef } from 'react';
+import { useState } from 'react';
 import JSZip from 'jszip';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
+import ToolChaining from '../components/ToolChaining';
 import FileList from '../components/FileList';
 import { protectPdf } from '../utils/pdfGuard';
-import { formatBytes } from '../fileManager';
 import { useAuth } from '../context/AuthContext';
-import { useExport } from '../context/ExportContext';
 import { logUserAction } from '../services/activityLog';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
@@ -26,9 +25,7 @@ export default function ProtectPDF() {
   const [working, setWorking]   = useState(false);
   const [error, setError]       = useState('');
   const [success, setSuccess]   = useState('');
-  const lastBytesRef = useRef(null);
-  const lastNameRef  = useRef('');
-  const isZipRef     = useRef(false);
+  const [lastResult, setLastResult] = useState(null);
 
   const loadFiles = (raw) => {
     const valid = Array.from(raw).filter(f => f.type === 'application/pdf');
@@ -84,7 +81,7 @@ export default function ProtectPDF() {
         a.href = url; a.download = name; a.click();
         setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
         
-        lastBytesRef.current = outputData; lastNameRef.current = name; isZipRef.current = false;
+        setLastResult({ bytes: outputData, name, isZip: false });
         setSuccess('Successfully encrypted!');
         
         addRecentFile({ tool: 'protect', name, size: outputData.byteLength || 0 });
@@ -140,7 +137,7 @@ export default function ProtectPDF() {
         const a = document.createElement('a'); a.href = url; a.download = zipName;
         a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
         
-        lastBytesRef.current = zipBlob; lastNameRef.current = zipName; isZipRef.current = true;
+        setLastResult({ bytes: zipBlob, name: zipName, isZip: true });
         setSuccess(`Successfully encrypted ${successCount} files!`);
         
         addRecentFile({ tool: 'protect_batch', name: zipName, size: zipBlob.size });
@@ -187,7 +184,7 @@ export default function ProtectPDF() {
       {error   && <div className="alert alert-error"   style={{ marginTop: 12 }}><span>❌ {error}</span></div>}
       {working && <ProgressBar pct={progress} label="Encrypting document…" />}
 
-      {success && (
+      {success && lastResult && (
         <div className="ux-result-card" style={{ marginTop: 12 }}>
           <div className="ux-result-success-bar">
             <div className="ux-result-check">✓</div>
@@ -196,13 +193,16 @@ export default function ProtectPDF() {
           <div className="ux-result-body">
             <div className="ux-result-actions">
               <button className="ux-btn-primary" style={{ marginTop:0 }} onClick={() => {
-                 const blob = isZipRef.current ? lastBytesRef.current : new Blob([lastBytesRef.current], { type: 'application/pdf' });
+                 const blob = lastResult.isZip ? lastResult.bytes : new Blob([lastResult.bytes], { type: 'application/pdf' });
                  const url = URL.createObjectURL(blob);
-                 const a = document.createElement('a'); a.href = url; a.download = lastNameRef.current;
+                 const a = document.createElement('a'); a.href = url; a.download = lastResult.name;
                  a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
               }}>↓ Download</button>
-              <SaveToDriveButton bytes={lastBytesRef.current} filename={lastNameRef.current} toolFolder="Secured" mimeType={isZipRef.current ? "application/zip" : "application/pdf"} />
+              <SaveToDriveButton bytes={lastResult.bytes} filename={lastResult.name} toolFolder="Secured" mimeType={lastResult.isZip ? "application/zip" : "application/pdf"} />
             </div>
+            {!lastResult.isZip && (
+              <ToolChaining lastBytes={lastResult.bytes} lastName={lastResult.name} currentTool="protect" />
+            )}
           </div>
         </div>
       )}

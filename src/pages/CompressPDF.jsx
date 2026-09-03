@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import JSZip from 'jszip';
 import ToolPageLayout from '../components/ToolPageLayout';
 import DropZone from '../components/DropZone';
 import ProgressBar from '../components/ProgressBar';
 import SaveToDriveButton from '../components/SaveToDriveButton';
+import ToolChaining from '../components/ToolChaining';
 import FileList from '../components/FileList';
 import RecentFilesPanel from '../components/RecentFilesPanel';
 import ToolSeoHead from '../components/ToolSeoHead';
 import ToolSeoContent from '../components/ToolSeoContent';
 import { formatBytes } from '../fileManager';
 import { useAuth } from '../context/AuthContext';
-import { useExport } from '../context/ExportContext';
 import { addRecentFile } from '../services/recentFiles';
 import { bumpLocalJob } from '../services/privacyStats';
 import { logUserAction } from '../services/activityLog';
@@ -45,7 +45,6 @@ export default function CompressPDF() {
     setFiles(prev => [...prev, ...newFiles]);
     setError(''); setResult(null);
   };
-  const fileInputRef = React.useRef(null);
 
   const removeFile = (id) => {
     setFiles(prev => prev.filter(f => f.id !== id));
@@ -193,6 +192,9 @@ export default function CompressPDF() {
             <div className="ux-result-actions">
               <SaveToDriveButton bytes={result.bytes} filename={result.name} toolFolder="Compressed" mimeType={result.isZip ? "application/zip" : "application/pdf"} />
             </div>
+            {!result.isZip && (
+              <ToolChaining lastBytes={result.bytes} lastName={result.name} currentTool="compress" />
+            )}
           </div>
         </div>
       )}

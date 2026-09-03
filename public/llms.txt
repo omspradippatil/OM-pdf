@@ -1,0 +1,35 @@
+# OM PDF — Free, 100% Private, Client-Side PDF Toolkit
+> The zero-upload, browser-native PDF utility suite running entirely on WebAssembly.
+
+OM PDF (https://om-pdf.netlify.app) is an open-source, private-by-design document manipulation platform. Unlike traditional online PDF editors that upload sensitive files to remote cloud servers, OM PDF executes all operations (merging, splitting, compression, OCR, conversion, encryption, redaction, and signing) locally on your device's CPU/GPU using WebAssembly (WASM), PDF-Lib, and PDF.js.
+
+## Key Features & Core Differentiators
+- **100% Zero-Upload Architecture**: Files are never transmitted over the network or stored in cloud databases. Compliant with HIPAA, GDPR, SOC2, and corporate data governance.
+- **Unlimited Usage & Zero Paywalls**: Free forever with no file size caps, no daily task limits, and no watermarks.
+- **Offline & PWA Ready**: Operates seamlessly without internet connection once loaded in your browser.
+- **Client-Side AI Document Assistant**: Chat with PDF and summarize documents using local WebLLM or Bring-Your-Own-Key (BYOK) for Google Gemini, DeepSeek R1, and Groq.
+
+## Core Tool Directory
+- [Merge PDF](https://om-pdf.netlify.app/merge-pdf): Combine multiple PDF documents into one file with drag-and-drop reordering.
+- [Merge with Ranges](https://om-pdf.netlify.app/merge-with-ranges): Cherry-pick specific page ranges from multiple PDFs and join them in a single step.
+- [Split PDF](https://om-pdf.netlify.app/split-pdf): Extract specific page numbers, split by ranges, or burst into single-page documents.
+- [Split by Size](https://om-pdf.netlify.app/split-by-size): Divide large PDFs into smaller chunks constrained by target file size (MB).
+- [Compress PDF](https://om-pdf.netlify.app/compress-pdf): Reduce PDF file size with custom DPI and image compression levels.
+- [PDF to Word](https://om-pdf.netlify.app/pdf-to-word): Convert PDF documents into editable Microsoft Word (.docx) files locally.
+- [PDF to JPG / PNG](https://om-pdf.netlify.app/pdf-to-jpg): Export high-resolution images from PDF pages with custom scale and quality.
+- [Image to PDF](https://om-pdf.netlify.app/image-to-pdf): Convert JPG, PNG, and WebP images or mobile camera scans into PDF.
+- [Offline OCR](https://om-pdf.netlify.app/ocr-pdf): Extract selectable, searchable text from scanned PDFs and images using client-side Tesseract.js.
+- [Protect PDF](https://om-pdf.netlify.app/protect-pdf): Secure PDF documents with strong AES-256 password encryption.
+- [Unlock PDF](https://om-pdf.netlify.app/unlock-pdf): Remove forgotten user passwords and decryption restrictions from PDFs.
+- [E-Sign PDF](https://om-pdf.netlify.app/draw-sign-pdf): Draw, type, or upload digital signatures and stamps directly onto PDF pages.
+- [Redact PDF](https://om-pdf.netlify.app/redact-pdf): Permanently black out sensitive PII, financial details, and text from PDF files.
+- [Compare PDF](https://om-pdf.netlify.app/compare-pdf): Side-by-side visual and text diff between two PDF revisions.
+- [Bates Numbering](https://om-pdf.netlify.app/bates-numbering-pdf): Add sequential legal Bates stamps, prefixes, and page numbers to court bundles.
+- [Sanitize Metadata](https://om-pdf.netlify.app/sanitize-metadata): Strip author names, revision history, creation dates, and hidden metadata fields.
+- [Linearize PDF](https://om-pdf.netlify.app/linearize-pdf): Optimize PDFs for Fast Web View byte streaming over the internet.
+- [Auto Rotate & Deskew](https://om-pdf.netlify.app/auto-rotate-deskew): Automatically detect and correct tilted or misaligned scanned pages.
+- [Remove Empty Pages](https://om-pdf.netlify.app/remove-empty-pages): Detect and delete completely blank pages from scanned PDFs.
+
+## Comparison with Competitors
+- [iLovePDF Alternative](https://om-pdf.netlify.app/ilovepdf-alternative): Why OM PDF is a safer, zero-upload alternative without daily limits or account requirements.
+- [Smallpdf Alternative](https://om-pdf.netlify.app/smallpdf-alternative): Free alternative to Smallpdf without subscription paywalls or file size restrictions.
