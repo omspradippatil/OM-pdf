@@ -132,12 +132,15 @@ async function run() {
       fs.writeFileSync(indexHtmlPath, html);
       console.log(`✓ Generated home: dist/index.html`);
     } else {
-      const routeDir = path.resolve(__dirname, '../dist', cleanPath);
-      if (!fs.existsSync(routeDir)) {
-        fs.mkdirSync(routeDir, { recursive: true });
+      // Write flat .html file (e.g. dist/merge-with-ranges.html or dist/blog/compress-pdf-for-email.html)
+      // This allows Netlify to serve clean URLs with HTTP 200 directly without 301 trailing slash redirects!
+      const targetFilePath = path.resolve(__dirname, '../dist', `${cleanPath}.html`);
+      const targetDir = path.dirname(targetFilePath);
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
       }
-      fs.writeFileSync(path.resolve(routeDir, 'index.html'), html);
-      console.log(`✓ Generated route: dist/${cleanPath}/index.html`);
+      fs.writeFileSync(targetFilePath, html);
+      console.log(`✓ Generated route: dist/${cleanPath}.html`);
     }
     count++;
   }
